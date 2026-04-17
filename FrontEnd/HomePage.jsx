@@ -1,27 +1,21 @@
 // HomePage.jsx
 // Pantalla principal
 
-import { useNavigate } from 'react-router-dom';
-import Sidebar from './components/Sidebar';
-import ModuloCard from './components/ModuloCard';
-import { MODULOS } from './components/modules';
+import Sidebar from '../components/Sidebar';
+import ModuloCard from '../components/ModuloCard';
+import { MODULOS } from '../components/modules';
 
 // ─── Página principal ─────────────────────────────────────────────────────────
 
-export default function HomePage() {
-  const usuario = 'El Ingeniero 13';
+export default function HomePage({ usuario, onLogout }) {
 
   function handleNavegar(moduloId) {
     console.log('Navegar a:', moduloId);
   }
 
-  function handleSalir() {
-    console.log('Cerrar sesión');
-  }
-
   return (
     <div style={styles.pagina}>
-      <Sidebar usuario={usuario} onNavegar={handleNavegar} onSalir={handleSalir} />
+      <Sidebar usuario={usuario} onNavegar={handleNavegar} onLogout={onLogout} />
 
       <main style={styles.main}>
         {/* Encabezado */}
@@ -67,102 +61,6 @@ const styles = {
     background: '#F9F9F9',
     fontFamily: 'Lato, sans-serif',
     overflow: 'hidden',
-  },
-
-  // ── Sidebar ──
-  sidebar: {
-    width: 200,
-    minWidth: 200,
-    minWidth: 250,
-    height: '100vh',
-    background: '#444444',
-    borderRight: '1px solid #1D1D1D',
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    paddingTop: 45,
-    paddingBottom: 45,
-    gap: 30,
-    boxSizing: 'border-box',
-  },
-  sidebarTitulo: {
-    color: '#F9F9F9',
-    fontSize: 26,
-    fontFamily: "'Racing Sans One', cursive",
-    fontWeight: 400,
-    lineHeight: '31.2px',
-  },
-  sidebarNav: {
-    width: '100%',
-    display: 'flex',
-    flexDirection: 'column',
-    gap: 1,
-    flex: 1,
-  },
-  sidebarItem: {
-    width: '100%',
-    height: 60,
-    padding: 10,
-    background: '#FFCC00',
-    borderBottom: '2px solid #1D1D1D',
-    border: 'none',
-    borderBottomWidth: 2,
-    borderBottomStyle: 'solid',
-    borderBottomColor: '#1D1D1D',
-    display: 'flex',
-    alignItems: 'center',
-    gap: 10,
-    cursor: 'pointer',
-    boxSizing: 'border-box',
-  },
-  sidebarItemIcono: {
-    width: 32,
-    height: 32,
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexShrink: 0,
-  },
-  sidebarItemLabel: {
-    color: '#1D1D1D',
-    fontSize: 22,
-    fontFamily: 'Lato, sans-serif',
-    fontWeight: 700,
-    lineHeight: '31.2px',
-    flex: 1,
-    textAlign: 'left',
-  },
-  sidebarFlecha: {
-    color: '#1D1D1D',
-    fontSize: 22,
-    fontWeight: 700,
-  },
-  sidebarUsuario: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    gap: 20,
-    paddingTop: 10,
-    paddingBottom: 10,
-  },
-  sidebarUsuarioNombre: {
-    color: '#F9F9F9',
-    fontSize: 20,
-    fontFamily: 'Lato, sans-serif',
-    fontWeight: 400,
-    lineHeight: '31.2px',
-    textAlign: 'center',
-  },
-  sidebarBotonSalir: {
-    width: 100,
-    height: 50,
-    background: '#F9F9F9',
-    border: 'none',
-    borderRadius: 4,
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    cursor: 'pointer',
   },
 
   // ── Main ──
