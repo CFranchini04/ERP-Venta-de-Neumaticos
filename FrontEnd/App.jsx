@@ -1,25 +1,30 @@
-import React, { useState } from "react";
-import "./App.css";
-
-import Login from "./Login";
-import Compras from "./Compras";
-import Contabilidad from "./Contabilidad";
-import "./Compras.css";
+import logo from './logo.svg';
+import './App.css';
+import { useState } from 'react';
+import HomePage from './Pantallas/HomePage';
+import Login from './Pantallas/Login';
+import Compras from './Pantallas/Compras';
+import Contabilidad from './Pantallas/Contabilidad';
 
 export default function App() {
-  const [user, setUser] = useState(null);
+  const [usuario, setUsuario] = useState(null);
 
-  if (!user) {
-    return <Login onLogin={setUser} />;
+  const handleLogin = (data) => {
+    setUsuario(data);
+  };
+
+  if (usuario && usuario.rol === 'admin') {
+    return <HomePage usuario={usuario.user} onLogout={() => setUsuario(null)} />;
   }
 
-  if (user.rol === "compras") {
-    return <Compras />;
+  if (usuario && usuario.rol === 'compras') {
+    return <Compras usuario={usuario.user} onLogout={() => setUsuario(null)} />;
   }
 
-  if (user.rol === "contabilidad") {
-    return <Contabilidad />;
+  if (usuario && usuario.rol === 'contabilidad') {
+    return <Contabilidad usuario={usuario.user} onLogout={() => setUsuario(null)} />;
   }
 
-  return <h1>Rol no válido</h1>;
+  return <Login onLogin={handleLogin} />;
 }
+
