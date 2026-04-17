@@ -1,6 +1,5 @@
 import React, { useState } from "react";
-import { FaUserCircle } from "react-icons/fa";
-import "./Login.css";
+import { IconoCarga } from "../components/Icons";
 
 export default function Login({ onLogin }) {
   const [usuario, setUsuario] = useState("");
@@ -11,15 +10,22 @@ export default function Login({ onLogin }) {
 
   if (usuario === "compras" && password === "1234") {
     onLogin({
-      user: "comprasUser",
+      user: usuario,
       rol: "compras"
     });
   }
 
   else if (usuario === "contabilidad" && password === "1234") {
     onLogin({
-      user: "contaUser",
+      user: usuario,
       rol: "contabilidad"
+    });
+  }
+
+  else if (usuario === "admin" && password === "1234") {
+    onLogin({
+      user: usuario,
+      rol: "admin"
     });
   }
 
@@ -29,16 +35,20 @@ export default function Login({ onLogin }) {
 };
 
   return (
-    <div className="login-container">
-      <div className="login-box">
+    <div style={styles.loginContainer}>
+      <div style={styles.loginBox}>
 
     
-        <div className="icono-container"> 
+        <div style={styles.iconoContainer}>
+          <div style={styles.iconoCargaWrapper}>
+            <IconoCarga />
+          </div>
   <svg
     xmlns="http://www.w3.org/2000/svg"
     width={40}
     height={40}
     viewBox="0 0 24 24"
+    style={styles.iconoUsuario}
   >
     <g
       fill="none"
@@ -73,24 +83,88 @@ export default function Login({ onLogin }) {
 </div>
 
         <form onSubmit={handleSubmit}>
-          <label>Usuario</label>
+          <label style={styles.label}>Usuario</label>
           <input
+            style={styles.input}
             type="text"
             value={usuario}
             onChange={(e) => setUsuario(e.target.value)}
           />
 
-          <label>Contraseña</label>
+          <label style={styles.label}>Contraseña</label>
           <input
+            style={styles.input}
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
 
-          <button type="submit">Iniciar Sesión</button>
+          <button style={styles.button} type="submit">Iniciar Sesión</button>
         </form>
 
       </div>
     </div>
   );
 }
+
+// Estilos para Login
+const styles = {
+  loginContainer: {
+    height: '100vh',
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    background: 'linear-gradient(#dcdcdc, #a0a0a0)',
+  },
+  loginBox: {
+    background: '#4a4a4a',
+    padding: '40px',
+    borderRadius: '20px',
+    width: '300px',
+    textAlign: 'center',
+    boxShadow: '0 10px 20px rgba(0,0,0,0.3)',
+  },
+  iconoContainer: {
+    position: 'relative',
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    margin: '0 auto 20px auto',
+    width: '140px',
+    height: '140px',
+  },
+  iconoCargaWrapper: {
+    position: 'absolute',
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1,
+    width: '100px',
+    height: '100px',
+  },
+  iconoUsuario: {
+    position: 'relative',
+    zIndex: 2,
+  },
+  label: {
+    display: 'block',
+    color: 'white',
+    marginTop: '10px',
+    textAlign: 'left',
+  },
+  input: {
+    width: '100%',
+    padding: '8px',
+    marginTop: '5px',
+    borderRadius: '8px',
+    border: 'none',
+  },
+  button: {
+    marginTop: '20px',
+    background: '#ffc107',
+    border: 'none',
+    padding: '10px',
+    borderRadius: '8px',
+    cursor: 'pointer',
+  },
+};
