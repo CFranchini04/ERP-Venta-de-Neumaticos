@@ -3,6 +3,7 @@
 
 import { IconoSalir } from './Icons';
 import { MODULOS } from './modules';
+import LogoFukuchi from '../LogoFukuchi.png';
 
 export default function Sidebar({ usuario, onNavegar, onLogout }) {
   function handleSalir() {
@@ -15,8 +16,11 @@ export default function Sidebar({ usuario, onNavegar, onLogout }) {
     <aside style={styles.sidebar}>
       {/* Logo / nombre app */}
       <div style={styles.sidebarTituloContainer}>
-        <span style={styles.sidebarTituloNeumaticos}>Neumáticos</span>
-        <span style={styles.sidebarTituloFukuchi}>FUKUCHI</span>
+        <img
+          src={LogoFukuchi}
+          alt="Logo Neumáticos FUKUCHI"
+          style={styles.sidebarLogo}
+        />
       </div>
 
       {/* Navegación */}
@@ -149,6 +153,11 @@ const styles = {
     flexDirection: 'column',
     alignItems: 'center',
     gap: -5,
+  },
+  sidebarLogo: {
+    width: 210,
+    height: 'auto',
+    objectFit: 'contain',
   },
   sidebarTituloNeumaticos: {
     color: '#F9F9F9',
