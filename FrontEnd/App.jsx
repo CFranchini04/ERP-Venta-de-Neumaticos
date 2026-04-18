@@ -9,13 +9,45 @@ import RRHH from './Pantallas/rrhh';
 
 export default function App() {
   const [usuario, setUsuario] = useState(null);
+  const [pagina, setPagina] = useState('home');
 
   const handleLogin = (data) => {
     setUsuario(data);
+    setPagina('home');
+  };
+
+  const handleNavegar = (moduloId) => {
+    if (moduloId === 'home') {
+      setPagina('home');
+    }
+    else if (moduloId === 'rrhh') {
+      setPagina('rrhh');
+    }
+    else if (moduloId === 'compras') {
+      setPagina('compras');
+    }
+    else if (moduloId === 'contabilidad') {
+      setPagina('contabilidad');
+    }
+  };
+
+  const handleLogout = () => {
+    setUsuario(null);
+    setPagina('home');
   };
 
   if (usuario && usuario.rol === 'admin') {
-    return <HomePage usuario={usuario.user} onLogout={() => setUsuario(null)} />;
+    if (pagina === 'rrhh') {
+      return <RRHH usuario={usuario.user} onNavegar={handleNavegar} onLogout={handleLogout} />;
+    }
+    if (pagina === 'compras') {
+      return <Compras usuario={usuario.user} onNavegar={handleNavegar} onLogout={handleLogout} />;
+    }
+    if (pagina === 'contabilidad') {
+      return <Contabilidad usuario={usuario.user} onNavegar={handleNavegar} onLogout={handleLogout} />;
+    }
+
+    return <HomePage usuario={usuario.user} onNavegar={handleNavegar} onLogout={handleLogout} />;
   }
 
   if (usuario && usuario.rol === 'compras') {
