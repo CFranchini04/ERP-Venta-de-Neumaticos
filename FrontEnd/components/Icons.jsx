@@ -1,5 +1,6 @@
 // Icons.jsx
 // Componentes de íconos reutilizables
+import { getColor } from "./Colors";
 
 export function IconoCompras() {
   return (
@@ -139,7 +140,7 @@ export function IconoCarga() {
       <path
         fill="none"
         fillOpacity={0}
-        stroke="#ffc107"
+        stroke={getColor('amarillo')} 
         strokeDasharray={60}
         strokeLinecap="round"
         strokeLinejoin="round"
@@ -175,7 +176,7 @@ export function IconoUsuario({ style }) {
     >
       <g
         fill="none"
-        stroke="#ffc107"
+        stroke={getColor('amarillo')}
         strokeDasharray={28}
         strokeLinecap="round"
         strokeLinejoin="round"
