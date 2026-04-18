@@ -12,6 +12,8 @@ export const getColor = (variant) => {
       return "#CECECE";
       case "rojo":
       return "#E30613";
+      case "negro":
+      return "#000000";
     default:
       return "#1D1D1D";
   }
