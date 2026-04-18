@@ -15,13 +15,17 @@ export default function Sidebar({ usuario, onNavegar, onLogout }) {
   return (
     <aside style={styles.sidebar}>
       {/* Logo */}
-      <div style={styles.sidebarTituloContainer}>
+      <button
+        onClick={() => onNavegar('home')}
+        style={styles.sidebarTituloContainer}
+        title="Ir a inicio"
+      >
         <img
           src={LogoFukuchi}
           alt="Logo Neumáticos FUKUCHI"
           style={styles.sidebarLogo}
         />
-      </div>
+      </button>
 
       {/* Navegación */}
       <nav style={styles.sidebarNav}>
@@ -45,7 +49,7 @@ export default function Sidebar({ usuario, onNavegar, onLogout }) {
           width="50"
           height="50"
           viewBox="0 0 16 16"
-          style={{ color: "#F9F9F9" }}
+          style={{ color: getColor("blanco") }}
         >
           <path
             fill="currentColor"
@@ -67,7 +71,7 @@ export default function Sidebar({ usuario, onNavegar, onLogout }) {
   );
 }
 
-// 🎨 Estilos corregidos
+//  Estilos para sidebar
 const styles = {
   sidebar: {
     width: 250,
@@ -125,7 +129,7 @@ const styles = {
     alignItems: "center",
     justifyContent: "center",
     flexShrink: 0,
-    color: getColor("negro"), // 👈 importante para SVG con currentColor
+    color: getColor("negro"), 
   },
 
   sidebarItemLabel: {
