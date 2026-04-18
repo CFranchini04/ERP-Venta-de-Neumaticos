@@ -29,6 +29,13 @@ export default function Login({ onLogin }) {
     });
   }
 
+  else if (usuario === "rrhh" && password === "1234") {
+    onLogin({
+      user: usuario,
+      rol: "rrhh"
+    });
+  }
+
   else {
     alert("Credenciales incorrectas");
   }
