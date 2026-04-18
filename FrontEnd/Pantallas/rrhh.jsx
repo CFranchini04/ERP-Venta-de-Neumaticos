@@ -4,7 +4,7 @@ import { Button } from '../components/Button';
 import { IconoRRHH, IconoDinero } from '../components/Icons';
 import List from '../components/Lista';
 
-export default function RRHH({ usuario = 'Empleado', onLogout }) {
+export default function RRHH({ usuario = 'Empleado', onLogout, onNavegar }) {
     const [empleados, setEmpleados] = useState([
         { id: 1, nombre: 'Camila', apellido: 'Pavon', cargo: 'Gerente', CI: '5648253', fecha_inicio: '2023-01-15' },
         { id: 2, nombre: 'Yeny', apellido: 'Miño', cargo: 'Cajero', CI: '1234567', fecha_inicio: '2023-02-01' },
@@ -20,7 +20,9 @@ export default function RRHH({ usuario = 'Empleado', onLogout }) {
     ];
 
     function handleNavegar(moduloId) {
-        console.log('Navegar a: ', moduloId);
+        if (onNavegar) {
+            onNavegar(moduloId);
+        }
     }
 
     function handleNuevo() {
