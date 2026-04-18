@@ -188,3 +188,4 @@ const styles = {
     textAlign: 'center',
     width: '100%',
   },
+};
