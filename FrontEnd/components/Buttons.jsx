@@ -1,88 +1,34 @@
-import React from 'react';
+import React from "react";
+import { getColor } from "./Colors";
 
-const BUTTON_VARIANTS = {
-  amarillo: {
-    background: '#FFCC00',
-    color: '#1D1D1D',
-    outline: '#444444',
-  },
-  blanco: {
-    background: '#FFFFFF',
-    color: '#1D1D1D',
-    outline: '#444444',
-  },
-  naranja: {
-    background: '#FFAE00',
-    color: '#FFFFFF',
-    outline: 'transparent',
-  },
-  grisclaro: {
-    background: '#00875A',
-    color: '#CECECE',
-    outline: 'transparent',
-  },
-};
-
-const BUTTON_SIZES = {
-  small: {
-    maxWidth: 220,
-    minHeight: 64,
-    padding: '14px',
-  },
-  medium: {
-    maxWidth: 320,
-    minHeight: 96,
-    padding: '20px',
-  },
-  large: {
-    maxWidth: 420,
-    minHeight: 120,
-    padding: '24px',
-  },
-};
-
-export function Button({
-  label = 'Boton',
-  variant = 'amarillo',
-  size = 'medium',
+export const Button = ({
+  disabled = false,
+  variant = "amarilloclaro",
+  label,
   onClick,
-  style = {},
-  children,
-  type = 'button',
-  ...props
-}) {
-  const variantStyle = BUTTON_VARIANTS[variant] || BUTTON_VARIANTS.amarillo;
-  const sizeStyle = BUTTON_SIZES[size] || BUTTON_SIZES.medium;
+  size = 20,
+}) => {
 
   return (
     <button
-      type={type}
       onClick={onClick}
+      disabled={disabled}
       style={{
-        display: 'inline-flex',
-        width: '100%',
-        ...sizeStyle,
+        paddingLeft: 20,
+        paddingRight: 20,
+        background: getColor(variant),
+        boxShadow: "0px 2px 2px rgba(0, 0, 0, 0.25)",
         borderRadius: 8,
-        border: 'none',
-        outline: `3px solid ${variantStyle.outline}`,
-        boxShadow: '0px 2px 2px rgba(0, 0, 0, 0.25)',
-        justifyContent: 'center',
-        alignItems: 'center',
-        gap: 10,
-        background: variantStyle.background,
-        color: variantStyle.color,
-        fontFamily: 'Lato, system-ui, sans-serif',
-        fontSize: 42,
-        fontWeight: 400,
-        lineHeight: '50.4px',
-        textAlign: 'center',
-        cursor: 'pointer',
-        wordWrap: 'break-word',
-        ...style,
+        border: "3px solid #444444",
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        cursor: disabled ? "not-allowed" : "pointer",
       }}
-      {...props}
     >
-      <span style={{ width: '100%' }}>{children || label}</span>
+      <span style={{ color: "#1D1D1D", fontSize: size, fontFamily: "Lato" }}>
+        {label}
+      </span>
     </button>
   );
-}
+};
