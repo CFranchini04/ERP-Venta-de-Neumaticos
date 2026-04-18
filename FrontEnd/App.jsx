@@ -5,6 +5,7 @@ import HomePage from './Pantallas/HomePage';
 import Login from './Pantallas/Login';
 import Compras from './Pantallas/Compras';
 import Contabilidad from './Pantallas/Contabilidad';
+import RRHH from './Pantallas/rrhh';
 
 export default function App() {
   const [usuario, setUsuario] = useState(null);
