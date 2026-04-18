@@ -1,5 +1,6 @@
 // ModuloCard.jsx
 // Componente para las tarjetas de módulos
+import { getColor } from "./Colors";
 
 export default function ModuloCard({ label, icon, onClick }) {
   return (
@@ -17,10 +18,10 @@ const styles = {
     height: 180,
     paddingTop: 10,
     paddingBottom: 10,
-    background: '#FFCC00',
+    background: getColor("amarillo"),
     boxShadow: '0px 6px 4px rgba(0,0,0,0.25)',
     borderRadius: 16,
-    border: '2px solid #444444',
+    border: '2px solid ' + getColor("gris"),
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
@@ -37,7 +38,7 @@ const styles = {
     justifyContent: 'center',
   },
   moduloLabel: {
-    color: '#1D1D1D',
+    color: getColor("gris-oscuro"),
     fontSize: 18,
     fontFamily: 'Lato, sans-serif',
     fontWeight: 700,
