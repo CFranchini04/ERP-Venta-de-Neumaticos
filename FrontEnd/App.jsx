@@ -25,6 +25,10 @@ export default function App() {
     return <Contabilidad usuario={usuario.user} onLogout={() => setUsuario(null)} />;
   }
 
+  if (usuario && usuario.rol === 'rrhh') {
+    return <RRHH usuario={usuario.user} onLogout={() => setUsuario(null)} />;
+  }
+
   return <Login onLogin={handleLogin} />;
 }
 
