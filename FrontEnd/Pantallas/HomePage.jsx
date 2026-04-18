@@ -7,10 +7,12 @@ import { MODULOS } from '../components/modules';
 
 // ─── Página principal ─────────────────────────────────────────────────────────
 
-export default function HomePage({ usuario, onLogout }) {
+export default function HomePage({ usuario, onLogout, onNavegar }) {
 
   function handleNavegar(moduloId) {
-    console.log('Navegar a:', moduloId);
+    if (onNavegar) {
+      onNavegar(moduloId);
+    }
   }
 
   return (
@@ -186,4 +188,3 @@ const styles = {
     textAlign: 'center',
     width: '100%',
   },
-};
