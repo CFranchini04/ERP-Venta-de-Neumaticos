@@ -1,11 +1,11 @@
 import logo from './logo.svg';
 import './App.css';
 import { useState } from 'react';
-import HomePage from './Pantallas/HomePage';
-import Login from './Pantallas/Login';
-import Compras from './Pantallas/Compras';
-import Contabilidad from './Pantallas/Contabilidad';
-import RRHH from './Pantallas/rrhh';
+import HomePage from './Pantallas/Main/HomePage';
+import Login from './Pantallas/Login/Login';
+import { Compras, Pedidos } from './Pantallas/Compras';
+import Contabilidad from './Pantallas/Contabilidad/Contabilidad';
+import RRHH from './Pantallas/RRHH/rrhh';
 
 export default function App() {
   const [usuario, setUsuario] = useState(null);
@@ -26,6 +26,9 @@ export default function App() {
     else if (moduloId === 'compras') {
       setPagina('compras');
     }
+    else if (moduloId === 'pedidos') {
+      setPagina('pedidos');
+    }
     else if (moduloId === 'contabilidad') {
       setPagina('contabilidad');
     }
@@ -42,6 +45,9 @@ export default function App() {
     }
     if (pagina === 'compras') {
       return <Compras usuario={usuario.user} onNavegar={handleNavegar} onLogout={handleLogout} />;
+    }
+    if (pagina === 'pedidos') {
+      return <Pedidos usuario={usuario.user} onNavegar={handleNavegar} onLogout={handleLogout} />;
     }
     if (pagina === 'contabilidad') {
       return <Contabilidad usuario={usuario.user} onNavegar={handleNavegar} onLogout={handleLogout} />;
@@ -64,4 +70,3 @@ export default function App() {
 
   return <Login onLogin={handleLogin} />;
 }
-
