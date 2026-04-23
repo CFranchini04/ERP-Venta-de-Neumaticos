@@ -1,15 +1,14 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Sidebar from "../../components/Sidebar";
 import { Button } from '../../components/Buttons';
 import { IconoRRHH, IconoDinero } from '../../components/Icons';
 import List from '../../components/Lista';
 
+const SUPABASE_URL = "https://skumubfkuzruzgkswutv.supabase.co";
+const SUPABASE_KEY = "sb_publishable_Achm8f37YDHChJy_mS0SGw_GBAdKfC6";
+
 export default function RRHH({ usuario = 'Empleado', onLogout, onNavegar }) {
-    const [empleados, setEmpleados] = useState([
-        { id: 1, nombre: 'Camila', apellido: 'Pavon', cargo: 'Gerente', CI: '5648253', fecha_inicio: '2023-01-15' },
-        { id: 2, nombre: 'Yeny', apellido: 'Miño', cargo: 'Cajero', CI: '1234567', fecha_inicio: '2023-02-01' },
-        { id: 3, nombre: 'Daniel', apellido: 'Cáceres', cargo: 'Supervisor', CI: '7654321', fecha_inicio: '2023-03-01' },
-    ]);
+    const [empleados, setEmpleados] = useState([]);
 
     const columns = [
         { key: 'nombre', label: 'Nombre' },
@@ -18,6 +17,35 @@ export default function RRHH({ usuario = 'Empleado', onLogout, onNavegar }) {
         { key: 'CI', label: 'CI' },
         { key: 'fecha_inicio', label: 'Fecha de Inicio' },
     ];
+
+    useEffect(() => {
+        const cargarEmpleados = async () => {
+            const respuesta = await fetch(
+                `${SUPABASE_URL}/rest/v1/empleados?select=id_empleado,fecha_de_contraracion,personas(nombre),cargo(nombre)&order=id_empleado.asc`,
+                {
+                    headers: {
+                        apikey: SUPABASE_KEY,
+                        Authorization: `Bearer ${SUPABASE_KEY}`,
+                    },
+                }
+            );
+
+            const data = await respuesta.json();
+
+            const formateado = data.map((item) => ({
+                id: item.id_empleado,
+                nombre: item.personas?.nombre ?? '',
+                apellido: 'Agregar en BD',
+                cargo: item.cargo?.nombre ?? '',
+                CI: 'Agregar en BD',
+                fecha_inicio: item.fecha_de_contraracion ?? '',
+            }));
+
+            setEmpleados(formateado);
+        };
+
+        cargarEmpleados();
+    }, []);
 
     function handleNavegar(moduloId) {
         if (onNavegar) {
