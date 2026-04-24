@@ -1,8 +1,6 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import Sidebar from "../../components/Sidebar";
 import { Button } from "../../components/Buttons";
-
-
 
 import {
   IconoPedidos,
@@ -13,6 +11,9 @@ import {
   IconoProveedor,
   IconoLupa
 } from "../../components/Icons";
+
+const SUPABASE_URL = "https://skumubfkuzruzgkswutv.supabase.co";
+const SUPABASE_KEY = "sb_publishable_Achm8f37YDHChJy_mS0SGw_GBAdKfC6";
 
 const CardModulo = ({ titulo, Icono, onClick }) => (
   <div className="card">
@@ -95,10 +96,57 @@ const styles = `
   }
 `;
 
-
-
-
 export default function Compras({ usuario = 'Empleado', onNavegar, onLogout }) {
+  const [cotizaciones, setCotizaciones] = useState([]);
+  const [facturas, setFacturas] = useState([]);
+
+  useEffect(() => {
+    const cargarDatos = async () => {
+      const resCot = await fetch(
+        `${SUPABASE_URL}/rest/v1/cotizaciones?select=id_cotizacion,elegida,monto_total,pedidos_compras(fecha),proveedores(personas(nombre))&order=id_cotizacion.asc`,
+        {
+          headers: {
+            apikey: SUPABASE_KEY,
+            Authorization: `Bearer ${SUPABASE_KEY}`,
+          },
+        }
+      );
+
+      const dataCot = await resCot.json();
+
+      const cotFormateadas = dataCot.map((item) => ({
+        codigo: `COT_${String(item.id_cotizacion).padStart(3, '0')}`,
+        estado: item.elegida ? 'Lista' : 'Pendiente',
+        fecha: item.pedidos_compras?.fecha ?? 'Agregar en BD',
+      }));
+
+      setCotizaciones(cotFormateadas);
+
+      const resFac = await fetch(
+        `${SUPABASE_URL}/rest/v1/facturas_compras?select=id_factura_compra,nro_factura,fecha,importe_total,ordenes_compras(fecha),proveedores(personas(nombre))&order=id_factura_compra.asc`,
+        {
+          headers: {
+            apikey: SUPABASE_KEY,
+            Authorization: `Bearer ${SUPABASE_KEY}`,
+          },
+        }
+      );
+
+      const dataFac = await resFac.json();
+
+      const facFormateadas = dataFac.map((item) => ({
+        codigo: item.nro_factura ? item.nro_factura : `FAC_COM_${String(item.id_factura_compra).padStart(3, '0')}`,
+        proveedor: item.proveedores?.personas?.nombre ?? 'Agregar en BD',
+        fecha_creacion: item.fecha ?? 'Agregar en BD',
+        fecha_vencimiento: 'Agregar en BD',
+      }));
+
+      setFacturas(facFormateadas);
+    };
+
+    cargarDatos();
+  }, []);
+
   return (
     <div style={{ display: 'flex', height: '100vh' }}>
       <Sidebar usuario={usuario} onNavegar={onNavegar} onLogout={onLogout} />
@@ -107,10 +155,10 @@ export default function Compras({ usuario = 'Empleado', onNavegar, onLogout }) {
         <style>{styles}</style>
 
         <h1 className="titulo">Módulo de Compras</h1>
- 
+
         {/*CARDS */}
         <div className="cards-grid">
-          <CardModulo titulo="Pedidos" Icono={IconoPedidos} onClick={() => onNavegar("pedidos")}/>
+          <CardModulo titulo="Pedidos" Icono={IconoPedidos} onClick={() => onNavegar("pedidos")} />
           <CardModulo titulo="Cotizaciones" Icono={IconoCotizaciones} />
           <CardModulo titulo="Órdenes de compra" Icono={IconoOrdenCompra} />
           <CardModulo titulo="Órdenes de pago" Icono={IconoOrdenPago} />
@@ -132,19 +180,14 @@ export default function Compras({ usuario = 'Empleado', onNavegar, onLogout }) {
               <span>Fecha de Vencimiento</span>
             </div>
 
-            <div className="fila">
-              <span>FAC_COM_048</span>
-              <span>Rusteeze</span>
-              <span>05/04/2026</span>
-              <span>05/04/2036</span>
-            </div>
-
-            <div className="fila">
-              <span>FAC_COM_048</span>
-              <span>Dinoco</span>
-              <span>05/03/2026</span>
-              <span>05/03/2036</span>
-            </div>
+            {facturas.map((item, index) => (
+              <div className="fila" key={index}>
+                <span>{item.codigo}</span>
+                <span>{item.proveedor}</span>
+                <span>{item.fecha_creacion}</span>
+                <span>{item.fecha_vencimiento}</span>
+              </div>
+            ))}
           </div>
 
           {/* COTIZACIONES */}
@@ -158,31 +201,21 @@ export default function Compras({ usuario = 'Empleado', onNavegar, onLogout }) {
               <span></span>
             </div>
 
-            <div className="fila">
-              <span>COT_038</span>
-              <span>Lista</span>
-              <span>05/04/2026</span>
-              <div className="icono-accion">
-                <IconoLupa />
+            {cotizaciones.map((item, index) => (
+              <div className="fila" key={index}>
+                <span>{item.codigo}</span>
+                <span>{item.estado}</span>
+                <span>{item.fecha}</span>
+                <div className="icono-accion">
+                  <IconoLupa />
+                </div>
               </div>
-            </div>
-
-            <div className="fila">
-              <span>COT_167</span>
-              <span>Lista</span>
-              <span>21/03/2026</span>
-              <div className="icono-accion">
-                <IconoLupa />
-              </div>
-            </div>
-
+            ))}
           </div>
 
         </div>
 
       </div>
     </div>
-    
   );
- }
-
+}
