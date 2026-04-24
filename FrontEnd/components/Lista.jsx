@@ -1,70 +1,151 @@
+import { useState } from "react";
 import { getColor } from "./Colors";
+import { Button } from "./Button";
 
-function List({ data, columns, onNuevo }) {
-    return (
-        <div style={{ padding: 20 }}>
+function List({
+  data,
+  columns,
+  onRowClick,
+  selectable = false,
 
-            {/* HEADER */}
-            <div style={{ display: "flex", gap: 10, marginBottom: 20 }}>
 
-                <input placeholder="Buscar..." />
+  controls = []
+}) {
 
-                <select>
-                    {columns.map((col, i) => (
-                        <option key={i} value={col.key}>
-                            {col.label}
-                        </option>
-                    ))}
-                </select>
+  const [selectedId, setSelectedId] = useState(null);
 
-                <button onClick={onNuevo}>
-                    Nuevo
-                </button>
+  const handleClick = (item) => {
+    if (selectable) {
+      setSelectedId(item.id);
+    }
 
-            </div>
+    if (onRowClick) {
+      onRowClick(item);
+    }
+  };
 
-            {/* TABLA */}
+  return (
+    <div style={{ padding: 20 }}>
 
-            {/* encabezados */}
-            <div
+      {/* HEADER DINÁMICO */}
+      <div style={{ display: "flex", gap: 20, marginBottom: 20, alignItems: "center" }}>
+
+        {controls.map((control, i) => {
+
+          // search
+          if (control.type === "search") {
+            return (
+              <input
+                key={i}
+                placeholder={control.placeholder || "Buscar..."}
+                value={control.value || ""}
+                onChange={control.onChange}
                 style={{
-                    display: "grid",
-                    gridTemplateColumns: `repeat(${columns.length}, 1fr)`,
-                    fontWeight: "bold",
-                    background: getColor("amarillo"),
-                    color: "white",
-                    padding: 10,
-                    borderRadius: 6,
+                  padding: "10px 14px",
+                  borderRadius: 8,
+                  border: `2px solid ${getColor("gris-claro")}`,
+                  outline: "none",
+                  fontSize: 14,
+                  fontFamily: "Lato",
+                  width: 200,
                 }}
-            >
-                {columns.map((col, i) => (
-                    <span key={i}>{col.label}</span>
+              />
+            );
+          }
+
+          // SELECT / FILTER
+          if (control.type === "select") {
+            return (
+              <select
+                key={i}
+                value={control.value || ""}
+                onChange={control.onChange}
+                style={{
+                  padding: "10px 14px",
+                  borderRadius: 8,
+                  border: `2px solid ${getColor("gris-claro")}`,
+                  background: getColor("blanco"),
+                  cursor: "pointer",
+                }}
+              >
+                <option value="">
+                  {control.placeholder || "Filtrar por..."}
+                </option>
+
+                {(control.options || []).map((opt, j) => (
+                  <option key={j} value={opt.key}>
+                    {opt.label}
+                  </option>
                 ))}
-            </div>
+              </select>
+            );
+          }
 
-            {/* filas */}
-            {data.map((item, index) => (
-                <div
-                    key={index}
-                    style={{
-                        display: "grid",
-                        gridTemplateColumns: `repeat(${columns.length}, 1fr)`,
-                        padding: 10,
-                        background: index % 2 === 0 ? getColor("blanco") : getColor("gris-claro"),
-                    }}
-                >
+          // BUTTONS
+          if (control.type === "button") {
+            return (
+              <Button
+                key={i}
+                label={control.label}
+                variant={control.variant || "amarillo"}
+                onClick={control.onClick}
+              />
+            );
+          }
 
+          return null;
+        })}
 
-                    {columns.map((col, i) => (
-                        <span key={i} style={{ color: getColor("text") }}>
-                            {item[col.key]}
-                        </span>
-                    ))}
-                </div>
+      </div>
+
+      {/* ENCABEZADOS */}
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: `repeat(${columns.length}, 1fr)`,
+          fontWeight: "bold",
+          background: getColor("amarillo"),
+          color: getColor("text"),
+          padding: 10,
+          borderRadius: 6,
+        }}
+      >
+        {columns.map((col, i) => (
+          <span key={i}>{col.label}</span>
+        ))}
+      </div>
+
+      {/* FILAS */}
+      {data.map((item, index) => {
+        const isSelected = selectedId === item.id;
+
+        return (
+          <div
+            key={item.id || index}
+            onClick={() => handleClick(item)}
+            style={{
+              display: "grid",
+              gridTemplateColumns: `repeat(${columns.length}, 1fr)`,
+              padding: 10,
+              cursor: onRowClick ? "pointer" : "default",
+
+              background: isSelected
+                ? getColor("naranja")
+                : index % 2 === 0
+                  ? getColor("blanco")
+                  : getColor("gris-claro"),
+            }}
+          >
+            {columns.map((col, i) => (
+              <span key={i} style={{ color: getColor("text") }}>
+                {item[col.key]}
+              </span>
             ))}
-
-        </div>
-    );
+          </div>
+        );
+      })}
+    </div>
+  );
 }
 
 export default List;
