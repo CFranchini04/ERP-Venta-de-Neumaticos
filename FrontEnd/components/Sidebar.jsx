@@ -1,16 +1,53 @@
 // Sidebar.jsx
-import React from "react";
-import { IconoSalir } from "./Icons";
-import { MODULOS } from "./modules";
-import LogoFukuchi from "../LogoFukuchi.png";
-import { getColor } from "./Colors";
+// Sidebar con dropdown único abierto
+
+import { useState } from 'react';
+import { IconoSalir } from './Icons';
+import { MODULOS } from './modules';
+import LogoFukuchi from '../LogoFukuchi.png';
+import { getColor } from './Colors';
 
 export default function Sidebar({ usuario, onNavegar, onLogout }) {
+
+  const [abierto, setAbierto] = useState(null);
+  const [hoveredItem, setHoveredItem] = useState(null);
+
   function handleSalir() {
-    if (window.confirm("¿Estás seguro de que quieres cerrar sesión?")) {
+    if (window.confirm('¿Estás seguro de que quieres cerrar sesión?')) {
       onLogout();
     }
   }
+
+  function toggleModulo(id) {
+    setAbierto((prev) => (prev === id ? null : id));
+  }
+
+  const SUBMENUS = {
+    compras: [
+      { id: 'nuevo_pedido', label: 'Nuevo pedido' },
+      { id: 'proveedores', label: 'Proveedores' },
+      { id: 'cotizaciones', label: 'Cotizaciones' },
+      { id: 'facturas_compras', label: 'Facturas' },
+    ],
+    rrhh: [
+      { id: 'gestion_personal', label: 'Gestión de Personal' },
+      { id: 'gestion_salarios', label: 'Gestión de Salarios' },
+    ],
+    ventas: [
+      { id: 'presupuestos', label: 'Presupuestos' },
+      { id: 'facturas_ventas', label: 'Facturas' },
+      { id: 'notas_credito', label: 'Notas de crédito' },
+      { id: 'venta_directa', label: 'Venta directa' },
+    ],
+    contabilidad: [
+      { id: 'conta_1', label: 'Placeholder 1' },
+      { id: 'conta_2', label: 'Placeholder 2' },
+    ],
+    tesoreria: [
+      { id: 'teso_1', label: 'Placeholder 1' },
+      { id: 'teso_2', label: 'Placeholder 2' },
+    ],
+  };
 
   return (
     <aside style={styles.sidebar}>
@@ -30,15 +67,44 @@ export default function Sidebar({ usuario, onNavegar, onLogout }) {
       {/* Navegación */}
       <nav style={styles.sidebarNav}>
         {MODULOS.map((m) => (
-          <button
-            key={m.id}
-            onClick={() => onNavegar(m.id)}
-            style={styles.sidebarItem}
-          >
-            <span style={styles.sidebarItemIcono}>{m.icon}</span>
-            <span style={styles.sidebarItemLabel}>{m.label}</span>
-            <span style={styles.sidebarFlecha}>›</span>
-          </button>
+          <div key={m.id} style={{ width: '100%' }}>
+
+            {/* Botón principal */}
+            <button
+              onClick={() => toggleModulo(m.id)}
+              style={styles.sidebarItem}
+            >
+              <span style={styles.sidebarItemIcono}>{m.icon}</span>
+              <span style={styles.sidebarItemLabel}>{m.label}</span>
+              <span style={styles.sidebarFlecha}>
+                {abierto === m.id ? '⌄' : '›'}
+              </span>
+            </button>
+
+            {/* Dropdown */}
+            {abierto === m.id && SUBMENUS[m.id] && (
+              <div style={styles.dropdown}>
+                {SUBMENUS[m.id].map((sub) => (
+                  <button
+                    key={sub.id}
+                    onClick={() => onNavegar(sub.id)}
+                    onMouseEnter={() => setHoveredItem(sub.id)}
+                    onMouseLeave={() => setHoveredItem(null)}
+                    style={{
+                      ...styles.dropdownItem,
+                      background:
+                        hoveredItem === sub.id
+                          ? getColor('amarillo-claro')
+                          : getColor('blanco'),
+                      color: getColor('negro'),
+                    }}
+                  >
+                    {sub.label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         ))}
       </nav>
 
@@ -49,7 +115,7 @@ export default function Sidebar({ usuario, onNavegar, onLogout }) {
           width="50"
           height="50"
           viewBox="0 0 16 16"
-          style={{ color: getColor("blanco") }}
+          style={{ color: '#F9F9F9' }}
         >
           <path
             fill="currentColor"
@@ -71,107 +137,110 @@ export default function Sidebar({ usuario, onNavegar, onLogout }) {
   );
 }
 
-//  Estilos para sidebar
+// Estilos para el sidebar
 const styles = {
   sidebar: {
     width: 250,
     minWidth: 250,
-    height: "100vh",
+    height: '100vh',
     background: getColor("negro"),
-    borderRight: `1px solid ${getColor("negro")}`,
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
+    borderRight: '1px solid #1D1D1D',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
     paddingTop: 45,
     paddingBottom: 45,
     gap: 30,
-    boxSizing: "border-box",
-  },
-
-  sidebarTituloContainer: {
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-  },
-
-  sidebarLogo: {
-    width: 210,
-    height: "auto",
-    objectFit: "contain",
   },
 
   sidebarNav: {
-    width: "100%",
-    display: "flex",
-    flexDirection: "column",
-    gap: 1,
+    width: '100%',
+    display: 'flex',
+    flexDirection: 'column',
     flex: 1,
   },
 
   sidebarItem: {
-    width: "100%",
+    width: '100%',
     height: 60,
     padding: 10,
     background: getColor("amarillo"),
-    border: "none",
-    borderBottom: `2px solid ${getColor("negro")}`,
-    display: "flex",
-    alignItems: "center",
+    border: 'none',
+    borderBottom: '2px solid #1D1D1D',
+    display: 'flex',
+    alignItems: 'center',
     gap: 10,
-    cursor: "pointer",
-    boxSizing: "border-box",
+    cursor: 'pointer',
   },
 
   sidebarItemIcono: {
     width: 32,
     height: 32,
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    flexShrink: 0,
-    color: getColor("negro"), 
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 
   sidebarItemLabel: {
     color: getColor("negro"),
     fontSize: 22,
-    fontFamily: "Lato, sans-serif",
+    fontFamily: 'Lato, sans-serif',
     fontWeight: 700,
     flex: 1,
-    textAlign: "left",
+    textAlign: 'left',
   },
 
   sidebarFlecha: {
-    color: getColor("negro"),
     fontSize: 22,
     fontWeight: 700,
   },
 
+  dropdown: {
+    width: '100%',
+    display: 'flex',
+    flexDirection: 'column',
+    background: getColor("negro"),
+  },
+
+  dropdownItem: {
+    width: '100%',
+    padding: '10px 20px',
+    background: getColor("blanco"),
+    color: getColor("negro"),
+    border: 'none',
+    textAlign: 'left',
+    cursor: 'pointer',
+    borderBottom: '1px solid #333',
+  },
+
   sidebarUsuario: {
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
     gap: 20,
-    paddingTop: 10,
-    paddingBottom: 10,
   },
 
   sidebarUsuarioNombre: {
     color: getColor("blanco"),
     fontSize: 20,
-    fontFamily: "Lato, sans-serif",
-    textAlign: "center",
   },
 
   sidebarBotonSalir: {
     width: 100,
     height: 50,
     background: getColor("blanco"),
-    border: "none",
+    border: 'none',
     borderRadius: 4,
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    cursor: "pointer",
+    cursor: 'pointer',
+  },
+
+  sidebarTituloContainer: {
+    background: 'none',
+    border: 'none',
+    cursor: 'pointer',
+  },
+
+  sidebarLogo: {
+    width: 210,
   },
 };
