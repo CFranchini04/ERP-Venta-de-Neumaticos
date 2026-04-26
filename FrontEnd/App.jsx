@@ -6,10 +6,14 @@ import Login from './Pantallas/Login/Login';
 import { Compras, Pedidos } from './Pantallas/Compras';
 import Contabilidad from './Pantallas/Contabilidad/Contabilidad';
 import RRHH from './Pantallas/RRHH/rrhh';
+import GestionPersonal from './Pantallas/RRHH/GestionPersonal';
+import GestionSalarial from './Pantallas/RRHH/GestionSalarial';
 
 export default function App() {
   const [usuario, setUsuario] = useState(null);
   const [pagina, setPagina] = useState('home');
+
+  const [empleadoSeleccionado, setEmpleadoSeleccionado] = useState(null);
 
   const handleLogin = (data) => {
     setUsuario(data);
@@ -32,6 +36,21 @@ export default function App() {
     else if (moduloId === 'contabilidad') {
       setPagina('contabilidad');
     }
+    // RRHH
+    else if (moduloId === 'gestion-personal') {
+      setEmpleadoSeleccionado(empleado);
+      setPagina('gestion-personal');
+    }
+
+    else if (moduloId === 'crear-empleado') {
+      setEmpleadoSeleccionado(null);
+      setPagina('gestion-personal');
+    }
+
+    else if (moduloId === 'gestion-salarios') {
+      setEmpleadoSeleccionado(empleado);
+      setPagina('gestion-salarios');
+    }
   };
 
   const handleLogout = () => {
@@ -43,6 +62,28 @@ export default function App() {
     if (pagina === 'rrhh') {
       return <RRHH usuario={usuario.user} onNavegar={handleNavegar} onLogout={handleLogout} />;
     }
+        //RRHH
+    if (pagina === 'gestion-personal') {
+      return (
+        <GestionPersonal
+          usuario={usuario.user}
+          empleado={empleadoSeleccionado}
+          onNavegar={handleNavegar}
+          onLogout={handleLogout}
+          onVolver={() => setPagina('rrhh')}
+        />
+      );
+    }
+
+    if (pagina === 'gestion-salarios') {
+      return (
+        <GestionSalarial
+          empleado={empleadoSeleccionado}
+          onVolver={() => setPagina('rrhh')}
+        />
+      );
+    }
+    
     if (pagina === 'compras') {
       return <Compras usuario={usuario.user} onNavegar={handleNavegar} onLogout={handleLogout} />;
     }
