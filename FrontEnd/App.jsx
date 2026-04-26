@@ -1,4 +1,3 @@
-import logo from './logo.svg';
 import './App.css';
 import { useState } from 'react';
 import HomePage from './Pantallas/Main/HomePage';
@@ -20,7 +19,7 @@ export default function App() {
     setPagina('home');
   };
 
-  const handleNavegar = (moduloId) => {
+  const handleNavegar = (moduloId, empleado) => {
     if (moduloId === 'home') {
       setPagina('home');
     }
@@ -59,10 +58,17 @@ export default function App() {
   };
 
   if (usuario && usuario.rol === 'admin') {
+
     if (pagina === 'rrhh') {
-      return <RRHH usuario={usuario.user} onNavegar={handleNavegar} onLogout={handleLogout} />;
+      return (
+        <RRHH
+          usuario={usuario.user}
+          onNavegar={handleNavegar}
+          onLogout={handleLogout}
+        />
+      );
     }
-        //RRHH
+    //RRHH
     if (pagina === 'gestion-personal') {
       return (
         <GestionPersonal
@@ -83,13 +89,18 @@ export default function App() {
         />
       );
     }
-    
+
+
+
+
     if (pagina === 'compras') {
       return <Compras usuario={usuario.user} onNavegar={handleNavegar} onLogout={handleLogout} />;
     }
+
     if (pagina === 'pedidos') {
       return <Pedidos usuario={usuario.user} onNavegar={handleNavegar} onLogout={handleLogout} />;
     }
+
     if (pagina === 'contabilidad') {
       return <Contabilidad usuario={usuario.user} onNavegar={handleNavegar} onLogout={handleLogout} />;
     }
