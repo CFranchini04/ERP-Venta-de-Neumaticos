@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import Sidebar from "../../components/Sidebar";
-import { Button } from '../../components/Buttons';
+import { Button } from '../../components/Button';
 import { IconoRRHH, IconoDinero } from '../../components/Icons';
 import List from '../../components/Lista';
 
@@ -8,7 +8,10 @@ const SUPABASE_URL = "https://skumubfkuzruzgkswutv.supabase.co";
 const SUPABASE_KEY = "sb_publishable_Achm8f37YDHChJy_mS0SGw_GBAdKfC6";
 
 export default function RRHH({ usuario = 'Empleado', onLogout, onNavegar }) {
+    const [empleadoSeleccionado, setEmpleadoSeleccionado] = useState(null);
     const [empleados, setEmpleados] = useState([]);
+    const [search, setSearch] = useState("");
+    const [orderBy, setOrderBy] = useState("");
 
     const columns = [
         { key: 'nombre', label: 'Nombre' },
@@ -35,9 +38,9 @@ export default function RRHH({ usuario = 'Empleado', onLogout, onNavegar }) {
             const formateado = data.map((item) => ({
                 id: item.id_empleado,
                 nombre: item.personas?.nombre ?? '',
-                apellido: 'Agregar en BD',
+                apellido: item.personas?.apellido ?? '',
                 cargo: item.cargo?.nombre ?? '',
-                CI: 'Agregar en BD',
+                CI: item.personas?.ci ?? '',
                 fecha_inicio: item.fecha_de_contraracion ?? '',
             }));
 
@@ -47,15 +50,35 @@ export default function RRHH({ usuario = 'Empleado', onLogout, onNavegar }) {
         cargarEmpleados();
     }, []);
 
-    function handleNavegar(moduloId) {
+    function handleNavegar(moduloId, empleado) {
         if (onNavegar) {
-            onNavegar(moduloId);
+            onNavegar(moduloId, empleado);
         }
     }
 
     function handleNuevo() {
-        console.log('Agregar nuevo empleado');
+        handleNavegar('crear-empleado');
     }
+
+    const empleadosFiltrados = empleados
+        .filter((emp) => {
+            const texto = search.toLowerCase();
+
+            return (
+                emp.nombre.toLowerCase().includes(texto) ||
+                emp.apellido.toLowerCase().includes(texto) ||
+                emp.cargo.toLowerCase().includes(texto) ||
+                emp.CI.toLowerCase().includes(texto)
+            );
+        })
+        .sort((a, b) => {
+            if (!orderBy) return 0;
+
+            const valA = a[orderBy]?.toString().toLowerCase() || "";
+            const valB = b[orderBy]?.toString().toLowerCase() || "";
+
+            return valA.localeCompare(valB);
+        });
 
     return (
         <div style={styles.pagina}>
@@ -71,7 +94,13 @@ export default function RRHH({ usuario = 'Empleado', onLogout, onNavegar }) {
                         <Button
                             label="Gestión de personal"
                             variant="amarillo"
-                            onClick={() => handleNavegar('gestion-personal')}
+                            onClick={() => {
+                                if (empleadoSeleccionado) {
+                                    handleNavegar('gestion-personal', empleadoSeleccionado);
+                                } else {
+                                    alert("Debes seleccionar un empleado primero");
+                                }
+                            }}
                             size={24}
                         />
                     </div>
@@ -80,16 +109,46 @@ export default function RRHH({ usuario = 'Empleado', onLogout, onNavegar }) {
                         <Button
                             label="Gestión de salarios"
                             variant="amarillo"
-                            onClick={() => handleNavegar('gestion-salarios')}
+                            onClick={() => {
+                                if (empleadoSeleccionado) {
+                                    handleNavegar('gestion-salarios', empleadoSeleccionado);
+                                } else {
+                                    alert("Debes seleccionar un empleado primero");
+                                }
+                            }}
                             size={24}
                         />
                     </div>
                 </section>
                 {/* Lista de empleados y acciones para filtrar etc.*/}
-                <section style={styles.listaEmpleados}> 
-                    <div style={styles.listaContainer}>
-                        <List data={empleados} columns={columns} onNuevo={handleNuevo} />
-                    </div>
+                <section style={styles.listaEmpleados}>
+                    <List
+                        data={empleadosFiltrados}
+                        columns={columns}
+                        selectable
+                        onRowClick={(emp) => setEmpleadoSeleccionado(emp)}
+                        controls={[
+                            {
+                                type: "search",
+                                placeholder: "Buscar empleado...",
+                                value: search,
+                                onChange: (e) => setSearch(e.target.value)
+                            },
+                            {
+                                type: "select",
+                                options: columns,
+                                placeholder: "Ordenar por...",
+                                value: orderBy,
+                                onChange: (e) => setOrderBy(e.target.value)
+                            },
+
+                            {
+                                type: "button",
+                                label: "Nuevo",
+                                onClick: handleNuevo
+                            }
+                        ]}
+                    />
                 </section>
             </main>
         </div>
@@ -120,6 +179,8 @@ const styles = {
         flexDirection: 'column',
         alignItems: 'center',
         gap: 16,
+        marginTop: 20,
+        marginBottom: 20,
     },
     actionContainer: {
         display: 'flex',
