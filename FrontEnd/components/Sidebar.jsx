@@ -25,9 +25,11 @@ export default function Sidebar({ usuario, onNavegar, onLogout }) {
   const SUBMENUS = {
     compras: [
       { id: 'nuevo_pedido', label: 'Nuevo pedido' },
-      { id: 'proveedores', label: 'Proveedores' },
       { id: 'cotizaciones', label: 'Cotizaciones' },
+      { id: 'ordenes_compra', label: 'Ordenes de Compra' },
+      { id: 'ordenes_pago', label: 'Ordenes de Pago' },
       { id: 'facturas_compras', label: 'Facturas' },
+      { id: 'proveedores', label: 'Proveedores' },
     ],
     rrhh: [
       { id: 'gestion_personal', label: 'Gestión de Personal' },
@@ -67,7 +69,7 @@ export default function Sidebar({ usuario, onNavegar, onLogout }) {
       {/* Navegación */}
       <nav style={styles.sidebarNav}>
         {MODULOS.map((m) => (
-          <div key={m.id} style={{ width: '100%' }}>
+          <div key={m.id} style={{ width: '100%', position: 'relative' }}>
 
             {/* Botón principal */}
             <button
@@ -148,9 +150,9 @@ const styles = {
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
-    paddingTop: 45,
-    paddingBottom: 45,
-    gap: 30,
+    paddingTop: 5,
+    paddingBottom: 25,
+    gap: 1,
   },
 
   sidebarNav: {
@@ -194,12 +196,31 @@ const styles = {
     fontSize: 22,
     fontWeight: 700,
   },
+/*
+  dropdown: {
+    position: 'absolute',
+    top: 0,
+    left: '100%',
+    width: 220,
+    display: 'flex',
+    flexDirection: 'column',
+    background: getColor("negro"),
+    zIndex: 1000,
+    boxShadow: '4px 4px 12px rgba(0,0,0,0.4)',
+    border: '2px solid #000000',
+  },
+*/
 
   dropdown: {
+    position: 'absolute',
+    top: 60,
+    left: 0,
     width: '100%',
     display: 'flex',
     flexDirection: 'column',
     background: getColor("negro"),
+    zIndex: 1000,
+    boxShadow: '0 4px 12px rgba(0,0,0,0.4)',
   },
 
   dropdownItem: {
