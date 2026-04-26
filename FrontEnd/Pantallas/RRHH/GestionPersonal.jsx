@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Sidebar from "../../components/Sidebar";
 import { Button } from '../../components/Button';
 import EditEmpleadoModal from "../../components/EditModal";
@@ -6,10 +6,38 @@ import EditEmpleadoModal from "../../components/EditModal";
 
 export default function GestionPersonal({ usuario, empleado, onVolver, onLogout, onNavegar }) {
 
-const [editOpen, setEditOpen] = useState(false);
-const [seccion, setSeccion] = useState("");
+  const [editOpen, setEditOpen] = useState(false);
+  const [seccion, setSeccion] = useState("");
 
-  if (!empleado) return <div>No hay empleado seleccionado</div>;
+  const isCreating = !empleado;
+
+  const [form, setForm] = useState({
+    nombre: "",
+    apellido: "",
+    CI: "",
+    ciudad: "",
+    direccion: "",
+    correo_electronico: "",
+    fecha_inicio: "",
+    cargo: "",
+    estado: "",
+    conyugue: "",
+    hijos: "",
+    hijos_menores: ""
+  });
+
+  useEffect(() => {
+    if (empleado) {
+      setForm(empleado);
+    }
+  }, [empleado]);
+
+  const handleChange = (key, value) => {
+    setForm({
+      ...form,
+      [key]: value
+    });
+  };
 
   return (
     <div style={styles.pagina}>
@@ -30,22 +58,76 @@ const [seccion, setSeccion] = useState("");
               <h3 style={styles.title}>Datos personales</h3>
 
               <div style={styles.form}>
-                <label>Nombre</label><span>{empleado.nombre}</span>
-                <label>Apellido</label><span>{empleado.apellido}</span>
-                <label>CI</label><span>{empleado.CI}</span>
-                <label>Ciudad</label><span>{empleado.ciudad}</span>
-                <label>Dirección</label><span>{empleado.direccion}</span>
-                <label>Correo</label><span>{empleado.correo_electronico}</span>
+                <label>Nombre</label>
+                {isCreating
+                  ? <input
+                    style={styles.input}
+                    value={form.nombre}
+                    onChange={(e) => handleChange("nombre", e.target.value)}
+                  />
+                  : <span>{form.nombre}</span>
+                }
+                <label>Apellido</label>
+                {isCreating
+                  ? <input
+                    style={styles.input}
+                    value={form.apellido}
+                    onChange={(e) => handleChange("apellido", e.target.value)}
+                  />
+                  : <span>{form.apellido}</span>
+                }
+
+                <label>CI</label>
+                {isCreating
+                  ? <input
+                    style={styles.input}
+                    value={form.CI}
+                    onChange={(e) => handleChange("CI", e.target.value)}
+                  />
+                  : <span>{form.CI}</span>
+                }
+
+                <label>Ciudad</label>
+                {isCreating
+                  ? <input
+                    style={styles.input}
+                    value={form.ciudad}
+                    onChange={(e) => handleChange("ciudad", e.target.value)}
+                  />
+                  : <span>{form.ciudad}</span>
+                }
+
+                <label>Dirección</label>
+                {isCreating
+                  ? <input
+                    style={styles.input}
+                    value={form.direccion}
+                    onChange={(e) => handleChange("direccion", e.target.value)}
+                  />
+                  : <span>{form.direccion}</span>
+                }
+
+                <label>Correo</label>
+                {isCreating
+                  ? <input
+                    style={styles.input}
+                    value={form.correo_electronico}
+                    onChange={(e) => handleChange("correo_electronico", e.target.value)}
+                  />
+                  : <span>{form.correo_electronico}</span>
+                }
               </div>
 
-              <Button
-                label="Editar"
-                variant="amarillo"
-                onClick={() => {
-                  setSeccion("personal");
-                  setEditOpen(true);
-                }}
-              />
+              {!isCreating && (
+                <Button
+                  label="Editar"
+                  variant="amarillo"
+                  onClick={() => {
+                    setSeccion("personal");
+                    setEditOpen(true);
+                  }}
+                />
+              )}
             </div>
 
             {/* DERECHA */}
@@ -55,46 +137,108 @@ const [seccion, setSeccion] = useState("");
                 <h3 style={styles.title}>Datos empresariales</h3>
 
                 <div style={styles.form}>
-                  <label>Fecha inicio</label><span>{empleado.fecha_inicio}</span>
-                  <label>Cargo</label><span>{empleado.cargo}</span>
-                  <label>Estado</label><span>{empleado.estado}</span>
+                  <label>Fecha inicio</label>
+                  {isCreating
+                    ? <input
+                      style={styles.input}
+                      value={form.fecha_inicio}
+                      onChange={(e) => handleChange("fecha_inicio", e.target.value)}
+                    />
+                    : <span>{form.fecha_inicio}</span>
+                  }
+                  <label>Cargo</label>
+                  {isCreating
+                    ? <input
+                      style={styles.input}
+                      value={form.cargo}
+                      onChange={(e) => handleChange("cargo", e.target.value)}
+                    />
+                    : <span>{form.cargo}</span>
+                  }
+                  <label>Estado</label>
+                  {isCreating
+                    ? <input
+                      style={styles.input}
+                      value={form.estado}
+                      onChange={(e) => handleChange("estado", e.target.value)}
+                    />
+                    : <span>{form.estado}</span>
+                  }
                 </div>
 
-                <Button
-                  label="Editar"
-                  variant="amarillo"
-                  onClick={() => {
-                    setSeccion("empresarial");
-                    setEditOpen(true);
-                  }}
-                />
+                {!isCreating && (
+                  <Button
+                    label="Editar"
+                    variant="amarillo"
+                    onClick={() => {
+                      setSeccion("empresarial");
+                      setEditOpen(true);
+                    }}
+                  />
+                )}
               </div>
 
               <div style={styles.card}>
                 <h3 style={styles.title}>Datos familiares</h3>
 
                 <div style={styles.form}>
-                  <label>Conyugue</label><span>{empleado.conyugue}</span>
-                  <label>Hijos</label><span>{empleado.hijos}</span>
-                  <label>Hijos menores</label><span>{empleado.hijos_menores}</span>
+                  <label>Conyugue</label>
+                  {isCreating
+                    ? <input
+                      style={styles.input}
+                      value={form.conyugue}
+                      onChange={(e) => handleChange("conyugue", e.target.value)}
+                    />
+                    : <span>{form.conyugue}</span>
+                  }
+                  <label>Hijos</label>
+                  {isCreating
+                    ? <input
+                      style={styles.input}
+                      value={form.hijos}
+                      onChange={(e) => handleChange("hijos", e.target.value)}
+                    />
+                    : <span>{form.hijos}</span>
+                  }
+                  <label>Hijos menores</label>
+                  {isCreating
+                    ? <input
+                      style={styles.input}
+                      value={form.hijos_menores}
+                      onChange={(e) => handleChange("hijos_menores", e.target.value)}
+                    />
+                    : <span>{form.hijos_menores}</span>
+                  }
                 </div>
 
-                <Button
-                  label="Editar"
-                  variant="amarillo"
-                  onClick={() => {
-                    setSeccion("familiar");
-                    setEditOpen(true);
-                  }}
-                />
+                {!isCreating && (
+                  <Button
+                    label="Editar"
+                    variant="amarillo"
+                    onClick={() => {
+                      setSeccion("familiar");
+                      setEditOpen(true);
+                    }}
+                  />
+                )}
               </div>
 
             </div>
           </div>
 
-          <div style={{ marginTop: 30 }}>
-            <Button label="Volver"
-              onClick={onVolver} variant="amarillo" />
+          <div style={{ marginTop: 30, display: "flex", gap: 10 }}>
+            <Button label="Volver" onClick={onVolver} variant="amarillo" />
+
+            {isCreating && (
+              <Button
+                label="Crear empleado"
+                variant="amarillo"
+                onClick={() => {
+                  //Modificar luego para que anhada en la bd
+                  console.log("CREAR:", form);
+                }}
+              />
+            )}
           </div>
 
         </div>
@@ -177,5 +321,14 @@ const styles = {
     rowGap: 10,
     columnGap: 10,
     alignItems: "center",
+  },
+  input: {
+    padding: "10px 12px",
+    borderRadius: 8,
+    border: "1px solid #DADADA",
+    outline: "none",
+    fontSize: 14,
+    transition: "all 0.2s ease",
+    background: "#FAFAFA",
   }
 };
