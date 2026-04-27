@@ -93,6 +93,7 @@ export default function App() {
 
 
 
+
     if (pagina === 'compras') {
       return <Compras usuario={usuario.user} onNavegar={handleNavegar} onLogout={handleLogout} />;
     }
@@ -108,6 +109,7 @@ export default function App() {
     return <HomePage usuario={usuario.user} onNavegar={handleNavegar} onLogout={handleLogout} />;
   }
 
+
   if (usuario && usuario.rol === 'compras') {
     return <Compras usuario={usuario.user} onLogout={() => setUsuario(null)} />;
   }
@@ -117,7 +119,37 @@ export default function App() {
   }
 
   if (usuario && usuario.rol === 'rrhh') {
-    return <RRHH usuario={usuario.user} onLogout={() => setUsuario(null)} />;
+    if (pagina === 'rrhh') {
+      return (
+        <RRHH
+          usuario={usuario.user}
+          onNavegar={handleNavegar}
+          onLogout={handleLogout}
+        />
+      );
+    }
+    //RRHH
+    if (pagina === 'gestion-personal') {
+      return (
+        <GestionPersonal
+          usuario={usuario.user}
+          empleado={empleadoSeleccionado}
+          onNavegar={handleNavegar}
+          onLogout={handleLogout}
+          onVolver={() => setPagina('rrhh')}
+        />
+      );
+    }
+
+    if (pagina === 'gestion-salarios') {
+      return (
+        <GestionSalarial
+          empleado={empleadoSeleccionado}
+          onVolver={() => setPagina('rrhh')}
+        />
+      );
+    }
+    return <HomePage usuario={usuario.user} onNavegar={handleNavegar} onLogout={handleLogout} />;
   }
 
   return <Login onLogin={handleLogin} />;
