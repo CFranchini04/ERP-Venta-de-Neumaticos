@@ -7,6 +7,7 @@ import Contabilidad from './Pantallas/Contabilidad/Contabilidad';
 import RRHH from './Pantallas/RRHH/rrhh';
 import GestionPersonal from './Pantallas/RRHH/GestionPersonal';
 import GestionSalarial from './Pantallas/RRHH/GestionSalarial';
+import Ventas from './Pantallas/Ventas/Ventas';
 
 export default function App() {
   const [usuario, setUsuario] = useState(null);
@@ -16,7 +17,12 @@ export default function App() {
 
   const handleLogin = (data) => {
     setUsuario(data);
-    setPagina('home');
+    
+    if (data.rol === 'rrhh') setPagina('rrhh');
+    else if (data.rol === 'compras') setPagina('compras');
+    else if (data.rol === 'contabilidad') setPagina('contabilidad');
+    else if (data.rol === 'ventas') setPagina('ventas');
+    else if (data.rol === 'admin') setPagina('home');
   };
 
   const handleNavegar = (moduloId, empleado) => {
@@ -25,6 +31,9 @@ export default function App() {
     }
     else if (moduloId === 'rrhh') {
       setPagina('rrhh');
+    }
+    else if (moduloId === 'ventas') {
+      setPagina('ventas');
     }
     else if (moduloId === 'compras') {
       setPagina('compras');
@@ -106,9 +115,12 @@ export default function App() {
       return <Contabilidad usuario={usuario.user} onNavegar={handleNavegar} onLogout={handleLogout} />;
     }
 
+    if (pagina === 'ventas') {
+      return <Ventas usuario={usuario.user} onNavegar={handleNavegar} onLogout={handleLogout} />;
+    }
+
     return <HomePage usuario={usuario.user} onNavegar={handleNavegar} onLogout={handleLogout} />;
   }
-
 
   if (usuario && usuario.rol === 'compras') {
     return <Compras usuario={usuario.user} onLogout={() => setUsuario(null)} />;
@@ -116,6 +128,13 @@ export default function App() {
 
   if (usuario && usuario.rol === 'contabilidad') {
     return <Contabilidad usuario={usuario.user} onLogout={() => setUsuario(null)} />;
+  }
+
+  if (usuario && usuario.rol === 'ventas') {
+    if (pagina === 'ventas') {
+      return <Ventas usuario={usuario.user} onNavegar={handleNavegar} onLogout={handleLogout} />;
+    }
+    return <Ventas usuario={usuario.user} onNavegar={handleNavegar} onLogout={handleLogout} />;
   }
 
   if (usuario && usuario.rol === 'rrhh') {
