@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { IconoCarga } from "../components/Icons";
+import { IconoCarga } from "../../components/Icons";
 
 export default function Login({ onLogin }) {
   const [usuario, setUsuario] = useState("");
@@ -12,6 +12,13 @@ export default function Login({ onLogin }) {
     onLogin({
       user: usuario,
       rol: "compras"
+    });
+  }
+
+  else if (usuario === "ventas" && password === "1234") {
+    onLogin({
+      user: usuario,
+      rol: "ventas"
     });
   }
 
