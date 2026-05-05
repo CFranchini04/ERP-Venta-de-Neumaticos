@@ -1,0 +1,14 @@
+{
+  "name": "proyecto-sdg",
+  "version": "1.0.0",
+  "description": "ERP Neumáticos Fukuchi",
+  "scripts": {
+    "dev": "concurrently \"cross-env PORT=3000 npm start --prefix FrontEnd\" \"npm run dev --prefix BackEnd\"",
+    "frontend": "cross-env PORT=3000 npm start --prefix FrontEnd",
+    "backend": "npm run dev --prefix BackEnd"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2",
+    "cross-env": "^7.0.3"
+  }
+}

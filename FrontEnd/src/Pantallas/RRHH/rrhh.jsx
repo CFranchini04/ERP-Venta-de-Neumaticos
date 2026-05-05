@@ -1,0 +1,300 @@
+import React, { useEffect, useState } from 'react';
+import Sidebar from "../../components/Sidebar";
+import { Button } from '../../components/Buttons';
+import { IconoRRHH, IconoDinero } from '../../components/Icons';
+import List from '../../components/Lista';
+
+const SUPABASE_URL = "https://ufpvebypnhcbvgyrkzrw.supabase.co";
+const SUPABASE_KEY = "sb_publishable_3zNPvTHmiYmwG-BMVDDk9g_KZ_li66L";
+
+
+export default function RRHH({ usuario = 'Empleado', onLogout, onNavegar }) {
+    const [empleadoSeleccionado, setEmpleadoSeleccionado] = useState(null);
+    const [empleados, setEmpleados] = useState([]);
+    const [search, setSearch] = useState("");
+    const [orderBy, setOrderBy] = useState("");
+    const [filtroCargo, setFiltroCargo] = useState("");
+
+
+    const cargos = [...new Set(empleados.map(emp => emp.cargo))];
+
+    const columns = [
+        { key: 'nombre', label: 'Nombre' },
+        { key: 'apellido', label: 'Apellido' },
+        { key: 'cargo', label: 'Cargo' },
+        { key: 'CI', label: 'CI' },
+        { key: 'fecha_inicio', label: 'Fecha de Inicio' },
+    ];
+
+    useEffect(() => {
+        const cargarEmpleados = async () => {
+            try {
+
+                const url =
+                    `${SUPABASE_URL}/rest/v1/empleados` +
+                    `?select=` +
+                    `id_empleado,` +
+                    `ci,` +
+                    `personas(nombre,apellido),` +
+                    `personas_horario_cargo(` +
+                    `fecha_inicio,` +
+                    `cargo(nombre)` +
+                    `)` +
+                    `&order=id_empleado.asc`;
+
+                const respuesta = await fetch(url, {
+                    headers: {
+                        apikey: SUPABASE_KEY,
+                        Authorization: `Bearer ${SUPABASE_KEY}`,
+                        "Content-Type": "application/json",
+                    },
+                });
+
+                const data = await respuesta.json();
+
+                console.log(JSON.stringify(data, null, 2));
+
+                if (!Array.isArray(data)) {
+                    console.error("Supabase devolvió un error:", data);
+                    return;
+                }
+
+                const formateado = data.map((item) => ({
+                    id: item.id_empleado ?? '',
+
+                    nombre:
+                        item.personas?.nombre ?? '',
+
+                    apellido:
+                        item.personas?.apellido ?? '',
+
+                    CI:
+                        item.ci ?? '',
+
+                    cargo:
+                        item.personas_horario_cargo?.[0]?.cargo?.nombre ?? '',
+
+                    fecha_inicio:
+                        item.personas_horario_cargo?.[0]?.fecha_inicio ?? '',
+                }));
+
+                setEmpleados(formateado);
+
+            } catch (error) {
+                console.error("ERROR GENERAL:", error);
+            }
+        };
+
+        cargarEmpleados();
+    }, []);
+
+    function handleNavegar(moduloId, empleado) {
+        if (onNavegar) {
+            onNavegar(moduloId, empleado);
+        }
+    }
+
+    function handleNuevo() {
+        handleNavegar('crear-empleado');
+    }
+
+    const empleadosFiltrados = empleados
+        .filter((emp) => {
+            const texto = search.toLowerCase();
+
+            const coincideBusqueda =
+                emp.nombre.toLowerCase().includes(texto) ||
+                emp.apellido.toLowerCase().includes(texto) ||
+                emp.cargo.toLowerCase().includes(texto) ||
+                emp.CI.toLowerCase().includes(texto);
+
+            const coincideCargo =
+                !filtroCargo || emp.cargo === filtroCargo;
+
+            return coincideBusqueda && coincideCargo;
+        })
+
+    return (
+        <div style={styles.pagina}>
+            <Sidebar usuario={usuario} onNavegar={handleNavegar} onLogout={onLogout} />
+
+            <main style={styles.contenido}>
+
+                <header style={styles.encabezado}>
+                    <h1 style={styles.titulo}>Módulo de RRHH</h1>
+                    <div style={styles.separador} />
+                </header>
+
+                {/* Botones de acciones principales */}
+
+                <section style={styles.acciones}>
+                    {[
+                        { label: 'Gestión de Empleados', icon: <IconoRRHH size={36} />, id: 'gestion-personal' },
+                        { label: 'Gestión de Salarios', icon: <IconoDinero size={36} />, id: 'gestion-salarios' },
+
+                    ].map((item) => (
+                        <button
+                            key={item.id}
+                            onClick={() => {
+                                if (!empleadoSeleccionado) {
+                                    alert('Por favor, selecciona un empleado primero');
+                                    return;
+                                }
+                                handleNavegar(item.id, empleadoSeleccionado);
+                            }}
+                            style={styles.tarjeta}
+                        >
+                            <span style={styles.tarjetaLabel}>{item.label}</span>
+                            <div style={styles.tarjetaIcono}>{item.icon}</div>
+                        </button>
+                    ))}
+                </section>
+
+
+                {/* Lista de empleados y acciones para filtrar etc.*/}
+                <section style={styles.listaEmpleados}>
+                    <List
+                        data={empleadosFiltrados}
+                        columns={columns}
+                        selectable
+                        onRowClick={(emp) => setEmpleadoSeleccionado(emp)}
+                        controls={[
+                            {
+                                type: "search",
+                                placeholder: "Buscar empleado...",
+                                value: search,
+                                onChange: (e) => setSearch(e.target.value)
+                            },
+                            {
+                                type: "select",
+                                options: columns,
+                                placeholder: "Ordenar por...",
+                                value: orderBy,
+                                onChange: (e) => setOrderBy(e.target.value)
+                            },
+                            {
+
+                                type: "select",
+                                options: cargos.map(c => ({ key: c, label: c })),
+                                placeholder: "Filtrar por cargo",
+                                value: filtroCargo,
+                                onChange: (e) => setFiltroCargo(e.target.value)
+                            },
+
+                            {
+                                type: "button",
+                                label: "Nuevo",
+                                onClick: handleNuevo
+                            }
+                        ]}
+                    />
+                </section>
+            </main>
+        </div>
+    );
+}
+
+const styles = {
+    pagina: {
+        display: 'flex',
+        width: '100vw',
+        height: '100vh',
+        background: '#F9F9F9',
+        fontFamily: 'Lato, sans-serif',
+        overflow: 'hidden',
+    },
+    contenido: {
+        flex: 1,
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'flex-start',
+        alignItems: 'center',
+        textAlign: 'center',
+        padding: 0,
+        boxSizing: 'border-box',
+        gap: 20,
+    },
+    encabezado: {
+        width: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        gap: 10,
+        padding: '21px 0',
+    },
+    titulo: {
+        color: '#000000',
+        fontSize: 42,
+        fontFamily: 'Lato, sans-serif',
+        fontWeight: 700,
+        lineHeight: 1.2,
+        margin: 0,
+        textAlign: 'center',
+        marginTop: 15,
+    },
+    separador: {
+        width: 'min(1100px, 80%)',
+        height: 4,
+        background: '#000000',
+    },
+    actionContainer: {
+        display: 'flex',
+        alignItems: 'center',
+        gap: 30,
+        background: '#ffffff',
+        padding: 20,
+        borderRadius: 8,
+        boxShadow: '0px 2px 2px rgba(0, 0, 0, 0.25)',
+        border: '3px solid #444444',
+    },
+    listaEmpleados: {
+        width: '100%',
+        maxWidth: 860,
+        textAlign: 'left',
+    },
+    lista: {
+        marginTop: 16,
+        paddingLeft: 20,
+        display: 'grid',
+    },
+    acciones: {
+        width: '100%',
+        maxWidth: 860,
+        display: 'flex',
+        justifyContent: 'center',
+        gap: 20,
+        flexWrap: 'wrap',
+    },
+    tarjetaLabel: {
+        color: '#444444',
+        fontSize: 16,
+        fontFamily: 'Lato, sans-serif',
+        fontWeight: 700,
+        textAlign: 'left',
+    },
+    tarjetaIcono: {
+        width: 48,
+        height: 48,
+        background: '#FFCC00',
+        borderRadius: 8,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        flexShrink: 0,
+    },
+    tarjeta: {
+        flex: '1 1 160px',
+        maxWidth: 400,
+        minHeight: 80,
+        padding: '12px 16px',
+        background: 'white',
+        boxShadow: '0px 2px 2px rgba(0,0,0,0.25)',
+        borderRadius: 8,
+        border: '3px solid #000000',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: 10,
+        cursor: 'pointer',
+    },
+};  
