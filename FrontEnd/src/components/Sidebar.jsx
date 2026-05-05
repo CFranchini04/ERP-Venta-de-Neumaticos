@@ -6,11 +6,13 @@ import { IconoSalir } from './Icons';
 import { MODULOS } from './modules';
 import LogoFukuchi from '../LogoFukuchi.png';
 import { getColor } from './Colors';
+import { IconoDropdown } from './Icons';
 
 export default function Sidebar({ usuario, onNavegar, onLogout }) {
 
   const [abierto, setAbierto] = useState(null);
   const [hoveredItem, setHoveredItem] = useState(null);
+  const [hoveredModulo, setHoveredModulo] = useState(null);
 
   function handleSalir() {
     if (window.confirm('¿Estás seguro de que quieres cerrar sesión?')) {
@@ -32,8 +34,8 @@ export default function Sidebar({ usuario, onNavegar, onLogout }) {
       { id: 'proveedores', label: 'Proveedores' },
     ],
     rrhh: [
-      { id: 'gestion_personal', label: 'Gestión de Personal' },
-      { id: 'gestion_salarios', label: 'Gestión de Salarios' },
+      { id: 'gestion_personal', label: 'Lista de Personal' },
+      { id: 'gestion_salarios', label: 'Nuevo Empleado' },
     ],
     ventas: [
       { id: 'presupuestos', label: 'Presupuestos' },
@@ -84,12 +86,17 @@ export default function Sidebar({ usuario, onNavegar, onLogout }) {
 
               <span
                 style={styles.sidebarFlecha}
+                onMouseEnter={() => setHoveredModulo(m.id)}
+                onMouseLeave={() => setHoveredModulo(null)}
                 onClick={(e) => {
                   e.stopPropagation();
                   toggleModulo(m.id);
                 }}
-              >
-                {abierto === m.id ? '⌄' : '›'}
+              > 
+                <IconoDropdown
+                  hovered={hoveredModulo === m.id}
+                  active={abierto === m.id}
+                />
               </span>
             </button>
 
@@ -206,20 +213,6 @@ const styles = {
     fontSize: 22,
     fontWeight: 700,
   },
-/*
-  dropdown: {
-    position: 'absolute',
-    top: 0,
-    left: '100%',
-    width: 220,
-    display: 'flex',
-    flexDirection: 'column',
-    background: getColor("negro"),
-    zIndex: 1000,
-    boxShadow: '4px 4px 12px rgba(0,0,0,0.4)',
-    border: '2px solid #000000',
-  },
-*/
 
   dropdown: {
     position: 'absolute',
