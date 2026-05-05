@@ -323,3 +323,31 @@ export function IconoMovimiento(){
     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="M13 3a9 9 0 0 0-9 9H1l3.89 3.89l.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7s-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42A8.95 8.95 0 0 0 13 21a9 9 0 0 0 0-18m-1 5v5l4.28 2.54l.72-1.21l-3.5-2.08V8z"/></svg>
   );
 }
+
+export function IconoDropdown({ hovered, active }) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="40"
+      height="40"
+      viewBox="0 0 24 24"
+      style={{
+        transition: 'transform 0.25s ease',
+        transform: active ? 'rotate(0deg)' : 'rotate(-90deg)',
+        display: 'block',
+      }}
+    >
+      {/* Círculo exterior (borde) */}
+      <path
+        fill={active ? getColor('amarillo') : hovered ? getColor('gris') : 'transparent'}
+        style={{ transition: 'fill 0.2s ease' }}
+        d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10s10-4.477 10-10S17.523 2 12 2"
+      />
+      {/* Círculo interior con flecha */}
+      <path
+        fill="currentColor"
+        d="M19.778 12a7.778 7.778 0 1 0-15.556 0a7.778 7.778 0 0 0 15.556 0m-5.23-2.452a1.11 1.11 0 1 1 1.57 1.57l-3.332 3.334a1.11 1.11 0 0 1-1.572 0L7.881 11.12l-.076-.085a1.11 1.11 0 0 1 1.563-1.562l.084.076L12 12.095z"
+      />
+    </svg>
+  );
+}
