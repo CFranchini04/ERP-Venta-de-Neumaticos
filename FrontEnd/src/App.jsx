@@ -8,7 +8,7 @@ import {
   Cotizaciones,
   OrdenesCompra,
   OrdenesPago,
-  NuevosPedidos
+  NuevoPedido
 } from './Pantallas/Compras';
 import Contabilidad from './Pantallas/Contabilidad/Contabilidad';
 import RRHH from './Pantallas/RRHH/rrhh';
@@ -71,8 +71,8 @@ export default function App() {
     else if (moduloId === 'pedidos') {
       setPagina('pedidos');
     }
-    else if (moduloId === 'nuevosPedidos') {
-      setPagina('nuevosPedidos');
+    else if (moduloId === 'nuevoPedido') {
+      setPagina('nuevoPedido');
     }
     else if (moduloId === 'cotizaciones') {
       setPagina('cotizaciones');
@@ -166,8 +166,8 @@ export default function App() {
     if (pagina === 'pedidos') {
       return <Pedidos usuario={usuario.user} onNavegar={handleNavegar} onLogout={handleLogout} />;
     }
-    if (pagina === 'nuevosPedidos') {
-      return (<NuevosPedidos usuario={usuario.user} onNavegar={handleNavegar} onLogout={handleLogout}/>);
+    if (pagina === 'nuevoPedido') {
+      return (<NuevoPedido usuario={usuario.user} onNavegar={handleNavegar} onLogout={handleLogout}/>);
     }
 
     if (pagina === 'cotizaciones') {
