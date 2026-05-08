@@ -2,7 +2,14 @@ import './App.css';
 import { useState } from 'react';
 import HomePage from './Pantallas/Main/HomePage';
 import Login from './Pantallas/Login/Login';
-import { Compras, Pedidos, Cotizaciones, OrdenesCompra, OrdenesPago } from './Pantallas/Compras';
+import {
+  Compras,
+  Pedidos,
+  Cotizaciones,
+  OrdenesCompra,
+  OrdenesPago,
+  NuevosPedidos
+} from './Pantallas/Compras';
 import Contabilidad from './Pantallas/Contabilidad/Contabilidad';
 import RRHH from './Pantallas/RRHH/rrhh';
 import GestionPersonal from './Pantallas/RRHH/GestionPersonal';
@@ -63,6 +70,9 @@ export default function App() {
     }
     else if (moduloId === 'pedidos') {
       setPagina('pedidos');
+    }
+    else if (moduloId === 'nuevosPedidos') {
+      setPagina('nuevosPedidos');
     }
     else if (moduloId === 'cotizaciones') {
       setPagina('cotizaciones');
@@ -156,6 +166,10 @@ export default function App() {
     if (pagina === 'pedidos') {
       return <Pedidos usuario={usuario.user} onNavegar={handleNavegar} onLogout={handleLogout} />;
     }
+    if (pagina === 'nuevosPedidos') {
+      return (<NuevosPedidos usuario={usuario.user} onNavegar={handleNavegar} onLogout={handleLogout}/>);
+    }
+
     if (pagina === 'cotizaciones') {
       return <Cotizaciones usuario={usuario.user} onNavegar={handleNavegar} onLogout={handleLogout} />;
     }
