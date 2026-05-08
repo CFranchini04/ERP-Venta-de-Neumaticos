@@ -7,11 +7,8 @@ function List({
   columns,
   onRowClick,
   selectable = false,
-
-
   controls = []
 }) {
-
   const [selectedId, setSelectedId] = useState(null);
 
   const handleClick = (item) => {
@@ -25,14 +22,32 @@ function List({
   };
 
   return (
-    <div style={{ padding: 20 }}>
+    <div
+      style={{
+        width: "100%",
+        background: getColor("blanco"),
+        border: `2px solid ${getColor("grisOscuro")}`,
+        borderRadius: 12,
+        padding: 16,
+        boxShadow: "0px 2px 8px rgba(0,0,0,0.15)",
+        boxSizing: "border-box",
+        overflow: "hidden",
+      }}
+    >
 
-      {/* HEADER DINÁMICO */}
-      <div style={{ display: "flex", gap: 20, marginBottom: 20, alignItems: "center" }}>
-
+      {/* CONTROLES */}
+      <div
+        style={{
+          display: "flex",
+          gap: 20,
+          marginBottom: 20,
+          alignItems: "center",
+          flexWrap: "wrap"
+        }}
+      >
         {controls.map((control, i) => {
 
-          // search
+          // SEARCH
           if (control.type === "search") {
             return (
               <input
@@ -53,7 +68,7 @@ function List({
             );
           }
 
-          // SELECT / FILTER
+          // SELECT
           if (control.type === "select") {
             return (
               <select
@@ -81,8 +96,7 @@ function List({
             );
           }
 
-
-          // BUTTONS
+          // BUTTON
           if (control.type === "button") {
             return (
               <Button
@@ -96,60 +110,70 @@ function List({
 
           return null;
         })}
-
       </div>
 
-      {/* ENCABEZADOS */}
+      {/* TABLA */}
       <div
         style={{
-          display: "grid",
-          gridTemplateColumns: columns
-            .map(col => col.width || "1fr")
-            .join(" "),
-          fontWeight: "bold",
-          background: getColor("amarillo"),
-          color: getColor("text"),
-          padding: 10,
-          borderRadius: 6,
+          width: "100%",
+          borderRadius: 12,
+          overflow: "hidden",
+          border: `1px solid ${getColor("grisOscuro")}`,
         }}
       >
-        {columns.map((col, i) => (
-          <span key={i}>{col.label}</span>
-        ))}
+
+        {/* HEADER */}
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: columns
+              .map(col => col.width || "1fr")
+              .join(" "),
+            fontWeight: "bold",
+            background: getColor("amarillo"),
+            color: getColor("text"),
+            padding: 10,
+          }}
+        >
+          {columns.map((col, i) => (
+            <span key={i}>{col.label}</span>
+          ))}
+        </div>
+
+        {/* FILAS */}
+        {data.map((item, index) => {
+          const isSelected = selectedId === item.id;
+
+          return (
+            <div
+              key={item.id || index}
+              onClick={() => {
+                if (selectable) setSelectedId(item.id);
+              }}
+              onDoubleClick={() => handleClick(item)}
+              style={{
+                display: "grid",
+                gridTemplateColumns: columns
+                  .map(col => col.width || "1fr")
+                  .join(" "),
+                padding: 10,
+                cursor: onRowClick ? "pointer" : "default",
+                background: isSelected
+                  ? getColor("naranja")
+                  : index % 2 === 0
+                    ? getColor("blanco")
+                    : getColor("gris-claro"),
+              }}
+            >
+              {columns.map((col, i) => (
+                <span key={i} style={{ color: getColor("text") }}>
+                  {item[col.key]}
+                </span>
+              ))}
+            </div>
+          );
+        })}
       </div>
-
-      {/* FILAS */}
-      {data.map((item, index) => {
-        const isSelected = selectedId === item.id;
-
-        return (
-          <div
-            key={item.id || index}
-            onClick={() => selectable && setSelectedId(item.id)}
-            onDoubleClick={() => handleClick(item)}
-            style={{
-              display: "grid",
-              gridTemplateColumns: columns
-                .map(col => col.width || "1fr")
-                .join(" "),
-              padding: 10,
-              cursor: onRowClick ? "pointer" : "default",
-
-              background: isSelected
-                ? getColor("naranja")
-                : index % 2 === 0
-                  ? getColor("blanco")
-                  : getColor("gris-claro"),
-            }}
-          >
-            {columns.map((col, i) => (
-              <span key={i} style={{ color: getColor("text") }}>
-                {item[col.key]}
-              </span>
-            ))}
-          </div>
-        );
-      })}
     </div>
   );
 }
