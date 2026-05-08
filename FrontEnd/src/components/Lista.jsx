@@ -9,6 +9,7 @@ function List({
   selectable = false,
   controls = []
 }) {
+
   const [selectedId, setSelectedId] = useState(null);
 
   const handleClick = (item) => {
@@ -22,77 +23,55 @@ function List({
   };
 
   return (
-    <div
-      style={{
-        width: "100%",
-        background: getColor("blanco"),
-        border: `2px solid ${getColor("grisOscuro")}`,
-        borderRadius: 12,
-        padding: 16,
-        boxShadow: "0px 2px 8px rgba(0,0,0,0.15)",
-        boxSizing: "border-box",
-        overflow: "hidden",
-      }}
-    >
+    <div style={styles.container}>
 
       {/* CONTROLES */}
-      <div
-        style={{
-          display: "flex",
-          gap: 20,
-          marginBottom: 20,
-          alignItems: "center",
-          flexWrap: "wrap"
-        }}
-      >
+      <div style={styles.controlsContainer}>
+
         {controls.map((control, i) => {
 
           // SEARCH
           if (control.type === "search") {
             return (
-              <input
-                key={i}
-                placeholder={control.placeholder || "Buscar..."}
-                value={control.value || ""}
-                onChange={control.onChange}
-                style={{
-                  padding: "10px 14px",
-                  borderRadius: 8,
-                  border: `2px solid ${getColor("gris-claro")}`,
-                  outline: "none",
-                  fontSize: 14,
-                  fontFamily: "Lato",
-                  width: 200,
-                }}
-              />
+              <div key={i} style={styles.searchContainer}>
+                <input
+                  placeholder={control.placeholder || "Buscar..."}
+                  value={control.value || ""}
+                  onChange={control.onChange}
+                  style={styles.searchInput}
+                />
+              </div>
             );
           }
 
           // SELECT
           if (control.type === "select") {
             return (
-              <select
-                key={i}
-                value={control.value || ""}
-                onChange={control.onChange}
-                style={{
-                  padding: "10px 14px",
-                  borderRadius: 8,
-                  border: `2px solid ${getColor("gris-claro")}`,
-                  background: getColor("blanco"),
-                  cursor: "pointer",
-                }}
-              >
-                <option value="">
-                  {control.placeholder || "Filtrar por..."}
-                </option>
+              <div key={i} style={styles.selectContainer}>
 
-                {(control.options || []).map((opt, j) => (
-                  <option key={j} value={opt.key}>
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
+                <div style={styles.selectLabel}>
+                  {control.label || "Filtrar por:"}
+                </div>
+
+                <div style={styles.selectWrapper}>
+                  <select
+                    value={control.value || ""}
+                    onChange={control.onChange}
+                    style={styles.select}
+                  >
+                    <option value="">
+                      {control.placeholder || "Seleccionar"}
+                    </option>
+
+                    {(control.options || []).map((opt, j) => (
+                      <option key={j} value={opt.key}>
+                        {opt.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+              </div>
             );
           }
 
@@ -113,26 +92,15 @@ function List({
       </div>
 
       {/* TABLA */}
-      <div
-        style={{
-          width: "100%",
-          borderRadius: 12,
-          overflow: "hidden",
-          border: `1px solid ${getColor("grisOscuro")}`,
-        }}
-      >
+      <div style={styles.tableContainer}>
 
         {/* HEADER */}
         <div
           style={{
-            display: "grid",
+            ...styles.header,
             gridTemplateColumns: columns
               .map(col => col.width || "1fr")
               .join(" "),
-            fontWeight: "bold",
-            background: getColor("amarillo"),
-            color: getColor("text"),
-            padding: 10,
           }}
         >
           {columns.map((col, i) => (
@@ -142,21 +110,20 @@ function List({
 
         {/* FILAS */}
         {data.map((item, index) => {
+
           const isSelected = selectedId === item.id;
 
           return (
             <div
               key={item.id || index}
               onClick={() => {
-                if (selectable) setSelectedId(item.id);
+                if (selectable) handleClick(item);
               }}
-              onDoubleClick={() => handleClick(item)}
               style={{
-                display: "grid",
+                ...styles.row,
                 gridTemplateColumns: columns
                   .map(col => col.width || "1fr")
                   .join(" "),
-                padding: 10,
                 cursor: onRowClick ? "pointer" : "default",
                 background: isSelected
                   ? getColor("naranja")
@@ -166,8 +133,8 @@ function List({
               }}
             >
               {columns.map((col, i) => (
-                <span key={i} style={{ color: getColor("text") }}>
-                  {item[col.key]}
+                <span key={i} style={styles.cellText}>
+                  {col.render ? col.render(item) : item[col.key]}
                 </span>
               ))}
             </div>
@@ -177,5 +144,114 @@ function List({
     </div>
   );
 }
+
+const styles = {
+
+  container: {
+    width: "100%",
+    background: getColor("blanco"),
+    border: `2px solid ${getColor("grisOscuro")}`,
+    borderRadius: 12,
+    padding: 16,
+    boxShadow: "0px 2px 8px rgba(0,0,0,0.15)",
+    boxSizing: "border-box",
+    overflow: "hidden",
+  },
+
+  controlsContainer: {
+    display: "flex",
+    gap: 20,
+    marginBottom: 20,
+    alignItems: "center",
+    flexWrap: "wrap",
+  },
+
+  searchContainer: {
+    height: 40,
+    background: "#F9F9F9",
+    borderRadius: 8,
+    border: `1px solid ${getColor("grisOscuro")}`,
+    display: "flex",
+    alignItems: "center",
+    padding: "0 12px",
+  },
+
+  searchInput: {
+    border: "none",
+    outline: "none",
+    background: "transparent",
+    fontSize: 14,
+    fontFamily: "Lato",
+    width: 200,
+    color: getColor("text"),
+  },
+
+  selectContainer: {
+    height: 40,
+    background: "#F9F9F9",
+    overflow: "hidden",
+    borderRadius: 8,
+    border: "1px solid #444444",
+    display: "flex",
+    alignItems: "center",
+  },
+
+  selectLabel: {
+    height: "100%",
+    padding: "0 12px",
+    background: "#F9F9F9",
+    borderRight: "1px solid #444444",
+    display: "flex",
+    alignItems: "center",
+    fontSize: 15,
+    fontFamily: "Lato",
+    fontWeight: "700",
+    color: "#1D1D1D",
+    whiteSpace: "nowrap",
+  },
+
+  selectWrapper: {
+    height: "100%",
+    padding: "0 10px",
+    display: "flex",
+    alignItems: "center",
+    background: "#F9F9F9",
+  },
+
+  select: {
+    border: "none",
+    outline: "none",
+    background: "transparent",
+    fontSize: 15,
+    fontFamily: "Lato",
+    cursor: "pointer",
+    color: "#444",
+  },
+
+  tableContainer: {
+    width: "100%",
+    borderRadius: 12,
+    overflow: "hidden",
+    border: `1px solid ${getColor("grisOscuro")}`,
+  },
+
+  header: {
+    display: "grid",
+    fontWeight: "bold",
+    background: getColor("amarillo"),
+    color: getColor("text"),
+    padding: 10,
+  },
+
+  row: {
+    display: "grid",
+    padding: 10,
+    alignItems: "center",
+  },
+
+  cellText: {
+    color: getColor("text"),
+  },
+};
 
 export default List;
