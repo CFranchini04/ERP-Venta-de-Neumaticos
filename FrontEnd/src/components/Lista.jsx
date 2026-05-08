@@ -81,6 +81,7 @@ function List({
             );
           }
 
+
           // BUTTONS
           if (control.type === "button") {
             return (
@@ -124,7 +125,8 @@ function List({
         return (
           <div
             key={item.id || index}
-            onClick={() => handleClick(item)}
+            onClick={() => selectable && setSelectedId(item.id)}
+            onDoubleClick={() => handleClick(item)}
             style={{
               display: "grid",
               gridTemplateColumns: columns
