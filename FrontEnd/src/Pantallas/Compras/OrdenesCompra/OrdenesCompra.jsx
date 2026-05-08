@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import Sidebar from "../../../components/Sidebar";
 import List from "../../../components/Lista";
+import { IconoLupa } from "../../../components/Icons";
+import { getColor } from "../../../components/Colors";
 
 
 export default function OrdenesCompra({ usuario, onNavegar, onLogout }) {
@@ -38,7 +40,30 @@ export default function OrdenesCompra({ usuario, onNavegar, onLogout }) {
   const columns = [
     { key: "codigo", label: "Código" },
     { key: "estado", label: "Estado" },
-    { key: "fecha", label: "Fecha de Creación" }
+    { key: "fecha", label: "Fecha de Creación" },
+
+    {
+      key: "acciones",
+      label: "Acciones",
+      render: (pedido) => (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onNavegar("informacion-orden", pedido);
+          }}
+          style={{
+            margin: "0 10px",
+            display: "block",
+            background: getColor("amarillo"),
+            border: "none",
+            borderRadius: 4,
+            cursor: "pointer"
+          }}
+        >
+          <IconoLupa />
+        </button>
+      )
+    }
   ];
 
   return (
@@ -57,14 +82,14 @@ export default function OrdenesCompra({ usuario, onNavegar, onLogout }) {
           <div style={styles.separador} />
         </header>
 
+
         <div style={{ width: "100%", maxWidth: 860 }}>
           <List
             data={pedidosFiltrados}
             columns={columns}
-            selectable
-            onRowClick={(pedido) => {
-              onNavegar("informacion-orden", pedido);
-            }}
+            selectable={false}
+
+
             controls={[
               {
                 type: "search",
