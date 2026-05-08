@@ -38,7 +38,7 @@ export default function NuevosPedidos({
     <div style={{
       display: "flex",
       height: "100vh",
-      background: "#F9F9F9"
+      background: getColor("blanco")
     }}>
 
       {/* SIDEBAR */}
