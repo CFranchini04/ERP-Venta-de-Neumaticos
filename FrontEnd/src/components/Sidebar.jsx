@@ -7,19 +7,23 @@ import { MODULOS } from './modules';
 import LogoFukuchi from '../LogoFukuchi.png';
 import { getColor } from './Colors';
 import { IconoDropdown } from './Icons';
+import { useAuth } from '../AuthContext';
+import { useNavigate } from 'react-router-dom';
 
-export default function Sidebar({ usuario, onNavegar, onLogout }) {
+export default function Sidebar({ usuario, onNavegar }) {
 
   const [abierto, setAbierto] = useState(null);
   const [hoveredItem, setHoveredItem] = useState(null);
   const [hoveredModulo, setHoveredModulo] = useState(null);
+  const { logout } = useAuth();
+  const navigate = useNavigate();
 
   function handleSalir() {
     if (window.confirm('¿Estás seguro de que quieres cerrar sesión?')) {
-      onLogout();
+      logout();
+      navigate('/');
     }
   }
-
   function toggleModulo(id) {
     setAbierto((prev) => (prev === id ? null : id));
   }
@@ -92,7 +96,7 @@ export default function Sidebar({ usuario, onNavegar, onLogout }) {
                   e.stopPropagation();
                   toggleModulo(m.id);
                 }}
-              > 
+              >
                 <IconoDropdown
                   hovered={hoveredModulo === m.id}
                   active={abierto === m.id}
