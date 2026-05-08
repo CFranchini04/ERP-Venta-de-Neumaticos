@@ -100,6 +100,7 @@ export default function RRHH({ usuario = 'Empleado', onLogout, onNavegar }) {
 
     const empleadosFiltrados = empleados
         .filter((emp) => {
+
             const texto = search.toLowerCase();
 
             const coincideBusqueda =
@@ -113,6 +114,23 @@ export default function RRHH({ usuario = 'Empleado', onLogout, onNavegar }) {
 
             return coincideBusqueda && coincideCargo;
         })
+
+        .sort((a, b) => {
+
+            if (orderBy === "nombre") {
+                return a.nombre.localeCompare(b.nombre);
+            }
+
+            if (orderBy === "apellido") {
+                return a.apellido.localeCompare(b.apellido);
+            }
+
+            if (orderBy === "cargo") {
+                return a.cargo.localeCompare(b.cargo);
+            }
+
+            return 0;
+        });
 
     return (
         <div style={styles.pagina}>
@@ -165,20 +183,32 @@ export default function RRHH({ usuario = 'Empleado', onLogout, onNavegar }) {
                                 value: search,
                                 onChange: (e) => setSearch(e.target.value)
                             },
-                            {
-                                type: "select",
-                                options: columns,
-                                placeholder: "Ordenar por...",
-                                value: orderBy,
-                                onChange: (e) => setOrderBy(e.target.value)
-                            },
-                            {
 
+                            {
                                 type: "select",
-                                options: cargos.map(c => ({ key: c, label: c })),
-                                placeholder: "Filtrar por cargo",
+                                label: "Ordenar por:",
+                                placeholder: "Seleccionar",
+                                value: orderBy,
+                                onChange: (e) => setOrderBy(e.target.value),
+
+                                options: [
+                                    { key: "nombre", label: "Nombre" },
+                                    { key: "apellido", label: "Apellido" },
+                                    { key: "cargo", label: "Cargo" }
+                                ]
+                            },
+
+                            {
+                                type: "select",
+                                label: "Filtrar por:",
+                                placeholder: "Cargo",
                                 value: filtroCargo,
-                                onChange: (e) => setFiltroCargo(e.target.value)
+                                onChange: (e) => setFiltroCargo(e.target.value),
+
+                                options: cargos.map(c => ({
+                                    key: c,
+                                    label: c
+                                }))
                             },
 
                             {
