@@ -8,7 +8,7 @@ import RRHH from './Pantallas/RRHH/rrhh';
 import GestionPersonal from './Pantallas/RRHH/GestionPersonal';
 import GestionSalarial from './Pantallas/RRHH/GestionSalarial';
 import Ventas from './Pantallas/Ventas/Ventas';
-import InformacionOrden from './Pantallas/Compras/OrdenCompra/InformacionOrden';
+import InformacionOrden from './Pantallas/Compras/OrdenesCompra/InformacionOrden';
 import Tesoreria from './Pantallas/Tesoreria/Tesoreria';
 
 export default function App() {
