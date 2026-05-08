@@ -150,7 +150,7 @@ export default function Pedidos({ usuario, onNavegar, onLogout }) {
 </div>
 
 <div
-  onClick={() => onNavegar("nuevosPedidos")}
+  onClick={() => onNavegar("nuevoPedido")}
   style={{
     height: 30,
     paddingLeft: 20,
@@ -178,8 +178,10 @@ export default function Pedidos({ usuario, onNavegar, onLogout }) {
   </div>
 </div>
 
+
 </div>
-</div>
+
+
 
 <div style={{
   alignSelf: 'stretch',
@@ -231,12 +233,10 @@ export default function Pedidos({ usuario, onNavegar, onLogout }) {
 </div>
 </div>
 
-<div style={{width: 200, alignSelf: 'stretch', padding: 10, overflow: 'hidden', justifyContent: 'center', alignItems: 'center', gap: 10, display: 'flex'}}>
 
 </div>
 </div>
 </div>
-
 
       
   );
