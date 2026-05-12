@@ -12,7 +12,6 @@ export default function OrdenesPago({ usuario, onNavegar, onLogout }) {
   const [orden, setOrden] = useState("default")
   const [pedidos, setPedidos] = useState([])
 
-  // ← El fetch va acá adentro
   useEffect(() => {
     const fetchOrdenes = async () => {
       try {
