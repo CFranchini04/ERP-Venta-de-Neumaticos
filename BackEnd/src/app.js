@@ -2,6 +2,7 @@ import express from 'express'
 import cors from 'cors'
 import authRoutes from './routes/auth/auth.routes.js'
 import ordenesCompraRoutes from './routes/compras/ordenesCompra.routes.js'
+import ordPagoRoutes from './routes/compras/ordenesPago.routes.js'
 
 const app = express()
 
@@ -14,5 +15,6 @@ app.get('/api/health', (req, res) => {
 
 app.use('/auth', authRoutes)
 app.use('/api/compras/ordenes-compra', ordenesCompraRoutes)
+app.use('/api/compras/ordenes-pago', ordPagoRoutes)
 
 export default app
