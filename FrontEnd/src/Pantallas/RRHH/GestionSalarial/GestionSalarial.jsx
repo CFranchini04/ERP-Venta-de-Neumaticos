@@ -1,6 +1,6 @@
 import React from 'react';
-import Sidebar from "../../components/Sidebar";
-import { Button } from '../../components/Buttons';
+import Sidebar from '../../../components/Sidebar';
+import { Button } from '../../../components/Buttons';
 
 export default function GestionPersonal({ usuario, empleado, onVolver, onLogout, onNavegar }) {
 
