@@ -14,30 +14,34 @@ export default function Pedidos({ usuario, onNavegar, onLogout }) {
   const [filtroEstado, setFiltroEstado] = useState("Todos");
   const [orden, setOrden] = useState("default");
   const [pedidos, setPedidos] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   // FETCH AGREGADO
   useEffect(() => {
-    const fetchPedidos = async () => {
-      try {
-        const response = await fetch('http://localhost:9128/api/compras/pedidos/tabla', {
-          method: 'GET'
-        });
+  const fetchPedidos = async () => {
+    try {
+      const response = await fetch(
+        'http://localhost:9128/api/compras/pedidos/tabla'
+      );
 
-        const data = await response.json();
+      const data = await response.json();
 
-        if (!response.ok) {
-          throw new Error(data.message);
-        }
-
-        setPedidos(data);
-
-      } catch (error) {
-        console.error(error.message);
+      if (!response.ok) {
+        throw new Error(data.message);
       }
-    };
 
-    fetchPedidos();
-  }, []);
+      setPedidos(data);
+
+    } catch (error) {
+      console.error(error.message);
+
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  fetchPedidos();
+}, []);
 
   const pedidosFiltrados = pedidos
     .filter((p) => {
@@ -70,6 +74,22 @@ export default function Pedidos({ usuario, onNavegar, onLogout }) {
 
       return 0;
     });
+    
+  if (loading) {
+    return (
+      <div
+        style={{
+          height: '100vh',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          fontSize: 24
+        }}
+      >
+        Cargando pedidos...
+      </div>
+    );
+  }    
 
   return (
     <div style={{ display: 'flex', height: '100vh' }}>
