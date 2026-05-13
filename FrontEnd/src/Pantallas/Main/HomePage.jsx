@@ -1,47 +1,49 @@
 // HomePage.jsx
 // Pantalla principal
 
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../AuthContext';
 import Sidebar from '../../components/Sidebar';
 import ModuloCard from '../../components/ModuloCard';
 import { MODULOS } from '../../components/modules';
+import { getColor } from '../../components/Colors';
 
-// ─── Página principal ─────────────────────────────────────────────────────────
+export default function HomePage() {
+  const { usuario, logout } = useAuth();
+  const navigate = useNavigate();
 
-export default function HomePage({ usuario, onLogout, onNavegar }) {
-
-  function handleNavegar(moduloId) {
-    if (onNavegar) {
-      onNavegar(moduloId);
-    }
-  }
+  const handleLogout = () => {
+    logout();
+    navigate('/');
+  };
 
   return (
     <div style={styles.pagina}>
-      <Sidebar usuario={usuario} onNavegar={handleNavegar} onLogout={onLogout} />
+      <Sidebar
+        usuario={usuario?.nombre}
+        onNavegar={(path) => navigate(path)}
+        onLogout={handleLogout}
+      />
 
       <main style={styles.main}>
-        {/* Encabezado */}
         <header style={styles.encabezado}>
-          <h1 style={styles.tituloBienvenida}>Bienvenido, {usuario}</h1>
+          <h1 style={styles.tituloBienvenida}>Bienvenido, {usuario?.nombre}</h1>
           <div style={styles.lineaEncabezado} />
         </header>
 
-        {/* Contenedor central */}
         <section style={styles.contenedor}>
-          {/* Título contenedor */}
           <div style={styles.tituloContenedor}>
             <h2 style={styles.tituloContenedorTexto}>¿A qué módulo desea acceder?</h2>
             <div style={styles.lineaContenedor} />
           </div>
 
-          {/* Grid de módulos */}
           <div style={styles.modulosGrid}>
             {MODULOS.map((m) => (
               <ModuloCard
                 key={m.id}
                 label={m.label}
                 icon={m.icon}
-                onClick={() => handleNavegar(m.id)}
+                onClick={() => navigate(m.id)}
               />
             ))}
           </div>
@@ -50,7 +52,6 @@ export default function HomePage({ usuario, onLogout, onNavegar }) {
     </div>
   );
 }
-
 // ─── Estilos ──────────────────────────────────────────────────────────────────
 
 const styles = {
@@ -60,7 +61,7 @@ const styles = {
     display: 'flex',
     width: '100vw',
     height: '100vh',  
-    background: '#F9F9F9',
+    background: getColor("blanco"),
     fontFamily: 'Lato, sans-serif',
     overflow: 'hidden',
   },
@@ -89,7 +90,7 @@ const styles = {
     padding: '21px 0',
   },
   tituloBienvenida: {
-    color: '#444444',
+    color: getColor("negro"),
     fontSize: '42px',
     fontFamily: 'Lato, sans-serif',
     fontWeight: 700,
@@ -100,7 +101,7 @@ const styles = {
   lineaEncabezado: {
     width: 'min(1100px, 80%)',
     height: 4,
-    background: '#444444',
+    background: getColor("negro"),
   },
 
   // ── Contenedor ──
@@ -108,10 +109,10 @@ const styles = {
     width: '100%',
     maxWidth: 1550,
     padding: 25,
-    background: '#F9F9F9',
+    background: getColor("blanco"),
     boxShadow: '0px 8px 8px 2px rgba(0,0,0,0.25)',
     borderRadius: 32,
-    border: '5px solid #CECECE',
+    border: '5px solid #FFFFFF',
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
@@ -128,7 +129,7 @@ const styles = {
     padding: '20px 77px',
   },
   tituloContenedorTexto: {
-    color: '#444444',
+    color: getColor("gris"),
     fontSize: '32px',
     fontFamily: 'Lato, sans-serif',
     fontWeight: 400,
@@ -140,7 +141,7 @@ const styles = {
   lineaContenedor: {
     width: 'min(1080px, 90%)',
     height: 3,
-    background: '#444444',
+    background: getColor("geis"),
     boxShadow: '0px 6px 2px rgba(0,0,0,0.10)',
   },
 
@@ -160,7 +161,7 @@ const styles = {
     height: 180,
     paddingTop: 10,
     paddingBottom: 10,
-    background: '#FFCC00',
+    background: getColor("amarillo"),
     boxShadow: '0px 6px 4px rgba(0,0,0,0.25)',
     borderRadius: 16,
     border: '2px solid #444444',
@@ -180,7 +181,7 @@ const styles = {
     justifyContent: 'center',
   },
   moduloLabel: {
-    color: '#1D1D1D',
+    color: getColor("negro"),
     fontSize: 18,
     fontFamily: 'Lato, sans-serif',
     fontWeight: 700,
