@@ -39,8 +39,8 @@ export default function Sidebar({ onNavegar }) {
         proveedores: '/compras/proveedores',
       },
       rrhh: {
-        gestion_personal: '/rrhh',
-        gestion_salarios: '/rrhh/gestion-salarial',
+        lista_personal: '/rrhh',
+        nuevo_empleado: '/rrhh/nuevo-empleado',
       },
       ventas: {
         presupuestos: 'https://http.cat/images/501.jpg',
@@ -68,10 +68,12 @@ export default function Sidebar({ onNavegar }) {
       return;
     }
 
-    if (onNavegar) {
-      onNavegar(ruta);
-    } else {
-      navigate(ruta);
+    navigate(ruta);
+    if (typeof onNavegar === 'function') {
+      try {
+        onNavegar(ruta);
+      } catch (err) {
+        console.error('Error en onNavegar:', err);}
     }
   };
 
@@ -85,8 +87,8 @@ export default function Sidebar({ onNavegar }) {
       { id: 'proveedores', label: 'Proveedores' },
     ],
     rrhh: [
-      { id: 'gestion_personal', label: 'Lista de Personal' },
-      { id: 'gestion_salarios', label: 'Nuevo Empleado' },
+      { id: 'lista_personal', label: 'Lista de Personal' },
+      { id: 'nuevo_empleado', label: 'Nuevo Empleado' },
     ],
     ventas: [
       { id: 'presupuestos', label: 'Presupuestos' },
