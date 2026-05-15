@@ -27,7 +27,9 @@ export default function HomePage() {
 
       <main style={styles.main}>
         <header style={styles.encabezado}>
-          <h1 style={styles.tituloBienvenida}>Bienvenido, {usuario?.nombre}</h1>
+          <h1 style={styles.tituloBienvenida}>
+            Bienvenido, {usuario?.nombre || usuario?.display_name || usuario?.email || 'Usuario'}
+          </h1>
           <div style={styles.lineaEncabezado} />
         </header>
 
@@ -43,7 +45,7 @@ export default function HomePage() {
                 key={m.id}
                 label={m.label}
                 icon={m.icon}
-                onClick={() => navigate(m.id)}
+                onClick={() => navigate(`/${m.id}`)}
               />
             ))}
           </div>
