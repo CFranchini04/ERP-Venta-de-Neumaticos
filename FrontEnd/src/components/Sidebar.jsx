@@ -1,5 +1,4 @@
 // Sidebar.jsx
-// Sidebar con dropdown único abierto
 
 import { useState } from 'react';
 import { IconoSalir } from './Icons';
@@ -10,12 +9,12 @@ import { IconoDropdown } from './Icons';
 import { useAuth } from '../AuthContext';
 import { useNavigate } from 'react-router-dom';
 
-export default function Sidebar({ usuario, onNavegar }) {
+export default function Sidebar({ onNavegar }) {
 
   const [abierto, setAbierto] = useState(null);
   const [hoveredItem, setHoveredItem] = useState(null);
   const [hoveredModulo, setHoveredModulo] = useState(null);
-  const { logout } = useAuth();
+  const { usuario, logout } = useAuth();
   const navigate = useNavigate();
 
   function handleSalir() {
@@ -24,9 +23,57 @@ export default function Sidebar({ usuario, onNavegar }) {
       navigate('/');
     }
   }
+
   function toggleModulo(id) {
     setAbierto((prev) => (prev === id ? null : id));
   }
+
+  const resolveSubRuta = (modulo, subId) => {
+    const rutas = {
+      compras: {
+        pedidos: '/compras/pedidos',
+        cotizaciones: '/compras/cotizaciones',
+        ordenesCompra: '/compras/ordenes-de-compra',
+        ordenesPago: '/compras/ordenes-de-pago',
+        facturas: '/compras/facturas',
+        proveedores: '/compras/proveedores',
+      },
+      rrhh: {
+        gestion_personal: '/rrhh',
+        gestion_salarios: '/rrhh/gestion-salarial',
+      },
+      ventas: {
+        presupuestos: 'https://http.cat/images/501.jpg',
+        facturas_ventas: 'https://http.cat/images/501.jpg',
+        notas_credito: 'https://http.cat/images/501.jpg',
+        venta_directa: 'https://http.cat/images/501.jpg',
+      },
+      contabilidad: {
+        conta_1: 'https://http.cat/images/501.jpg',
+        conta_2: 'https://http.cat/images/501.jpg',
+      },
+      tesoreria: {
+        teso_1: 'https://http.cat/images/501.jpg',
+        teso_2: 'https://http.cat/images/501.jpg',
+      },
+    };
+
+    return rutas[modulo]?.[subId] || `/${modulo}`;
+  };
+
+  const handleNavegar = (ruta) => {
+    const isExternal = /^https?:\/\//.test(ruta);
+    if (isExternal) {
+      window.location.href = ruta;
+      return;
+    }
+
+    if (onNavegar) {
+      onNavegar(ruta);
+    } else {
+      navigate(ruta);
+    }
+  };
 
   const SUBMENUS = {
     compras: [
@@ -61,7 +108,7 @@ export default function Sidebar({ usuario, onNavegar }) {
     <aside style={styles.sidebar}>
       {/* Logo */}
       <button
-        onClick={() => onNavegar('home')}
+        onClick={() => handleNavegar('/home')}
         style={styles.sidebarTituloContainer}
         title="Ir a inicio"
       >
@@ -79,7 +126,7 @@ export default function Sidebar({ usuario, onNavegar }) {
 
             {/* Botón principal */}
             <button
-              onClick={() => onNavegar(m.id)}
+              onClick={() => handleNavegar(`/${m.id}`)}
               style={styles.sidebarItem}
             >
               <span style={styles.sidebarItemIcono}>{m.icon}</span>
@@ -110,7 +157,7 @@ export default function Sidebar({ usuario, onNavegar }) {
                 {SUBMENUS[m.id].map((sub) => (
                   <button
                     key={sub.id}
-                    onClick={() => onNavegar(sub.id)}
+                    onClick={() => handleNavegar(resolveSubRuta(m.id, sub.id))}
                     onMouseEnter={() => setHoveredItem(sub.id)}
                     onMouseLeave={() => setHoveredItem(null)}
                     style={{
@@ -138,7 +185,7 @@ export default function Sidebar({ usuario, onNavegar }) {
           width="50"
           height="50"
           viewBox="0 0 16 16"
-          style={{ color: '#F9F9F9' }}
+          style={{ color: getColor("blanco") }}
         >
           <path
             fill="currentColor"
@@ -146,7 +193,9 @@ export default function Sidebar({ usuario, onNavegar }) {
           />
         </svg>
 
-        <span style={styles.sidebarUsuarioNombre}>{usuario}</span>
+        <span style={styles.sidebarUsuarioNombre}>
+          {usuario?.nombre || usuario?.display_name || usuario?.email || usuario?.user || 'Usuario'}
+        </span>
 
         <button
           onClick={handleSalir}
