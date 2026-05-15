@@ -19,6 +19,14 @@ function Redirect404() {
   return null;
 }
 
+function Redirect501() {
+  useEffect(() => {
+    window.location.href = 'https://http.cat/images/501.jpg';
+  }, []);
+
+  return null;
+}
+
 export default function App() {
 
 
@@ -45,6 +53,8 @@ export default function App() {
             <Route path="/compras/cotizaciones" element={<Cotizaciones />} />
             <Route path="/compras/ordenes-de-compra" element={<OrdenesCompra />} />
             <Route path="/compras/ordenes-de-pago" element={<OrdenesPago />} />
+            <Route path="/compras/facturas" element={<Redirect501 />} />
+            <Route path="/compras/proveedores" element={<Redirect501 />} />
             <Route path="/tesoreria" element={<Tesoreria />} />
             <Route path="/contabilidad" element={<Contabilidad />} />
           </Route>
