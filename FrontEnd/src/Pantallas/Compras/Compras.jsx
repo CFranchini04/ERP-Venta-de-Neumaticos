@@ -1,4 +1,5 @@
 import React from "react";
+import { useNavigate } from 'react-router-dom';
 import Sidebar from "../../components/Sidebar";
 import { Button } from "../../components/Buttons";
 import List from '../../components/Lista';
@@ -94,6 +95,24 @@ const styles = `
 
 
 export default function Compras({ usuario = 'Empleado', onNavegar, onLogout }) {
+  const navigate = useNavigate();
+
+  const handleNavegar = (clave) => {
+    const rutas = {
+      pedidos: '/compras/pedidos',
+      cotizaciones: '/compras/cotizaciones',
+      ordenesCompra: '/compras/ordenes-de-compra',
+      ordenesPago: '/compras/ordenes-de-pago',
+      facturas: '/compras/facturas',
+      proveedores: '/compras/proveedores',
+    };
+
+    const ruta = rutas[clave] || (clave.startsWith('/') ? clave : `/compras/${clave}`);
+    navigate(ruta);
+    if (typeof onNavegar === 'function') {
+      try { onNavegar(ruta); } catch (e) {}
+    }
+  };
   // FACTURAS
   const columnasFacturas = [
     { key: "codigo", label: "Código" },
@@ -147,7 +166,7 @@ export default function Compras({ usuario = 'Empleado', onNavegar, onLogout }) {
  
   return (
     <div style={{ display: 'flex', height: '100vh' }}>
-      <Sidebar usuario={usuario} onNavegar={onNavegar} onLogout={onLogout} />
+      <Sidebar usuario={usuario} onNavegar={handleNavegar} onLogout={onLogout} />
 
       <div style={{ 
           flex: 1, 
@@ -162,12 +181,12 @@ export default function Compras({ usuario = 'Empleado', onNavegar, onLogout }) {
  
         {/*CARDS */}
         <div className="cards-grid">
-          <CardModulo titulo="Pedidos" Icono={IconoPedidos} onClick={() => onNavegar("pedidos")}/>
-          <CardModulo titulo="Cotizaciones" Icono={IconoCotizaciones} onClick={() => onNavegar("cotizaciones")} />
-          <CardModulo titulo="Órdenes de compra" Icono={IconoOrdenCompra} onClick={() => onNavegar("ordenesCompra")} />
-          <CardModulo titulo="Órdenes de pago" Icono={IconoOrdenPago} onClick={() => onNavegar("ordenesPago")} />
-          <CardModulo titulo="Facturas" Icono={IconoFactura} onClick={() => onNavegar("facturas")}/>
-          <CardModulo titulo="Proveedores" Icono={IconoProveedor} onClick={() => onNavegar("proveedores")}/>
+          <CardModulo titulo="Pedidos" Icono={IconoPedidos} onClick={() => handleNavegar("pedidos")}/>
+          <CardModulo titulo="Cotizaciones" Icono={IconoCotizaciones} onClick={() => handleNavegar("cotizaciones")} />
+          <CardModulo titulo="Órdenes de compra" Icono={IconoOrdenCompra} onClick={() => handleNavegar("ordenesCompra")} />
+          <CardModulo titulo="Órdenes de pago" Icono={IconoOrdenPago} onClick={() => handleNavegar("ordenesPago")} />
+          <CardModulo titulo="Facturas" Icono={IconoFactura} onClick={() => handleNavegar("facturas")}/>
+          <CardModulo titulo="Proveedores" Icono={IconoProveedor} onClick={() => handleNavegar("proveedores")}/>
         </div>
 
         {/* 🔹 TABLAS */}
