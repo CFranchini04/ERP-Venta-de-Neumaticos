@@ -2,14 +2,17 @@ import React, { useState, useEffect } from 'react';
 import Sidebar from "../../components/Sidebar";
 import { Button } from '../../components/Buttons';
 import EditEmpleadoModal from "../../components/EditModal";
+import { useParams, useNavigate } from 'react-router-dom';
+
 
 
 export default function GestionPersonal({ usuario, empleado, onVolver, onLogout, onNavegar }) {
-
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const isCreating = !id;
   const [editOpen, setEditOpen] = useState(false);
   const [seccion, setSeccion] = useState("");
-
-  const isCreating = !empleado;
+  const [cargando, setCargando] = useState(!isCreating);
 
   const [form, setForm] = useState({
     nombre: "",
@@ -26,18 +29,45 @@ export default function GestionPersonal({ usuario, empleado, onVolver, onLogout,
     hijos_menores: ""
   });
 
-  useEffect(() => {
-    if (empleado) {
-      setForm(empleado);
-    }
-  }, [empleado]);
+  const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:9128/api";
 
-  const handleChange = (key, value) => {
-    setForm({
-      ...form,
-      [key]: value
-    });
-  };
+  useEffect(() => {
+    if (!id) return;
+
+    const cargarEmpleado = async () => {
+      try {
+        const res = await fetch(`${API_BASE}/empleados/${id}`);
+        const data = await res.json();
+        console.log("Respuesta de la API:", data);
+        
+        setForm({
+          nombre: data.nombre ?? '',
+          apellido: data.apellido ?? '',
+          CI: data.CI ?? '',
+          ciudad: data.ciudad ?? '',
+          direccion: data.direccion ?? '',
+          correo_electronico: data.correo_electronico ?? '',
+          fecha_inicio: data.fecha_inicio ?? '',
+          cargo: data.cargo ?? '',
+          estado: data.estado ?? '',
+          conyugue: data.conyugue ?? '',
+          hijos: data.hijos ?? '',
+          hijos_menores: data.hijos_menores ?? '',
+        });
+      } catch (error) {
+        console.error("Error cargando empleado:", error);
+      } finally {
+        setCargando(false);
+      }
+    };
+
+    cargarEmpleado();
+  }, [id]);
+
+  const handleChange = (key, value) => setForm({ ...form, [key]: value });
+
+  if (cargando) return <div>Cargando...</div>;
+
 
   return (
     <div style={styles.pagina}>
