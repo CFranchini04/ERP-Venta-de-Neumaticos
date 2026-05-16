@@ -3,6 +3,7 @@ import Sidebar from "../../components/Sidebar";
 import { Button } from '../../components/Buttons';
 import { IconoRRHH, IconoDinero } from '../../components/Icons';
 import List from '../../components/Lista';
+import { useNavigate} from 'react-router-dom';
 
 const SUPABASE_URL = "https://ufpvebypnhcbvgyrkzrw.supabase.co";
 const SUPABASE_KEY = "sb_publishable_3zNPvTHmiYmwG-BMVDDk9g_KZ_li66L";
@@ -14,10 +15,28 @@ export default function RRHH({ usuario = 'Empleado', onLogout, onNavegar }) {
     const [search, setSearch] = useState("");
     const [orderBy, setOrderBy] = useState("");
     const [filtroCargo, setFiltroCargo] = useState("");
+    const navigate = useNavigate();
+    const handleNavegar = (ruta, empleado = null) => {
+        if (empleado) {
+            navigate(`/rrhh/${ruta}/${empleado.id}`);
+        } else {
+            navigate(`/rrhh/${ruta}`);
+        }
+    };
+    
+    const handleVerEmpleado = (empleado, e) => {
+        if (e) e.stopPropagation();
+        const idEmpleado = empleado?.id ?? empleado?.id_empleado;
+        if (!idEmpleado) return;
+        navigate(`/rrhh/gestion-de-empleado/${idEmpleado}`);
+    };
 
+    function handleNuevo() {
+        navigate('/rrhh/nuevo-empleado');
+    }
 
     const cargos = [...new Set(empleados.map(emp => emp.cargo))];
-
+    
     const columns = [
         { key: 'nombre', label: 'Nombre' },
         { key: 'apellido', label: 'Apellido' },
@@ -87,12 +106,6 @@ export default function RRHH({ usuario = 'Empleado', onLogout, onNavegar }) {
 
         cargarEmpleados();
     }, []);
-
-    function handleNavegar(moduloId, empleado) {
-        if (onNavegar) {
-            onNavegar(moduloId, empleado);
-        }
-    }
 
     function handleNuevo() {
         handleNavegar('crear-empleado');
