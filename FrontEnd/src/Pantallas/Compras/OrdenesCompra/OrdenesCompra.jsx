@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import Sidebar from "../../../components/Sidebar";
 import List from "../../../components/Lista";
 import { IconoLupa } from "../../../components/Icons";
@@ -7,12 +8,20 @@ import { getColor } from "../../../components/Colors";
 const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:9128/api";
 
 export default function OrdenesCompra({ usuario, onNavegar, onLogout }) {
+  const navigate = useNavigate();
   const [ordenes, setOrdenes] = useState([]);
   const [busqueda, setBusqueda] = useState("");
   const [filtroEstado, setFiltroEstado] = useState("");
   const [orden, setOrden] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
+  const handleVerOrden = (orden, e) => {
+    if (e) e.stopPropagation();
+    const idOrden = orden?.id_orden ?? orden?.id;
+    if (!idOrden) return;
+    navigate(`/compras/ordenes-de-compra/${idOrden}`);
+  };
 
   useEffect(() => {
     const cargarOrdenes = async () => {
@@ -67,12 +76,9 @@ export default function OrdenesCompra({ usuario, onNavegar, onLogout }) {
     {
       key: "acciones",
       label: "Acciones",
-      render: (pedido) => (
+      render: (orden) => (
         <button
-          onClick={(e) => {
-            e.stopPropagation();
-            onNavegar("informacion-orden", pedido);
-          }}
+          onClick={(e) => handleVerOrden(orden, e)}
           style={{
             margin: "0 10px",
             display: "block",
