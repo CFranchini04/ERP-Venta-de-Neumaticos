@@ -243,16 +243,21 @@ const styles = {
     background: getColor("amarillo"),
     color: getColor("text"),
     padding: 10,
+    textAlign: "center",
+    alignItems: "center",
   },
 
   row: {
     display: "grid",
     padding: 10,
     alignItems: "center",
+    textAlign: "center",
   },
 
   cellText: {
     color: getColor("text"),
+    textAlign: "center",
+    width: "100%",
   },
 };
 
