@@ -7,7 +7,8 @@ function List({
   columns,
   onRowClick,
   selectable = false,
-  controls = []
+  controls = [],
+  searchWidth = 250
 }) {
 
   const [selectedId, setSelectedId] = useState(null);
@@ -30,10 +31,15 @@ function List({
 
         {controls.map((control, i) => {
 
-          // SEARCH
           if (control.type === "search") {
             return (
-              <div key={i} style={styles.searchContainer}>
+              <div
+                key={i}
+                style={{
+                  ...styles.searchContainer,
+                  width: searchWidth
+                }}
+              >
                 <input
                   placeholder={control.placeholder || "Buscar..."}
                   value={control.value || ""}
@@ -44,7 +50,6 @@ function List({
             );
           }
 
-          // SELECT
           if (control.type === "select") {
             return (
               <div key={i} style={styles.selectContainer}>
@@ -75,7 +80,6 @@ function List({
             );
           }
 
-          // BUTTON
           if (control.type === "button") {
             return (
               <Button
@@ -94,7 +98,6 @@ function List({
       {/* TABLA */}
       <div style={styles.tableContainer}>
 
-        {/* HEADER */}
         <div
           style={{
             ...styles.header,
@@ -108,7 +111,6 @@ function List({
           ))}
         </div>
 
-        {/* FILAS */}
         {data.map((item, index) => {
 
           const isSelected = selectedId === item.id;
@@ -182,7 +184,7 @@ const styles = {
     background: "transparent",
     fontSize: 14,
     fontFamily: "Lato",
-    width: 200,
+    width: "100%",
     color: getColor("text"),
   },
 
