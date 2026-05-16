@@ -5,7 +5,7 @@ import PublicRoute from './PublicRoute';
 import Login from './Pantallas/Login/Login';
 import HomePage from './Pantallas/Main/HomePage';
 import { RRHH, GestionPersonal, GestionSalarial } from './Pantallas/RRHH';
-import { Compras, Pedidos, Cotizaciones, OrdenesCompra, OrdenesPago, NuevoPedido } from './Pantallas/Compras';
+import { Compras, Pedidos, Cotizaciones, OrdenesCompra, OrdenesPago, NuevoPedido, InformacionOrden } from './Pantallas/Compras';
 import Ventas from './Pantallas/Ventas/Ventas';
 import Tesoreria from './Pantallas/Tesoreria/Tesoreria';
 import Contabilidad from './Pantallas/Contabilidad/Contabilidad';
@@ -52,6 +52,7 @@ export default function App() {
             <Route path="/compras/pedidos/nuevo-pedido" element={<NuevoPedido />} />
             <Route path="/compras/cotizaciones" element={<Cotizaciones />} />
             <Route path="/compras/ordenes-de-compra" element={<OrdenesCompra />} />
+            <Route path="/compras/ordenes-de-compra/:id" element={<InformacionOrden />} />
             <Route path="/compras/ordenes-de-pago" element={<OrdenesPago />} />
             <Route path="/compras/facturas" element={<Redirect501 />} />
             <Route path="/compras/proveedores" element={<Redirect501 />} />
