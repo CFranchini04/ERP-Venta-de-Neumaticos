@@ -37,7 +37,7 @@ const styles = `
   .titulo {
     text-align: center;
     margin-bottom: 20px;
-    border-bottom: 4px solid #000000;
+    border-bottom: 4px solid ${getColor("negro")};
     padding-bottom: 10px;
     fontSize: 42;
   }
@@ -48,15 +48,15 @@ const styles = `
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 20px;
-    border-radius: 1px solid  #000000;
+    border-radius: 1px solid  ${getColor("negro")};
     margin-bottom: 30px;
   }
 
   .card {
-    background: #FFFFFF;
+    background: ${getColor("blanco")};
     padding: 12px 16px;            
     border-radius: 8px;
-    border: 3px solid #000000;
+    border: 3px solid ${getColor("negro")};
     box-shadow: 0px 2px 2px rgba(0,0,0,0.25); 
     display: flex;
     justify-content: space-between;
@@ -81,18 +81,15 @@ const styles = `
   }
 
   .tabla {
-    background: #ffffff;
+    background: ${getColor("blanco")};
     padding: 5px;
     border-radius: 10px;
-    border: 1px solid #000000;
+    border: 1px solid ${getColor("negro")};
     box-shadow: 0px 2px 2px rgba(0,0,0,0.25);
     
   }
 
 `;
-
-
-
 
 export default function Compras({ usuario = 'Empleado', onNavegar, onLogout }) {
   const navigate = useNavigate();
@@ -113,6 +110,7 @@ export default function Compras({ usuario = 'Empleado', onNavegar, onLogout }) {
       try { onNavegar(ruta); } catch (e) {}
     }
   };
+  
   // FACTURAS
   const columnasFacturas = [
     { key: "codigo", label: "Código" },
@@ -209,9 +207,7 @@ export default function Compras({ usuario = 'Empleado', onNavegar, onLogout }) {
               columns={columnasCotizaciones}
             />
           </div>
-
         </div>
-
       </div>
     </div>
     
