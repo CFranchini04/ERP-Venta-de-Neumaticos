@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
 import Sidebar from "../../../components/Sidebar";
 import { Button } from "../../../components/Buttons";
 import { getColor } from "../../../components/Colors";
@@ -19,7 +20,8 @@ export default function InformacionOrden({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const idOrden = orden?.id_orden ?? orden?.id;
+  const { id: idParam } = useParams();
+  const idOrden = orden?.id_orden ?? orden?.id ?? idParam;
 
   useEffect(() => {
     const cargarOrden = async () => {
