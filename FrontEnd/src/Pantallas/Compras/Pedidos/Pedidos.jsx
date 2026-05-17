@@ -223,7 +223,7 @@ export default function Pedidos({ usuario, onNavegar, onLogout }) {
               flex: '1 1 0',
               overflow: 'hidden',
               borderRadius: 8,
-              outline: '1px #1D1D1D solid',
+              outline: '1px #000000 solid',
               outlineOffset: '-1px',
               display: 'flex',
               flexDirection: 'column'
