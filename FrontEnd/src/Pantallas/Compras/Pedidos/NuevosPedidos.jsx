@@ -1,15 +1,31 @@
 import React, { useMemo, useState } from "react";
 import Sidebar from "../../../components/Sidebar";
 import List from "../../../components/Lista";
+import SearchBar from "../../../components/Searchbar";
 
 import {
   IconoLupa,
   IconoCalculadora,
   IconoFlecha,
-  IconoMas
+  IconoMas,
+  IconoMenos
 } from "../../../components/Icons";
 
 import { getColor } from "../../../components/Colors";
+
+const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:9128/api";
+
+// Mapea la respuesta del API a la estructura interna del componente
+const mapProductoFromAPI = (p) => ({
+  id:               p.id_producto,
+  nombre:           p.nombre          || "",
+  categoria:        p.categorias_productos?.nombre || "",
+  marca:            p.marcas?.nombre   || "",
+  inventario:       p.stock_actual     ?? 0,
+  inventarioMinimo: p.stock_minimo     ?? 0,
+  inventarioMaximo: null,               // no existe en la BD
+  precio:           Number(p.precio_compra ?? 0),
+});
 
 export default function NuevosPedidos({
   usuario,
@@ -17,96 +33,42 @@ export default function NuevosPedidos({
   onLogout
 }) {
 
-  // BUSCADOR PRODUCTO
-  const [busquedaProducto, setBusquedaProducto] = useState("");
-
   // CANTIDAD
   const [cantidad, setCantidad] = useState(1);
 
-  // PRODUCTO SELECCIONADO
-  const [productoSeleccionado, setProductoSeleccionado] =
-    useState(null);
+  // PRODUCTO SELECCIONADO (ya mapeado al formato interno)
+  const [productoSeleccionado, setProductoSeleccionado] = useState(null);
 
   // PRODUCTOS EN ORDEN
   const [ordenCompra, setOrdenCompra] = useState([]);
 
-  // PRODUCTOS DISPONIBLES
-  const productos = [
-    {
-      id: "01",
-      nombre: "Neumático Nieve",
-      categoria: "Calle",
-      marca: "Good Year",
-      inventario: 360,
-      inventarioMinimo: 50,
-      inventarioMaximo: 500,
-      precio: 1350000
-    },
-    {
-      id: "02",
-      nombre: "Neumático Liso",
-      categoria: "Pista",
-      marca: "Pirelli",
-      inventario: 25,
-      inventarioMinimo: 10,
-      inventarioMaximo: 100,
-      precio: 2000000
-    },
-    {
-      id: "03",
-      nombre: "Neumático Blando",
-      categoria: "Pista",
-      marca: "Continental",
-      inventario: 81,
-      inventarioMinimo: 15,
-      inventarioMaximo: 120,
-      precio: 850000
-    },
-    {
-      id: "04",
-      nombre: "Neumático Medio",
-      categoria: "Pista",
-      marca: "Bridgestone",
-      inventario: 35,
-      inventarioMinimo: 10,
-      inventarioMaximo: 80,
-      precio: 5300000
-    }
-  ];
-
-  // FILTRO PRODUCTOS
-  const productosFiltrados = productos.filter((p) =>
-    p.nombre.toLowerCase().includes(
-      busquedaProducto.toLowerCase()
-    )
-  );
-
   // AÑADIR A ORDEN
+  // Se agrega un _uid único por fila para poder identificar y eliminar
+  // incluso si el mismo producto se añade más de una vez
   const agregarAOrden = () => {
-
     if (!productoSeleccionado) return;
 
-    const subtotal =
-      productoSeleccionado.precio * cantidad;
+    const subtotal = productoSeleccionado.precio * cantidad;
 
     const nuevoProducto = {
       ...productoSeleccionado,
       cantidad,
-      subtotal
+      subtotal,
+      _uid: Date.now() + Math.random(), // clave única por entrada
     };
 
     setOrdenCompra((prev) => [...prev, nuevoProducto]);
-
     setCantidad(1);
+  };
+
+  // ELIMINAR DE ORDEN
+  const eliminarDeOrden = (uid) => {
+    setOrdenCompra((prev) => prev.filter((item) => item._uid !== uid));
   };
 
   // TOTAL
   const totalEstimado = useMemo(() => {
-
-    return ordenCompra.reduce((acc, item) => {
-      return acc + item.subtotal;
-    }, 0);
-
+    return ordenCompra.reduce((acc, item) => acc + item.subtotal, 0);
   }, [ordenCompra]);
 
   // COLUMNAS TABLA
@@ -151,11 +113,33 @@ export default function NuevosPedidos({
     {
       key: "acciones",
       label: "",
-      width: "60px",
-      render: () => (
-        <button style={styles.iconButton}>
-          <IconoLupa />
-        </button>
+      width: "90px",
+      render: (item) => (
+        <div style={styles.accionesCell}>
+          {/* Botón lupa (ver detalle) */}
+          <button
+            style={styles.iconButton}
+            title="Ver detalle"
+            onClick={(e) => {
+              e.stopPropagation();
+              // Aquí se puede añadir lógica de detalle a futuro
+            }}
+          >
+            <IconoLupa />
+          </button>
+
+          {/* Botón eliminar fila */}
+          <button
+            style={styles.iconButtonRojo}
+            title="Eliminar de la orden"
+            onClick={(e) => {
+              e.stopPropagation();
+              eliminarDeOrden(item._uid);
+            }}
+          >
+            <IconoMenos />
+          </button>
+        </div>
       )
     }
   ];
@@ -184,13 +168,8 @@ export default function NuevosPedidos({
           </button>
 
           <div style={{ flex: 1 }}>
-
-            <h1 style={styles.titulo}>
-              Nuevo Pedido
-            </h1>
-
+            <h1 style={styles.titulo}>Nuevo Pedido</h1>
             <div style={styles.separador} />
-
           </div>
 
         </header>
@@ -200,58 +179,54 @@ export default function NuevosPedidos({
 
           {/* TITULO */}
           <div style={styles.cardTitulo}>
-
             <IconoMas />
-
-            <span>
-              Añadir producto
-            </span>
-
+            <span>Añadir producto</span>
           </div>
 
           {/* CONTROLES */}
           <div style={styles.controles}>
 
-            {/* BUSCADOR */}
-            <input
+            {/* ── BARRA DE BÚSQUEDA EN TIEMPO REAL ── */}
+            {/* fetchOnMount=true pre-carga todos los productos al abrir la pantalla */}
+            <SearchBar
+              apiUrl={`${API_BASE}/misc/productos`}
+              queryParam="search"
               placeholder="Buscar producto ..."
-              value={busquedaProducto}
-              onChange={(e) => {
-
-                const texto = e.target.value;
-
-                setBusquedaProducto(texto);
-
-                const encontrado = productos.find((p) =>
-                  p.nombre.toLowerCase().includes(
-                    texto.toLowerCase()
-                  )
-                );
-
-                setProductoSeleccionado(
-                  encontrado || null
-                );
+              fetchOnMount={true}
+              onSelect={(rawItem) => {
+                setProductoSeleccionado(mapProductoFromAPI(rawItem));
               }}
-              style={styles.inputBusqueda}
+              onClear={() => {
+                setProductoSeleccionado(null);
+              }}
+              getLabel={(item) => item?.nombre || ""}
+              renderOption={(item) => (
+                <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                  <span style={{ fontWeight: 700, fontSize: 14 }}>
+                    {item.nombre}
+                  </span>
+                  <span style={{ fontSize: 12, color: "#888" }}>
+                    {item.categorias_productos?.nombre ?? "—"}
+                    {" · "}
+                    {item.marcas?.nombre ?? "—"}
+                    {" · Stock: "}
+                    {item.stock_actual ?? 0}
+                  </span>
+                </div>
+              )}
+              style={{ flex: 1, minWidth: 250 }}
             />
 
             {/* CANTIDAD */}
             <div style={styles.cantidadContainer}>
-
-              <span>
-                Cantidad para añadir:
-              </span>
-
+              <span>Cantidad para añadir:</span>
               <input
                 type="number"
                 min={1}
                 value={cantidad}
-                onChange={(e) =>
-                  setCantidad(Number(e.target.value))
-                }
+                onChange={(e) => setCantidad(Number(e.target.value))}
                 style={styles.inputCantidad}
               />
-
             </div>
 
             {/* BOTON AÑADIR */}
@@ -280,55 +255,27 @@ export default function NuevosPedidos({
             {/* DATOS */}
             <div style={styles.infoGrid}>
 
-              <div>
-                <strong>Nombre:</strong>
-              </div>
+              <div><strong>Nombre:</strong></div>
+              <div>{productoSeleccionado?.nombre || "-"}</div>
 
-              <div>
-                {productoSeleccionado?.nombre || "-"}
-              </div>
-
-              <div>
-                <strong>Último precio:</strong>
-              </div>
-
+              <div><strong>Último precio:</strong></div>
               <div>
                 {productoSeleccionado
                   ? productoSeleccionado.precio.toLocaleString("es-PY")
                   : "-"}
               </div>
 
-              <div>
-                <strong>Categoría:</strong>
-              </div>
+              <div><strong>Categoría:</strong></div>
+              <div>{productoSeleccionado?.categoria || "-"}</div>
 
-              <div>
-                {productoSeleccionado?.categoria || "-"}
-              </div>
+              <div><strong>Inventario mínimo:</strong></div>
+              <div>{productoSeleccionado?.inventarioMinimo ?? "-"}</div>
 
-              <div>
-                <strong>Inventario mínimo:</strong>
-              </div>
+              <div><strong>Marca:</strong></div>
+              <div>{productoSeleccionado?.marca || "-"}</div>
 
-              <div>
-                {productoSeleccionado?.inventarioMinimo || "-"}
-              </div>
-
-              <div>
-                <strong>Marca:</strong>
-              </div>
-
-              <div>
-                {productoSeleccionado?.marca || "-"}
-              </div>
-
-              <div>
-                <strong>Inventario máximo:</strong>
-              </div>
-
-              <div>
-                {productoSeleccionado?.inventarioMaximo || "-"}
-              </div>
+              <div><strong>Inventario máximo:</strong></div>
+              <div>{productoSeleccionado?.inventarioMaximo ?? "-"}</div>
 
             </div>
 
@@ -339,9 +286,7 @@ export default function NuevosPedidos({
         {/* ORDEN DE COMPRA */}
         <div style={styles.cardTabla}>
 
-          <h2 style={styles.subtitulo}>
-            Orden de Compra
-          </h2>
+          <h2 style={styles.subtitulo}>Orden de Compra</h2>
 
           <List
             data={ordenCompra}
@@ -356,10 +301,7 @@ export default function NuevosPedidos({
                 type: "select",
                 placeholder: "Ordenar por",
                 options: [
-                  {
-                    key: "default",
-                    label: "Por defecto"
-                  }
+                  { key: "default", label: "Por defecto" }
                 ]
               }
             ]}
@@ -367,17 +309,11 @@ export default function NuevosPedidos({
 
           {/* FOOTER */}
           <div style={styles.footer}>
-
             <h2>
-              Costo total estimado:
-              {" "}
+              Costo total estimado:{" "}
               {totalEstimado.toLocaleString("es-PY")}
             </h2>
-
-            <button style={styles.botonGuardar}>
-              Guardar
-            </button>
-
+            <button style={styles.botonGuardar}>Guardar</button>
           </div>
 
         </div>
@@ -453,14 +389,6 @@ const styles = {
     alignItems: "center",
     marginBottom: 20,
     flexWrap: "wrap",
-  },
-
-  inputBusqueda: {
-    flex: 1,
-    minWidth: 250,
-    padding: 10,
-    borderRadius: 8,
-    border: "1px solid #000000",
   },
 
   cantidadContainer: {
@@ -548,13 +476,36 @@ const styles = {
     cursor: "pointer",
   },
 
+  // Contenedor de los dos botones de acción en cada fila
+  accionesCell: {
+    display: "flex",
+    gap: 6,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
+  // Botón lupa (amarillo estándar)
   iconButton: {
     border: "none",
     background: getColor("amarillo"),
-    borderRadius: 4,
+    borderRadius: 6,
     cursor: "pointer",
+    padding: 5,
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-  }
+  },
+
+  // Botón eliminar (rojo)
+  iconButtonRojo: {
+    border: "none",
+    background: getColor("negro"),
+    borderRadius: 6,
+    cursor: "pointer",
+    padding: 5,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    color: "#ffffff",
+  },
 };
