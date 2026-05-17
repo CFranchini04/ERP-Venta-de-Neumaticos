@@ -1,6 +1,14 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import Sidebar from "../../../components/Sidebar";
-import { IconoLupa } from "../../../components/Icons";
+import List from "../../../components/Lista";
+
+import {
+  IconoLupa,
+  IconoCalculadora,
+  IconoFlecha,
+  IconoMas
+} from "../../../components/Icons";
+
 import { getColor } from "../../../components/Colors";
 
 export default function NuevosPedidos({
@@ -9,8 +17,20 @@ export default function NuevosPedidos({
   onLogout
 }) {
 
-  const [busqueda, setBusqueda] = useState("");
+  // BUSCADOR PRODUCTO
+  const [busquedaProducto, setBusquedaProducto] = useState("");
 
+  // CANTIDAD
+  const [cantidad, setCantidad] = useState(1);
+
+  // PRODUCTO SELECCIONADO
+  const [productoSeleccionado, setProductoSeleccionado] =
+    useState(null);
+
+  // PRODUCTOS EN ORDEN
+  const [ordenCompra, setOrdenCompra] = useState([]);
+
+  // PRODUCTOS DISPONIBLES
   const productos = [
     {
       id: "01",
@@ -18,9 +38,9 @@ export default function NuevosPedidos({
       categoria: "Calle",
       marca: "Good Year",
       inventario: 360,
-      cantidad: 100,
-      precio: "1.350.000",
-      subtotal: "135.000.000"
+      inventarioMinimo: 50,
+      inventarioMaximo: 500,
+      precio: 1350000
     },
     {
       id: "02",
@@ -28,18 +48,120 @@ export default function NuevosPedidos({
       categoria: "Pista",
       marca: "Pirelli",
       inventario: 25,
-      cantidad: 20,
-      precio: "2.000.000",
-      subtotal: "40.000.000"
+      inventarioMinimo: 10,
+      inventarioMaximo: 100,
+      precio: 2000000
+    },
+    {
+      id: "03",
+      nombre: "Neumático Blando",
+      categoria: "Pista",
+      marca: "Continental",
+      inventario: 81,
+      inventarioMinimo: 15,
+      inventarioMaximo: 120,
+      precio: 850000
+    },
+    {
+      id: "04",
+      nombre: "Neumático Medio",
+      categoria: "Pista",
+      marca: "Bridgestone",
+      inventario: 35,
+      inventarioMinimo: 10,
+      inventarioMaximo: 80,
+      precio: 5300000
+    }
+  ];
+
+  // FILTRO PRODUCTOS
+  const productosFiltrados = productos.filter((p) =>
+    p.nombre.toLowerCase().includes(
+      busquedaProducto.toLowerCase()
+    )
+  );
+
+  // AÑADIR A ORDEN
+  const agregarAOrden = () => {
+
+    if (!productoSeleccionado) return;
+
+    const subtotal =
+      productoSeleccionado.precio * cantidad;
+
+    const nuevoProducto = {
+      ...productoSeleccionado,
+      cantidad,
+      subtotal
+    };
+
+    setOrdenCompra((prev) => [...prev, nuevoProducto]);
+
+    setCantidad(1);
+  };
+
+  // TOTAL
+  const totalEstimado = useMemo(() => {
+
+    return ordenCompra.reduce((acc, item) => {
+      return acc + item.subtotal;
+    }, 0);
+
+  }, [ordenCompra]);
+
+  // COLUMNAS TABLA
+  const columns = [
+    {
+      key: "id",
+      label: "ID",
+      width: "70px"
+    },
+    {
+      key: "nombre",
+      label: "Producto"
+    },
+    {
+      key: "categoria",
+      label: "Categoría"
+    },
+    {
+      key: "marca",
+      label: "Marca"
+    },
+    {
+      key: "inventario",
+      label: "Inventario"
+    },
+    {
+      key: "cantidad",
+      label: "Cantidad"
+    },
+    {
+      key: "precio",
+      label: "Último Precio",
+      render: (item) =>
+        item.precio.toLocaleString("es-PY")
+    },
+    {
+      key: "subtotal",
+      label: "Subtotal estimado",
+      render: (item) =>
+        item.subtotal.toLocaleString("es-PY")
+    },
+    {
+      key: "acciones",
+      label: "",
+      width: "60px",
+      render: () => (
+        <button style={styles.iconButton}>
+          <IconoLupa />
+        </button>
+      )
     }
   ];
 
   return (
-    <div style={{
-      display: "flex",
-      height: "100vh",
-      background: getColor("blanco")
-    }}>
+    <div style={styles.pagina}>
 
       {/* SIDEBAR */}
       <Sidebar
@@ -49,130 +171,163 @@ export default function NuevosPedidos({
       />
 
       {/* CONTENIDO */}
-      <div style={{
-        flex: 1,
-        padding: 20,
-        overflow: "auto"
-      }}>
+      <main style={styles.contenido}>
 
         {/* HEADER */}
-        <div style={{
-          display: "flex",
-          alignItems: "center",
-          marginBottom: 20
-        }}>
+        <header style={styles.encabezado}>
 
           <button
             onClick={() => onNavegar("pedidos")}
-            style={{
-              marginRight: 20,
-              cursor: "pointer"
-            }}
+            style={styles.botonVolver}
           >
-            ←
+            <IconoFlecha />
           </button>
 
-          <h1 style={{
-            flex: 1,
-            textAlign: "center",
-            borderBottom: "2px solid black"
-          }}>
-            Nuevo Pedido
-          </h1>
-        </div>
+          <div style={{ flex: 1 }}>
+
+            <h1 style={styles.titulo}>
+              Nuevo Pedido
+            </h1>
+
+            <div style={styles.separador} />
+
+          </div>
+
+        </header>
 
         {/* CARD SUPERIOR */}
-        <div style={{
-          background: "#ECECEC",
-          borderRadius: 16,
-          padding: 20,
-          marginBottom: 20,
-          border: "1px solid #999"
-        }}>
+        <div style={styles.card}>
 
-          <h2 style={{
-            textAlign: "center",
-            marginBottom: 20
-          }}>
-            Añadir producto
-          </h2>
+          {/* TITULO */}
+          <div style={styles.cardTitulo}>
 
-          {/* BUSCADOR */}
-          <div style={{
-            display: "flex",
-            gap: 10,
-            marginBottom: 20
-          }}>
+            <IconoMas />
 
+            <span>
+              Añadir producto
+            </span>
+
+          </div>
+
+          {/* CONTROLES */}
+          <div style={styles.controles}>
+
+            {/* BUSCADOR */}
             <input
-              placeholder="Buscar producto..."
-              value={busqueda}
-              onChange={(e) => setBusqueda(e.target.value)}
-              style={{
-                flex: 1,
-                padding: 10,
-                borderRadius: 8,
-                border: "1px solid #999"
+              placeholder="Buscar producto ..."
+              value={busquedaProducto}
+              onChange={(e) => {
+
+                const texto = e.target.value;
+
+                setBusquedaProducto(texto);
+
+                const encontrado = productos.find((p) =>
+                  p.nombre.toLowerCase().includes(
+                    texto.toLowerCase()
+                  )
+                );
+
+                setProductoSeleccionado(
+                  encontrado || null
+                );
               }}
+              style={styles.inputBusqueda}
             />
 
-            <button>
-              <IconoLupa />
+            {/* CANTIDAD */}
+            <div style={styles.cantidadContainer}>
+
+              <span>
+                Cantidad para añadir:
+              </span>
+
+              <input
+                type="number"
+                min={1}
+                value={cantidad}
+                onChange={(e) =>
+                  setCantidad(Number(e.target.value))
+                }
+                style={styles.inputCantidad}
+              />
+
+            </div>
+
+            {/* BOTON AÑADIR */}
+            <button
+              onClick={agregarAOrden}
+              style={styles.botonAgregar}
+            >
+              Añadir a la Orden
             </button>
 
-            <input
-              type="number"
-              defaultValue={30}
-              style={{
-                width: 80
-              }}
-            />
-
-            <button style={{
-              background: "#FFCC00",
-              borderRadius: 8,
-              padding: "10px 20px",
-              border: "1px solid black",
-              cursor: "pointer"
-            }}>
-              Añadir a la Orden
+            {/* REGISTRAR */}
+            <button style={styles.botonSecundario}>
+              Registrar Nuevo Producto
             </button>
 
           </div>
 
           {/* INFO PRODUCTO */}
-          <div style={{
-            background: "#DDD",
-            borderRadius: 12,
-            padding: 20,
-            display: "flex",
-            gap: 30
-          }}>
+          <div style={styles.infoProducto}>
 
-            <div style={{
-              width: 100,
-              height: 100,
-              background: "white",
-              borderRadius: 12
-            }} />
+            {/* ICONO */}
+            <div style={styles.iconoContainer}>
+              <IconoCalculadora />
+            </div>
 
-            <div style={{ flex: 1 }}>
+            {/* DATOS */}
+            <div style={styles.infoGrid}>
 
-              <div style={{
-                display: "grid",
-                gridTemplateColumns: "1fr 1fr",
-                gap: 10
-              }}>
+              <div>
+                <strong>Nombre:</strong>
+              </div>
 
-                <div>Nombre:</div>
-                <div>Último precio:</div>
+              <div>
+                {productoSeleccionado?.nombre || "-"}
+              </div>
 
-                <div>Categoría:</div>
-                <div>Inventario mínimo:</div>
+              <div>
+                <strong>Último precio:</strong>
+              </div>
 
-                <div>Marca:</div>
-                <div>Inventario máximo:</div>
+              <div>
+                {productoSeleccionado
+                  ? productoSeleccionado.precio.toLocaleString("es-PY")
+                  : "-"}
+              </div>
 
+              <div>
+                <strong>Categoría:</strong>
+              </div>
+
+              <div>
+                {productoSeleccionado?.categoria || "-"}
+              </div>
+
+              <div>
+                <strong>Inventario mínimo:</strong>
+              </div>
+
+              <div>
+                {productoSeleccionado?.inventarioMinimo || "-"}
+              </div>
+
+              <div>
+                <strong>Marca:</strong>
+              </div>
+
+              <div>
+                {productoSeleccionado?.marca || "-"}
+              </div>
+
+              <div>
+                <strong>Inventario máximo:</strong>
+              </div>
+
+              <div>
+                {productoSeleccionado?.inventarioMaximo || "-"}
               </div>
 
             </div>
@@ -181,96 +336,45 @@ export default function NuevosPedidos({
 
         </div>
 
-        {/* TABLA */}
-        <div style={{
-          background: "#ECECEC",
-          borderRadius: 16,
-          padding: 20,
-          border: "1px solid #999"
-        }}>
+        {/* ORDEN DE COMPRA */}
+        <div style={styles.cardTabla}>
 
-          <h2 style={{
-            textAlign: "center",
-            marginBottom: 20
-          }}>
+          <h2 style={styles.subtitulo}>
             Orden de Compra
           </h2>
 
-          {/* HEADER TABLA */}
-          <div style={{
-            display: "grid",
-            gridTemplateColumns:
-              "80px 1fr 1fr 1fr 1fr 1fr 1fr 80px",
-            background: "#FFCC00",
-            padding: 10,
-            fontWeight: "bold"
-          }}>
-            <div>ID</div>
-            <div>Producto</div>
-            <div>Categoría</div>
-            <div>Marca</div>
-            <div>Inventario</div>
-            <div>Cantidad</div>
-            <div>Último Precio</div>
-            <div></div>
-          </div>
-
-          {/* FILAS */}
-          {productos.map((p, index) => (
-
-            <div
-              key={p.id}
-              style={{
-                display: "grid",
-                gridTemplateColumns:
-                  "80px 1fr 1fr 1fr 1fr 1fr 1fr 80px",
-                padding: 10,
-                background:
-                  index % 2 === 0
-                    ? "#F9F9F9"
-                    : "#D9D9D9"
-              }}
-            >
-
-              <div>{p.id}</div>
-              <div>{p.nombre}</div>
-              <div>{p.categoria}</div>
-              <div>{p.marca}</div>
-              <div>{p.inventario}</div>
-              <div>{p.cantidad}</div>
-              <div>{p.precio}</div>
-
-              <div style={{
-                display: "flex",
-                justifyContent: "center"
-              }}>
-                <IconoLupa />
-              </div>
-
-            </div>
-
-          ))}
+          <List
+            data={ordenCompra}
+            columns={columns}
+            selectable={false}
+            controls={[
+              {
+                type: "search",
+                placeholder: "Buscar producto..."
+              },
+              {
+                type: "select",
+                placeholder: "Ordenar por",
+                options: [
+                  {
+                    key: "default",
+                    label: "Por defecto"
+                  }
+                ]
+              }
+            ]}
+          />
 
           {/* FOOTER */}
-          <div style={{
-            display: "flex",
-            justifyContent: "space-between",
-            marginTop: 20,
-            alignItems: "center"
-          }}>
+          <div style={styles.footer}>
 
             <h2>
               Costo total estimado:
+              {" "}
+              {totalEstimado.toLocaleString("es-PY")}
             </h2>
 
-            <button style={{
-              background: "#FFCC00",
-              padding: "10px 30px",
-              borderRadius: 12,
-              border: "1px solid black",
-              fontWeight: "bold",
-              cursor: "pointer"
-            }}>
+            <button style={styles.botonGuardar}>
               Guardar
             </button>
 
@@ -278,7 +382,179 @@ export default function NuevosPedidos({
 
         </div>
 
-      </div>
+      </main>
+
     </div>
   );
 }
+
+const styles = {
+
+  pagina: {
+    display: "flex",
+    minHeight: "100vh",
+    background: "#F5F5F5",
+  },
+
+  contenido: {
+    flex: 1,
+    padding: 20,
+    display: "flex",
+    flexDirection: "column",
+    gap: 20,
+  },
+
+  encabezado: {
+    display: "flex",
+    alignItems: "center",
+    gap: 20,
+  },
+
+  botonVolver: {
+    border: "none",
+    background: "transparent",
+    cursor: "pointer",
+  },
+
+  titulo: {
+    fontSize: 42,
+    fontWeight: 700,
+    margin: 0,
+    textAlign: "center",
+    fontFamily: "Lato",
+  },
+
+  separador: {
+    height: 4,
+    background: "#000",
+    marginTop: 10,
+  },
+
+  card: {
+    background: "#ffffff",
+    borderRadius: 16,
+    padding: 20,
+    border: "1px solid #000000",
+  },
+
+  cardTitulo: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 10,
+    fontWeight: "bold",
+    fontSize: 24,
+    marginBottom: 20,
+  },
+
+  controles: {
+    display: "flex",
+    gap: 15,
+    alignItems: "center",
+    marginBottom: 20,
+    flexWrap: "wrap",
+  },
+
+  inputBusqueda: {
+    flex: 1,
+    minWidth: 250,
+    padding: 10,
+    borderRadius: 8,
+    border: "1px solid #000000",
+  },
+
+  cantidadContainer: {
+    display: "flex",
+    alignItems: "center",
+    gap: 10,
+  },
+
+  inputCantidad: {
+    width: 80,
+    padding: 8,
+  },
+
+  botonAgregar: {
+    background: getColor("amarillo"),
+    border: "1px solid #000",
+    borderRadius: 20,
+    padding: "10px 20px",
+    cursor: "pointer",
+    fontWeight: "bold",
+  },
+
+  botonSecundario: {
+    background: "#ffffff",
+    border: "1px solid #000000",
+    borderRadius: 20,
+    padding: "10px 20px",
+    cursor: "pointer",
+  },
+
+  infoProducto: {
+    background: getColor("gris-claro"),
+    borderRadius: 16,
+    padding: 20,
+    display: "flex",
+    gap: 30,
+    alignItems: "center",
+  },
+
+  iconoContainer: {
+    width: 100,
+    height: 100,
+    borderRadius: 12,
+    background: "#FFF",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  infoGrid: {
+    flex: 1,
+    display: "grid",
+    gridTemplateColumns: "1fr 1fr 1fr 1fr",
+    rowGap: 15,
+    columnGap: 30,
+    alignItems: "center",
+  },
+
+  cardTabla: {
+    background: "#ffffff",
+    borderRadius: 16,
+    padding: 20,
+    border: "1px solid #000000",
+  },
+
+  subtitulo: {
+    textAlign: "center",
+    marginBottom: 20,
+    fontFamily: "Lato",
+  },
+
+  footer: {
+    marginTop: 20,
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+
+  botonGuardar: {
+    background: getColor("amarillo"),
+    border: "1px solid #000",
+    borderRadius: 20,
+    padding: "10px 30px",
+    fontWeight: "bold",
+    cursor: "pointer",
+  },
+
+  iconButton: {
+    border: "none",
+    background: getColor("amarillo"),
+    borderRadius: 4,
+    cursor: "pointer",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+  }
+};
