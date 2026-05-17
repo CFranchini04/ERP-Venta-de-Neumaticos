@@ -354,16 +354,8 @@ export function IconoDropdown({ hovered, active }) {
 
 export function IconoMenos({ hovered, active }) {
   return (
-<<<<<<< HEAD
     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 16 16">
 	    <path fill="currentColor" fillRule="evenodd" d="M8 1a7 7 0 1 0 0 14A7 7 0 0 0 8 1M4 7.5v1h8v-1z" clipRule="evenodd"></path>
     </svg>
   );
 }
-=======
-    <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 16 16">
-	    <path fill="currentColor" fillRule="evenodd" d="M8 1a7 7 0 1 0 0 14A7 7 0 0 0 8 1M4 7.5v1h8v-1z" clipRule="evenodd"></path>
-    </svg>
-  );
-}
->>>>>>> 1c909c45503bfcffe4622760b2b92d1f5eb304f2
