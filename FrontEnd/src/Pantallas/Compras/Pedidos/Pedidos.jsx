@@ -95,14 +95,24 @@ export default function Pedidos({ usuario, onNavegar, onLogout }) {
     <div style={{ display: 'flex', height: '100vh' }}>
       <Sidebar usuario={usuario} onNavegar={onNavegar} onLogout={onLogout} />
 
-      <div style={{ flex: 1, padding: '40px', background: '#F9F9F9' }}>
-        <h1 className="titulo">Pedidos</h1>
+      <div style={{
+            flex: 1,
+            padding: '10px',
+            background: '#ffffff',
+            textAlign: 'center',
+          }}
+        >
+          <h1 className="titulo" 
+            >Pedidos</h1>
 
-        <div style={{ width: '100%', height: '100%', paddingLeft: 25, paddingRight: 25, paddingTop: 10, paddingBottom: 10, overflow: 'hidden', flexDirection: 'column', justifyContent: 'flex-start', alignItems: 'center', gap: 10, display: 'inline-flex' }}>
+          
 
-          <div style={{ alignSelf: 'stretch', flex: '1 1 0', paddingLeft: 25, paddingRight: 25, paddingTop: 10, paddingBottom: 10, background: getColor('blanco'), boxShadow: '0px 2px 8px rgba(0, 0, 0, 0.25)', overflow: 'hidden', borderRadius: 16, outline: '1px #444444 solid', flexDirection: 'column', justifyContent: 'flex-start', alignItems: 'center', gap: 10, display: 'flex' }}>
 
-            <div style={{ alignSelf: 'stretch', padding: 10, overflow: 'hidden', justifyContent: 'flex-start', alignItems: 'center', gap: 25, display: 'inline-flex' }}>
+        <div style={{ width: '100%', height: '100%', paddingLeft: 20, paddingRight: 20, paddingTop: 10, paddingBottom: 10, overflow: 'hidden', flexDirection: 'column', justifyContent: 'flex-start', alignItems: 'center', gap: 10, display: 'inline-flex' }}>
+
+          <div style={{ alignSelf: 'stretch', flex: '1 1 0', paddingLeft: 20, paddingRight: 20, paddingTop: 10, paddingBottom: 10, background: getColor('blanco'), boxShadow: '0px 2px 8px rgba(0, 0, 0, 0.25)', overflow: 'hidden', borderRadius: 16, outline: '1px #444444 solid', flexDirection: 'column', justifyContent: 'flex-start', alignItems: 'center', gap: 10, display: 'flex' }}>
+
+            <div style={{ alignSelf: 'stretch', padding: 10, overflow: 'hidden', justifyContent: 'flex-start', alignItems: 'center', gap: 15, display: 'inline-flex' }}>
 
               {/* BUSCADOR */}
               <div style={{ flex: '1 1 0', height: 30, background: '#F9F9F9', overflow: 'hidden', borderRadius: 8, outline: '1px #444444 solid', justifyContent: 'center', alignItems: 'center', display: 'flex' }}>
