@@ -1,207 +1,264 @@
-import React, { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
-import Sidebar from "../../../components/Sidebar";
-import { Button } from "../../../components/Buttons";
-import { getColor } from "../../../components/Colors";
-import Lista from "../../../components/Lista";
-import { IconoLupa, IconoCompras } from "../../../components/Icons";
-import List from "../../../components/Lista";
+import { useState } from "react";
+import { getColor } from "./Colors";
+import { Button } from "./Buttons";
 
-export default function Proveedores({ usuario, onLogout, onNavegar }) {
+function List({
+  data,
+  columns,
+  onRowClick,
+  selectable = false,
+  controls = [],
+  searchWidth = 250
+}) {
 
-    const [search, setSearch] = useState("");
-    const [orderBy, setOrderBy] = useState("");
-    const [filtroProveedor, setFiltroProveedor] = useState("");
-    const [proveedores, setProveedores] = useState([]);
+  const [selectedId, setSelectedId] = useState(null);
 
-    function handleVerProveedor() {
-        console.log("Ver proveedor");
+  const handleClick = (item) => {
+    if (selectable) {
+      setSelectedId(item.id);
     }
 
-
-    const columns = [
-        { key: "proveedor", label: "Proveedor" },
-        { key: "ruc", label: "RUC" },
-        { key: "ubicacion", label: "Ubicación" },
-        { key: "telefono", label: "Teléfono" },
-        { key: "entrega", label: "Tiempo de entrega" },
-        {
-            key: "acciones",
-            label: "Acciones",
-            render: (orden) => (
-                <div
-                    style={{
-                        display: "flex",
-                        justifyContent: "center",
-                        alignItems: "center",
-                        gap: 10,
-                        width: "100%"
-                    }}
-                >
-                    <button
-                        onClick={(e) => handleVerProveedor(orden, e)}
-                        style={{
-                            background: getColor("grisOscuro"),
-                            border: "none",
-                            borderRadius: 4,
-                            cursor: "pointer"
-                        }}
-                    >
-                        <IconoLupa color="#FFD600" />
-                    </button>
-                </div>
-            )
-        },
-        {
-            key: "acciones",
-            label: "Acciones",
-            render: (orden) => (
-                <div
-                    style={{
-                        display: "flex",
-                        justifyContent: "center",
-                        alignItems: "center",
-                        width: "100%"
-                    }}
-                >
-                    <button
-                        onClick={(e) => handleVerProveedor(orden, e)}
-                        style={{
-                            background: getColor("amarillo"),
-                            border: "none",
-                            borderRadius: 4,
-                            cursor: "pointer"
-                        }}
-                    >
-                        <IconoCompras size={24} />
-                    </button>
-                </div>
-            )
-        }
-    ];
-
-    function handleNuevo() {
-        //Deberia llevar a la pag de crear proveedor
-        console.log("Nuevo proveedor");
+    if (onRowClick) {
+      onRowClick(item);
     }
+  };
 
-    return (
-        <div style={styles.pagina}>
-            <Sidebar usuario={usuario} onLogout={onLogout} onNavegar={onNavegar} />
+  return (
+    <div style={styles.container}>
 
-            <main style={styles.contenido}>
-                <header style={styles.encabezado}>
-                    <h1 style={styles.titulo}>Proveedores</h1>
-                    <div style={styles.separador} />
-                </header>
+      {/* CONTROLES */}
+      <div style={styles.controlsContainer}>
 
-                <section style={styles.listaStyle}>
-                    <Lista
-                        data={[
-                            {
-                                proveedor: "Distribuidora Central",
-                                ruc: "80012345-6",
-                                ubicacion: "Asunción",
-                                telefono: "0981 123 456",
-                                entrega: "2 días"
-                            },
-                            {
-                                proveedor: "Importadora San José",
-                                ruc: "80198765-4",
-                                ubicacion: "Luque",
-                                telefono: "0972 555 888",
-                                entrega: "5 días"
-                            }
-                        ]}
-                        columns={columns}
-                        controls={[
-                            {
-                                type: "search",
-                                placeholder: "Buscar proveedor...",
-                                value: search,
-                                onChange: (e) => setSearch(e.target.value)
-                            },
-                            {
-                                type: "select",
-                                label: "Ordenar por:",
-                                placeholder: "Seleccionar",
-                                value: orderBy,
-                                onChange: (e) => setOrderBy(e.target.value),
+        {controls.map((control, i) => {
 
-                                options: [
-                                    { key: "proveedor", label: "Proveedor" },
-                                    { key: "ruc", label: "RUC" },
-                                    { key: "ubicacion", label: "Ubicación" },
-                                    { key: "telefono", label: "Teléfono" },
-                                    { key: "entrega", label: "Tiempo de entrega" },
+          if (control.type === "search") {
+            return (
+              <div
+                key={i}
+                style={{
+                  ...styles.searchContainer,
+                  width: searchWidth
+                }}
+              >
+                <input
+                  placeholder={control.placeholder || "Buscar..."}
+                  value={control.value || ""}
+                  onChange={control.onChange}
+                  style={styles.searchInput}
+                />
+              </div>
+            );
+          }
 
-                                ]
-                            },
-                            {
-                                type: "select",
-                                label: "Filtrar por:",
-                                placeholder: "Seleccionar",
-                                value: filtroProveedor,
-                                onChange: (e) => setFiltroProveedor(e.target.value),
+          if (control.type === "select") {
+            return (
+              <div key={i} style={styles.selectContainer}>
 
-                                options: [
-                                    { key: "proveedor", label: "Proveedor" },
-                                    { key: "ruc", label: "RUC" },
-                                    { key: "ubicacion", label: "Ubicación" },
-                                    { key: "telefono", label: "Teléfono" },
-                                    { key: "entrega", label: "Tiempo de entrega" },
+                <div style={styles.selectLabel}>
+                  {control.label || "Filtrar por:"}
+                </div>
 
-                                ]
+                <div style={styles.selectWrapper}>
+                  <select
+                    value={control.value || ""}
+                    onChange={control.onChange}
+                    style={styles.select}
+                  >
+                    <option value="">
+                      {control.placeholder || "Seleccionar"}
+                    </option>
 
-                            },
-                            {
-                                type: "button",
-                                label: "Registrar Proveedor",
-                                size: "lg",
-                                onClick: handleNuevo
-                            }
-                        ]}
-                        searchWidth={250}
-                    />
-                </section>
+                    {(control.options || []).map((opt, j) => (
+                      <option key={j} value={opt.key}>
+                        {opt.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
 
-            </main>
+              </div>
+            );
+          }
+
+          if (control.type === "button") {
+            return (
+              <Button
+                key={i}
+                label={control.label}
+                variant={control.variant || "amarillo"}
+                onClick={control.onClick}
+              />
+            );
+          }
+
+          return null;
+        })}
+      </div>
+
+      {/* TABLA */}
+      <div style={styles.tableContainer}>
+
+        <div
+          style={{
+            ...styles.header,
+            gridTemplateColumns: columns
+              .map(col => col.width || "1fr")
+              .join(" "),
+          }}
+        >
+          {columns.map((col, i) => (
+            <span key={i}>{col.label}</span>
+          ))}
         </div>
-    );
+
+        {data.map((item, index) => {
+
+          const isSelected = selectedId === item.id;
+
+          return (
+            <div
+              key={item.id || index}
+              onClick={() => {
+                if (selectable) handleClick(item);
+              }}
+              style={{
+                ...styles.row,
+                gridTemplateColumns: columns
+                  .map(col => col.width || "1fr")
+                  .join(" "),
+                cursor: onRowClick ? "pointer" : "default",
+                background: isSelected
+                  ? getColor("naranja")
+                  : index % 2 === 0
+                    ? getColor("blanco")
+                    : getColor("gris-claro"),
+              }}
+            >
+              {columns.map((col, i) => (
+                <span key={i} style={styles.cellText}>
+                  {col.render ? col.render(item) : item[col.key]}
+                </span>
+              ))}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
 }
 
 const styles = {
-    pagina: {
-        display: "flex",
-        minHeight: "100vh",
-        background: "#F5F5F5",
-    },
-    contenido: {
-        flex: 1,
-        padding: 20,
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-    },
-    encabezado: {
-        width: "100%",
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        gap: 10,
-        padding: "21px 0",
-    },
-    titulo: {
-        color: "#000000",
-        fontSize: 42,
-        fontFamily: "Lato, sans-serif",
-        fontWeight: 700,
-        margin: 0,
-        textAlign: "center",
-    },
-    separador: {
-        width: "min(1100px, 80%)",
-        height: 4,
-        background: "#000000",
-    },
+
+  container: {
+    width: "100%",
+    background: getColor("blanco"),
+    border: `2px solid ${getColor("grisOscuro")}`,
+    borderRadius: 12,
+    padding: 16,
+    boxShadow: "0px 2px 8px rgba(0,0,0,0.15)",
+    boxSizing: "border-box",
+    overflow: "hidden",
+  },
+
+  controlsContainer: {
+    display: "flex",
+    gap: 20,
+    marginBottom: 20,
+    alignItems: "center",
+    flexWrap: "wrap",
+  },
+
+  searchContainer: {
+    height: 40,
+    background: "#F9F9F9",
+    borderRadius: 8,
+    border: `1px solid ${getColor("grisOscuro")}`,
+    display: "flex",
+    alignItems: "center",
+    padding: "0 12px",
+  },
+
+  searchInput: {
+    border: "none",
+    outline: "none",
+    background: "transparent",
+    fontSize: 14,
+    fontFamily: "Lato",
+    width: "100%",
+    color: getColor("text"),
+  },
+
+  selectContainer: {
+    height: 40,
+    background: "#F9F9F9",
+    overflow: "hidden",
+    borderRadius: 8,
+    border: "1px solid #444444",
+    display: "flex",
+    alignItems: "center",
+  },
+
+  selectLabel: {
+    height: "100%",
+    padding: "0 12px",
+    background: "#F9F9F9",
+    borderRight: "1px solid #444444",
+    display: "flex",
+    alignItems: "center",
+    fontSize: 15,
+    fontFamily: "Lato",
+    fontWeight: "700",
+    color: "#1D1D1D",
+    whiteSpace: "nowrap",
+  },
+
+  selectWrapper: {
+    height: "100%",
+    padding: "0 10px",
+    display: "flex",
+    alignItems: "center",
+    background: "#F9F9F9",
+  },
+
+  select: {
+    border: "none",
+    outline: "none",
+    background: "transparent",
+    fontSize: 15,
+    fontFamily: "Lato",
+    cursor: "pointer",
+    color: "#444",
+  },
+
+  tableContainer: {
+    width: "100%",
+    borderRadius: 12,
+    overflow: "hidden",
+    border: `1px solid ${getColor("grisOscuro")}`,
+  },
+
+  header: {
+    display: "grid",
+    fontWeight: "bold",
+    background: getColor("amarillo"),
+    color: getColor("text"),
+    padding: 10,
+    textAlign: "center",
+    alignItems: "center",
+  },
+
+  row: {
+    display: "grid",
+    padding: 10,
+    alignItems: "center",
+    textAlign: "center",
+  },
+
+  cellText: {
+    color: getColor("text"),
+    textAlign: "center",
+    width: "100%",
+  },
 };
+
+export default List;
