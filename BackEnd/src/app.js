@@ -7,6 +7,7 @@ import ordPagoRoutes from './routes/compras/ordenesPago.routes.js'
 import pedidosRoutes from './routes/compras/pedidos.routes.js'
 import productosRoutes from './routes/misc/productos.routes.js'
 import facturasRoutes from './routes/compras/facturas.routes.js'
+import cotizacionesRoutes from './routes/compras/cotizaciones.routes.js'
 
 const app = express()
 
@@ -24,5 +25,5 @@ app.use('/api/compras/ordenes-pago', ordPagoRoutes)
 app.use('/api/compras/pedidos', pedidosRoutes)
 app.use('/api/misc/productos', productosRoutes)
 app.use('/api/compras/facturas', facturasRoutes)
-
+app.use('/api/compras/cotizaciones', cotizacionesRoutes)
 export default app
