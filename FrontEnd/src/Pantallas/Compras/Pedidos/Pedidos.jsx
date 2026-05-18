@@ -3,7 +3,6 @@ import Sidebar from "../../../components/Sidebar";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
-
 import {
   IconoLupa
 } from "../../../components/Icons";
@@ -11,7 +10,7 @@ import {
 import { getColor } from "../../../components/Colors";
 
 export default function Pedidos({ usuario, onNavegar, onLogout }) {
-
+ 
   const navigate = useNavigate();
   const [busqueda, setBusqueda] = useState("");
   const [filtroEstado, setFiltroEstado] = useState("Todos");
@@ -125,7 +124,7 @@ export default function Pedidos({ usuario, onNavegar, onLogout }) {
                     value={busqueda}
                     onChange={(e) => setBusqueda(e.target.value)}
                     style={{
-                      color: '#444444',
+                      color: '#000000',
                       fontSize: 16,
                       fontFamily: 'Lato',
                       fontWeight: '400',
@@ -146,7 +145,7 @@ export default function Pedidos({ usuario, onNavegar, onLogout }) {
               </div>
 
               {/* FILTRO */}
-              <div style={{ height: 30, background: '#F9F9F9', overflow: 'hidden', borderRadius: 8, outline: '1px #444444 solid', justifyContent: 'flex-start', alignItems: 'flex-start', display: 'flex' }}>
+              <div style={{ height: 30, background: '#ffffff', overflow: 'hidden', borderRadius: 8, outline: '1px #444444 solid', justifyContent: 'flex-start', alignItems: 'flex-start', display: 'flex' }}>
 
                 <div style={{ alignSelf: 'stretch', padding: 10, background: '#F9F9F9', overflow: 'hidden', borderRight: '1px #444444 solid', justifyContent: 'flex-start', alignItems: 'center', gap: 10, display: 'flex' }}>
                   <div style={{ color: '#1D1D1D', fontSize: 16, fontFamily: 'Lato', fontWeight: '700' }}>
@@ -198,7 +197,7 @@ export default function Pedidos({ usuario, onNavegar, onLogout }) {
                 </div>
               </div>
 
-              {/* BOTON */}
+               {/* BOTON */}
               <div
                 onClick={() => navigate("/compras/pedidos/nuevo-pedido")}
                 style={{
@@ -209,7 +208,7 @@ export default function Pedidos({ usuario, onNavegar, onLogout }) {
                   boxShadow: '0px 2px 2px rgba(0, 0, 0, 0.25)',
                   overflow: 'hidden',
                   borderRadius: 8,
-                  outline: '1px #444444 solid',
+                  outline: '1px #000000 solid',
                   justifyContent: 'center',
                   alignItems: 'center',
                   display: 'flex',
@@ -264,7 +263,7 @@ export default function Pedidos({ usuario, onNavegar, onLogout }) {
                     display: 'grid',
                     gridTemplateColumns: 'repeat(3, 1fr) 200px',
                     padding: 10,
-                    background: index % 2 === 0 ? '#F9F9F9' : '#CECECE',
+                    background: index % 2 === 0 ? '#ffffff' : '#CECECE',
                     alignItems: 'center'
                   }}
                 >
