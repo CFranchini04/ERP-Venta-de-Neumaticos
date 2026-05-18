@@ -1,6 +1,7 @@
 import express from 'express'
 import cors from 'cors'
 import authRoutes from './routes/auth/auth.routes.js'
+import proveedoresRoutes from './routes/compras/proveedores.routes.js'
 import ordenesCompraRoutes from './routes/compras/ordenesCompra.routes.js'
 import ordPagoRoutes from './routes/compras/ordenesPago.routes.js'
 import pedidosRoutes from './routes/compras/pedidos.routes.js'
@@ -17,6 +18,7 @@ app.get('/api/health', (req, res) => {
 })
 
 app.use('/auth', authRoutes)
+app.use('/api/compras/proveedores', proveedoresRoutes)
 app.use('/api/compras/ordenes-compra', ordenesCompraRoutes)
 app.use('/api/compras/ordenes-pago', ordPagoRoutes)
 app.use('/api/compras/pedidos', pedidosRoutes)
