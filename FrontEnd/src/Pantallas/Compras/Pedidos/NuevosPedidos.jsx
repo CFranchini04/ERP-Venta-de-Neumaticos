@@ -2,6 +2,7 @@ import React, { useMemo, useState } from "react";
 import Sidebar from "../../../components/Sidebar";
 import List from "../../../components/Lista";
 import SearchBar from "../../../components/Searchbar";
+import { useNavigate } from "react-router-dom";
 
 import {
   IconoLupa,
@@ -33,6 +34,8 @@ export default function NuevosPedidos({
   onNavegar,
   onLogout
 }) {
+
+  const navigate = useNavigate();
 
   // CANTIDAD
   const [cantidad, setCantidad] = useState(1);
@@ -126,10 +129,19 @@ export default function NuevosPedidos({
             title="Ver detalle"
             onClick={(e) => {
               e.stopPropagation();
-              // Aquí se puede añadir lógica de detalle a futuro
+              // 
             }}
           >
+          <button
+            onClick={() => navigate("/compras/pedidos/1")}
+            style={{
+              border: "none",
+              background: "transparent",
+              cursor: "pointer"
+            }}
+           > 
             <IconoLupa />
+          </button>
           </button>
 
           {/* Botón eliminar fila */}
