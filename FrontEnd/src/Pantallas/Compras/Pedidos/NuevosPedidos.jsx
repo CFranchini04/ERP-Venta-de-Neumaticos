@@ -6,8 +6,9 @@ import SearchBar from "../../../components/Searchbar";
 import {
   IconoLupa,
   IconoCalculadora,
-  IconoFlecha,
+  IconoSalir,
   IconoMas,
+  IconoCerrar,
   IconoMenos
 } from "../../../components/Icons";
 
@@ -41,6 +42,9 @@ export default function NuevosPedidos({
 
   // PRODUCTOS EN ORDEN
   const [ordenCompra, setOrdenCompra] = useState([]);
+
+  //MODAL REGISTRAR NUEVO PRODUCTO
+  const [mostrarModal, setMostrarModal] =useState(false);
 
   // AÑADIR A ORDEN
   // Se agrega un _uid único por fila para poder identificar y eliminar
@@ -164,7 +168,7 @@ export default function NuevosPedidos({
             onClick={() => onNavegar("pedidos")}
             style={styles.botonVolver}
           >
-            <IconoFlecha />
+            <IconoSalir />
           </button>
 
           <div style={{ flex: 1 }}>
@@ -238,7 +242,10 @@ export default function NuevosPedidos({
             </button>
 
             {/* REGISTRAR */}
-            <button style={styles.botonSecundario}>
+            <button 
+              style={styles.botonSecundario}
+              onClick={() => setMostrarModal(true)}
+            >
               Registrar Nuevo Producto
             </button>
 
@@ -318,6 +325,138 @@ export default function NuevosPedidos({
 
         </div>
 
+        {/* MODAL */}
+        {mostrarModal && (
+
+          <div style={styles.modalOverlay}>
+
+            <div style={styles.modal}>
+
+            {/* HEADER */}
+            <div style={styles.modalHeader}>
+
+              <h2 style={styles.modalTitulo}>
+                Producto
+              </h2>
+
+              <button
+                onClick={() => setMostrarModal(false)}
+                style={styles.botonCerrar}
+              >
+                <IconoCerrar/>
+              </button>
+
+            </div>
+
+            {/* CONTENIDO */}
+            <div style={styles.modalContenido}>
+
+              {/* IZQUIERDA */}
+              <div style={styles.modalIzquierda}>
+
+                <div style={styles.imagenProducto}>
+                  <IconoCalculadora />
+                </div>
+
+                <h2>
+                  Neumático Pirelli
+                </h2>
+
+              </div>
+
+              {/* DERECHA */}
+              <div style={styles.modalDerecha}>
+
+                <div style={styles.formGroup}>
+                  <label>
+                    Categoría del Producto:
+                  </label>
+
+                  <input
+                    defaultValue="Neumático de pista"
+                  />
+                </div>
+
+                <div style={styles.formGroup}>
+                  <label>
+                    Marca del Neumático:
+                  </label>
+
+                  <input
+                    defaultValue="Pirelli"
+                  />
+                </div>
+
+                <div style={styles.formGroup}>
+                  <label>
+                    Último Precio:
+                  </label>
+
+                  <input
+                    defaultValue="1.200.000"
+                  />
+                </div>
+
+                <div style={styles.formGroup}>
+                  <label>
+                    Inventario Mínimo:
+                  </label>
+
+                  <input
+                    defaultValue="10"
+                  />
+                </div>
+
+                <div style={styles.formGroup}>
+                  <label>
+                    Inventario Máximo:
+                  </label>
+
+                  <input
+                    defaultValue="250"
+                  />
+                </div>
+
+              </div>
+
+            </div>
+
+            {/* FOOTER */}
+            <div style={styles.modalFooter}>
+
+              <h2 style={{
+                textAlign: "center"
+              }}>
+                
+                "Se le enviará un pedido de cotización
+                a los siguientes proveedores:
+                <br />
+                Rust-eze, Dinoco, HTB, NFU2"
+              </h2>
+
+              <div style={styles.modalBotones}>
+
+                <button style={styles.botonAgregar}>
+                  Confirmar
+                </button>
+
+                <button
+                  style={styles.botonSecundario}
+                  onClick={() => setMostrarModal(false)}
+                >
+                  Cancelar
+                </button>
+
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      )}
+
       </main>
 
     </div>
@@ -329,7 +468,7 @@ const styles = {
   pagina: {
     display: "flex",
     minHeight: "100vh",
-    background: "#F5F5F5",
+    background: "#ffffff",
   },
 
   contenido: {
@@ -508,4 +647,100 @@ const styles = {
     justifyContent: "center",
     color: "#ffffff",
   },
+
+  modalOverlay: {
+    position: "fixed",
+    top: 0,
+    left: 0,
+    width: "100%",
+    height: "100%",
+    background: "rgba(0,0,0,0.5)",
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    zIndex: 999,
+  },
+
+  modal: {
+    width: "80%",
+    maxWidth: 900,
+    background: "#ffffff",
+    borderRadius: 24,
+    overflow: "hidden",
+    boxShadow: "0px 4px 20px rgba(0,0,0,0.4)",
+  },
+
+  modalHeader: {
+    background: getColor("amarillo"),
+    padding: "20px 30px",
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+
+  modalTitulo: {
+    margin: 0,
+    fontSize: 40,
+    fontWeight: "bold",
+  },
+
+  botonCerrar: {
+    border: "none",
+    background: "transparent",
+    cursor: "pointer",
+  },
+
+  modalContenido: {
+    display: "flex",
+    gap: 40,
+    padding: 40,
+  },
+
+  modalIzquierda: {
+    width: 250,
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    gap: 20,
+  },
+
+  imagenProducto: {
+    width: 180,
+    height: 180,
+    background: "#ffffff",
+    boxShadow: "0px 4px 20px rgba(0,0,0,0.4)",
+    borderRadius: 12,
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
+  modalDerecha: {
+    flex: 1,
+    display: "flex",
+    flexDirection: "column",
+    gap: 20,
+  },
+
+  formGroup: {
+    display: "grid",
+    gridTemplateColumns: "250px 1fr",
+    alignItems: "center",
+    gap: 20,
+  },
+
+  modalFooter: {
+    padding: 30,
+    display: "flex",
+    flexDirection: "column",
+    gap: 20,
+  },
+
+  modalBotones: {
+    display: "flex",
+    justifyContent: "flex-end",
+    gap: 20,
+  },
+
+
 };
