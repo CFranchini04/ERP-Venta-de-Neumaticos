@@ -3,7 +3,7 @@ import supabase from '../../config/supabase.js'
 const getAllOrdPago = async () => {
     const { data, error } = await supabase
         .from('ordenes_pago')
-        .select('*, proveedores(*, personas(*)), estados(nombre), detalles_orden_pago(*, facturas_compras(*), metodos_de_pago(*))')
+        .select('*, proveedores(*, personas(nombre)), estados(nombre), detalles_orden_pago(*, facturas_compras(*), metodos_de_pago(*))')
     if (error) throw new Error(error.message)
     return data
 }
@@ -11,7 +11,7 @@ const getAllOrdPago = async () => {
 const getOrdPago = async (id) => {
     const { data, error } = await supabase
         .from('ordenes_pago')
-        .select('*, proveedores(*, personas(*)), estados(nombre), detalles_orden_pago(*, facturas_compras(*), metodos_de_pago(*))')
+        .select('*, proveedores(*, personas(nombre)), estados(nombre), detalles_orden_pago(*, facturas_compras(*), metodos_de_pago(*))')
         .eq('id_orden_pago', id)
         .single()
     if (error) throw new Error(error.message)
@@ -21,7 +21,7 @@ const getOrdPago = async (id) => {
 const getOrdPagoByCodigo = async (codigo) => {
     const { data, error } = await supabase
         .from('ordenes_pago')
-        .select('*, proveedores(*, personas(*)), estados(nombre), detalles_orden_pago(*, facturas_compras(*), metodos_de_pago(*))')
+        .select('*, proveedores(*, personas(nombre)), estados(nombre), detalles_orden_pago(*, facturas_compras(*), metodos_de_pago(*))')
         .eq('codigo_orden_pago', codigo)
         .single()
     if (error) throw new Error(error.message)
