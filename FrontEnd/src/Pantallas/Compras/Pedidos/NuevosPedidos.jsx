@@ -2,6 +2,7 @@ import React, { useMemo, useState, useEffect } from "react";
 import Sidebar from "../../../components/Sidebar";
 import List from "../../../components/Lista";
 import SearchBar from "../../../components/Searchbar";
+import NuevoProductoModal from "./NuevoProductoModal";
 import { useNavigate } from "react-router-dom";
 
 import {
@@ -9,7 +10,6 @@ import {
   IconoCalculadora,
   IconoFlecha,
   IconoMas,
-  IconoCerrar,
   IconoMenos
 } from "../../../components/Icons";
 
@@ -37,11 +37,12 @@ export default function NuevosPedidos({ usuario, onNavegar, onLogout }) {
   const [ordenCompra, setOrdenCompra] = useState([]);
   const [proveedores, setProveedores] = useState([]);
   const [mostrarModalConfirmar, setMostrarModalConfirmar] = useState(false);
-  const [mostrarModal, setMostrarModal] = useState(false);
+  const [mostrarModalProducto, setMostrarModalProducto] = useState(false);
   const [guardando, setGuardando] = useState(false);
   const [errorGuardar, setErrorGuardar] = useState("");
+  // Forzar re-render del SearchBar para recargar lista tras crear producto
+  const [searchKey, setSearchKey] = useState(0);
 
-  // Carga proveedores desde el propio backend (mismo patrón que el resto del proyecto)
   useEffect(() => {
     const cargarProveedores = async () => {
       try {
@@ -88,7 +89,6 @@ export default function NuevosPedidos({ usuario, onNavegar, onLogout }) {
     setMostrarModalConfirmar(true);
   };
 
-  // Guarda cabecera + detalle a través del backend propio
   const handleConfirmarGuardar = async () => {
     setGuardando(true);
     setErrorGuardar("");
@@ -96,7 +96,6 @@ export default function NuevosPedidos({ usuario, onNavegar, onLogout }) {
     try {
       const codigoPedido = `PED_${Date.now()}`;
 
-      // 1. Insertar cabecera en pedidos_compras
       const resCabecera = await fetch(`${API_BASE}/compras/pedidos`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -113,7 +112,6 @@ export default function NuevosPedidos({ usuario, onNavegar, onLogout }) {
         throw new Error(dataCabecera?.message || "Error al crear el pedido");
       }
 
-      // El backend puede devolver el objeto directamente o dentro de una propiedad
       const idPedido =
         dataCabecera?.id_pedido ??
         dataCabecera?.pedido?.id_pedido ??
@@ -121,7 +119,6 @@ export default function NuevosPedidos({ usuario, onNavegar, onLogout }) {
 
       if (!idPedido) throw new Error("No se obtuvo el ID del pedido creado");
 
-      // 2. Insertar detalles en pedidos_compras_detalle
       const resDetalles = await fetch(`${API_BASE}/compras/pedidos/detalle`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -150,6 +147,13 @@ export default function NuevosPedidos({ usuario, onNavegar, onLogout }) {
     } finally {
       setGuardando(false);
     }
+  };
+
+  // Al crear un producto nuevo, refrescar el SearchBar y seleccionarlo
+  const handleProductoCreado = (nuevoProducto) => {
+    const mapeado = mapProductoFromAPI(nuevoProducto);
+    setProductoSeleccionado(mapeado);
+    setSearchKey((k) => k + 1); // fuerza remount del SearchBar para recargar
   };
 
   const columns = [
@@ -228,6 +232,7 @@ export default function NuevosPedidos({ usuario, onNavegar, onLogout }) {
 
           <div style={styles.controles}>
             <SearchBar
+              key={searchKey}
               apiUrl={`${API_BASE}/misc/productos`}
               queryParam="search"
               placeholder="Buscar producto ..."
@@ -263,7 +268,10 @@ export default function NuevosPedidos({ usuario, onNavegar, onLogout }) {
               Añadir a la Orden
             </button>
 
-            <button style={styles.botonSecundario} onClick={() => setMostrarModal(true)}>
+            <button
+              style={styles.botonSecundario}
+              onClick={() => setMostrarModalProducto(true)}
+            >
               Registrar Nuevo Producto
             </button>
           </div>
@@ -291,7 +299,6 @@ export default function NuevosPedidos({ usuario, onNavegar, onLogout }) {
         <div style={styles.cardTabla}>
           <h2 style={styles.subtitulo}>Orden de Compra</h2>
 
-          {/* Sin value/onChange en los controles para evitar el warning de React */}
           <List
             data={ordenCompra}
             columns={columns}
@@ -327,20 +334,16 @@ export default function NuevosPedidos({ usuario, onNavegar, onLogout }) {
         {mostrarModalConfirmar && (
           <div style={styles.modalOverlay}>
             <div style={styles.modalConfirmar}>
-
               <div style={styles.modalConfirmarTitulo}>
                 Confirmacion pedido a proveedor
               </div>
-
               <div style={styles.modalConfirmarCuerpo}>
                 <p style={styles.modalConfirmarTexto}>
                   Se le enviara un pedido de cotizacion a los siguientes proveedores:
                   <br />
                   <strong>{nombresProveedores}</strong>
                 </p>
-
                 {errorGuardar && <div style={styles.errorMsg}>{errorGuardar}</div>}
-
                 <div style={styles.modalConfirmarBotones}>
                   <button
                     style={{
@@ -353,7 +356,6 @@ export default function NuevosPedidos({ usuario, onNavegar, onLogout }) {
                   >
                     {guardando ? "Guardando..." : "Confirmar"}
                   </button>
-
                   <button
                     style={styles.botonCancelar}
                     onClick={() => { setMostrarModalConfirmar(false); setErrorGuardar(""); }}
@@ -367,57 +369,12 @@ export default function NuevosPedidos({ usuario, onNavegar, onLogout }) {
           </div>
         )}
 
-        {/* ── MODAL REGISTRAR NUEVO PRODUCTO ── */}
-        {mostrarModal && (
-          <div style={styles.modalOverlay}>
-            <div style={styles.modal}>
-              <div style={styles.modalHeader}>
-                <h2 style={styles.modalTitulo}>Producto</h2>
-                <button onClick={() => setMostrarModal(false)} style={styles.botonCerrar}>
-                  <IconoCerrar />
-                </button>
-              </div>
-
-              <div style={styles.modalContenido}>
-                <div style={styles.modalIzquierda}>
-                  <div style={styles.imagenProducto}><IconoCalculadora /></div>
-                  <h2>Neumático Pirelli</h2>
-                </div>
-                <div style={styles.modalDerecha}>
-                  <div style={styles.formGroup}>
-                    <label>Categoría del Producto:</label>
-                    <input defaultValue="Neumático de pista" />
-                  </div>
-                  <div style={styles.formGroup}>
-                    <label>Marca del Neumático:</label>
-                    <input defaultValue="Pirelli" />
-                  </div>
-                  <div style={styles.formGroup}>
-                    <label>Último Precio:</label>
-                    <input defaultValue="1.200.000" />
-                  </div>
-                  <div style={styles.formGroup}>
-                    <label>Inventario Mínimo:</label>
-                    <input defaultValue="10" />
-                  </div>
-                  <div style={styles.formGroup}>
-                    <label>Inventario Máximo:</label>
-                    <input defaultValue="250" />
-                  </div>
-                </div>
-              </div>
-
-              <div style={styles.modalFooter}>
-                <div style={styles.modalBotones}>
-                  <button style={styles.botonAgregar}>Confirmar</button>
-                  <button style={styles.botonSecundario} onClick={() => setMostrarModal(false)}>
-                    Cancelar
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
+        {/* ── MODAL NUEVO PRODUCTO ── */}
+        <NuevoProductoModal
+          open={mostrarModalProducto}
+          onClose={() => setMostrarModalProducto(false)}
+          onProductoCreado={handleProductoCreado}
+        />
 
       </main>
     </div>
@@ -512,25 +469,4 @@ const styles = {
     background: "#ffffff", border: "1px solid #999", borderRadius: 999,
     padding: "10px 24px", fontSize: 15, cursor: "pointer", fontFamily: "Lato, sans-serif",
   },
-  modal: {
-    width: "80%", maxWidth: 900, background: "#ffffff",
-    borderRadius: 24, overflow: "hidden", boxShadow: "0px 4px 20px rgba(0,0,0,0.4)",
-  },
-  modalHeader: {
-    background: getColor("amarillo"), padding: "20px 30px",
-    display: "flex", justifyContent: "space-between", alignItems: "center",
-  },
-  modalTitulo: { margin: 0, fontSize: 40, fontWeight: "bold" },
-  botonCerrar: { border: "none", background: "transparent", cursor: "pointer" },
-  modalContenido: { display: "flex", gap: 40, padding: 40 },
-  modalIzquierda: { width: 250, display: "flex", flexDirection: "column", alignItems: "center", gap: 20 },
-  imagenProducto: {
-    width: 180, height: 180, background: "#ffffff",
-    boxShadow: "0px 4px 20px rgba(0,0,0,0.4)", borderRadius: 12,
-    display: "flex", justifyContent: "center", alignItems: "center",
-  },
-  modalDerecha: { flex: 1, display: "flex", flexDirection: "column", gap: 20 },
-  formGroup: { display: "grid", gridTemplateColumns: "250px 1fr", alignItems: "center", gap: 20 },
-  modalFooter: { padding: 30, display: "flex", flexDirection: "column", gap: 20 },
-  modalBotones: { display: "flex", justifyContent: "flex-end", gap: 20 },
 };

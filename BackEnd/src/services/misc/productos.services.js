@@ -7,12 +7,13 @@ const searchProductos = async (search = '') => {
             id_producto,
             nombre,
             codigo,
+            descripcion,
             precio_compra,
             precio_venta,
             stock_actual,
             stock_minimo,
-            marcas(nombre),
-            categorias_productos(nombre)
+            marcas(id_marca, nombre),
+            categorias_productos(id_categoria, nombre)
         `)
 
     if (search && search.trim()) {
@@ -31,12 +32,13 @@ const getProducto = async (id) => {
             id_producto,
             nombre,
             codigo,
+            descripcion,
             precio_compra,
             precio_venta,
             stock_actual,
             stock_minimo,
-            marcas(nombre),
-            categorias_productos(nombre)
+            marcas(id_marca, nombre),
+            categorias_productos(id_categoria, nombre)
         `)
         .eq('id_producto', id)
         .single()
@@ -44,4 +46,43 @@ const getProducto = async (id) => {
     return data
 }
 
-export default { searchProductos, getProducto }
+const postProducto = async ({ nombre, codigo, descripcion, precio_compra, precio_venta, stock_actual, stock_minimo, id_marca, id_categoria }) => {
+    const { data, error } = await supabase
+        .from('productos')
+        .insert({ nombre, codigo, descripcion, precio_compra, precio_venta, stock_actual, stock_minimo, id_marca, id_categoria })
+        .select(`
+            id_producto,
+            nombre,
+            codigo,
+            descripcion,
+            precio_compra,
+            precio_venta,
+            stock_actual,
+            stock_minimo,
+            marcas(id_marca, nombre),
+            categorias_productos(id_categoria, nombre)
+        `)
+        .single()
+    if (error) throw new Error(error.message)
+    return data
+}
+
+const getAllMarcas = async () => {
+    const { data, error } = await supabase
+        .from('marcas')
+        .select('id_marca, nombre')
+        .order('nombre', { ascending: true })
+    if (error) throw new Error(error.message)
+    return data
+}
+
+const getAllCategorias = async () => {
+    const { data, error } = await supabase
+        .from('categorias_productos')
+        .select('id_categoria, nombre')
+        .order('nombre', { ascending: true })
+    if (error) throw new Error(error.message)
+    return data
+}
+
+export default { searchProductos, getProducto, postProducto, getAllMarcas, getAllCategorias }
