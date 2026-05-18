@@ -4,6 +4,8 @@ const router = Router()
 
 router.get('/', pedidosController.getAllPedidos)
 router.get('/tabla', pedidosController.getTablePedidos)
-router.get('/:id', pedidosController.getPedidos)    
+router.get('/:id', pedidosController.getPedidos) 
+router.post('/', pedidosController.postPedido)
+router.post('/detalle', pedidosController.postDetallePedido)   
 
 export default router;

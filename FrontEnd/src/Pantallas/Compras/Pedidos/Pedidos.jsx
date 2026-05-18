@@ -1,6 +1,8 @@
 import React from "react";
 import Sidebar from "../../../components/Sidebar";
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+
 
 import {
   IconoLupa
@@ -10,6 +12,7 @@ import { getColor } from "../../../components/Colors";
 
 export default function Pedidos({ usuario, onNavegar, onLogout }) {
 
+  const navigate = useNavigate();
   const [busqueda, setBusqueda] = useState("");
   const [filtroEstado, setFiltroEstado] = useState("Todos");
   const [orden, setOrden] = useState("default");
@@ -197,7 +200,7 @@ export default function Pedidos({ usuario, onNavegar, onLogout }) {
 
               {/* BOTON */}
               <div
-                onClick={() => onNavegar("nuevoPedido")}
+                onClick={() => navigate("/compras/pedidos/nuevo-pedido")}
                 style={{
                   height: 30,
                   paddingLeft: 20,

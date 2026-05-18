@@ -27,5 +27,22 @@ const getTablePedidos = async (req, res) => {
         res.status(400).json({ message: error.message })
     }
 }
+const postPedido = async (req, res) => {
+    try {
+        const pedido = await pedidosService.postPedido(req.body)
+        res.status(201).json(pedido)
+    } catch (error) {
+        res.status(400).json({ message: error.message })
+    }
+}
 
-export default { getAllPedidos, getPedidos, getTablePedidos }   
+const postDetallePedido = async (req, res) => {
+    try {
+        const detalles = await pedidosService.postDetallePedido(req.body)
+        res.status(201).json(detalles)
+    } catch (error) {
+        res.status(400).json({ message: error.message })
+    }
+}
+
+export default { getAllPedidos, getPedidos, getTablePedidos, postPedido, postDetallePedido }   

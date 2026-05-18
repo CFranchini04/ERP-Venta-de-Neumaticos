@@ -24,4 +24,24 @@ const getTablePedidos = async () => {
     if(error)throw new Error (error.message);
     return data;
 }
-export default {getAllPedidos, getPedidos, getTablePedidos}
+
+const postPedido = async ({ fecha_creacion, precio_total, id_estado, codigo_pedido }) => {
+    const { data, error } = await supabase
+        .from('pedidos_compras')
+        .insert({ fecha_creacion, precio_total, id_estado, codigo_pedido })
+        .select()
+        .single()
+    if (error) throw new Error(error.message)
+    return data
+}
+ 
+
+const postDetallePedido = async (detalles) => {
+    const { data, error } = await supabase
+        .from('pedidos_compras_detalle')
+        .insert(detalles)
+        .select()
+    if (error) throw new Error(error.message)
+    return data
+}
+export default {getAllPedidos, getPedidos, getTablePedidos, postPedido, postDetallePedido}
