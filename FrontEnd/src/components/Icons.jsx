@@ -352,10 +352,18 @@ export function IconoDropdown({ hovered, active }) {
   );
 }
 
-export function IconoMenos({ hovered, active }) {
+export function IconoMenos() {
   return (
     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 16 16">
 	    <path fill="currentColor" fillRule="evenodd" d="M8 1a7 7 0 1 0 0 14A7 7 0 0 0 8 1M4 7.5v1h8v-1z" clipRule="evenodd"></path>
+    </svg>
+  );
+}
+
+export function IconoCerrar() {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 20 20">
+	    <path fill="currentColor" d="M2.93 17.07A10 10 0 1 1 17.07 2.93A10 10 0 0 1 2.93 17.07M11.4 10l2.83-2.83l-1.41-1.41L10 8.59L7.17 5.76L5.76 7.17L8.59 10l-2.83 2.83l1.41 1.41L10 11.41l2.83 2.83l1.41-1.41L11.41 10z"></path>
     </svg>
   );
 }
