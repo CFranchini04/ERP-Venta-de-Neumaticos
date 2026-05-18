@@ -5,5 +5,6 @@ export { default as OrdenesCompra } from './OrdenesCompra/OrdenesCompra';
 export { default as OrdenesPago } from './OrdenesPago/OrdenesPago';
 export { default as Facturas } from './Facturas/Facturas';
 export { default as Proveedores } from './Proveedores/Proveedores';
-export { default as NuevoPedido } from './Pedidos/NuevosPedidos';
+export { default as NuevosPedidos } from './Pedidos/NuevosPedidos';
+export { default as DetallePedido } from './Pedidos/DetallePedido';
 export { default as InformacionOrden } from './OrdenesCompra/InformacionOrden';
