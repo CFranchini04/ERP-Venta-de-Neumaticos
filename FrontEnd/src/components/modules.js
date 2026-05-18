@@ -5,7 +5,7 @@ import { IconoCompras, IconoTesoreria, IconoVentas, IconoRRHH, IconoContabilidad
 
 export const MODULOS = [
   { id: 'rrhh',        label: 'RRHH',          icon: <IconoRRHH /> },
-  { id: 'compras',     label: 'Compras',       icon: <IconoCompras /> },
+  { id: 'compras',     label: 'Compras',       icon: <IconoCompras size={110} /> },
   { id: 'ventas',      label: 'Ventas',        icon: <IconoVentas /> },
   { id: 'tesoreria',   label: 'Tesorería',     icon: <IconoTesoreria /> },
   { id: 'contabilidad',label: 'Contabilidad',  icon: <IconoContabilidad /> },
