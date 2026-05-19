@@ -3,7 +3,6 @@ import Sidebar from "../../../components/Sidebar";
 import List from "../../../components/Lista";
 
 import {
-  IconoEditar,
   IconoSalir
 } from "../../../components/Icons";
 
@@ -15,8 +14,19 @@ export default function DetallePedido({
   onLogout
 }) {
 
-  const [busqueda, setBusqueda] = useState("");
-  const [orden, setOrden] = useState("");
+const [busqueda, setBusqueda] = useState("");
+const [orden, setOrden] = useState("");
+const [tabActiva, setTabActiva] = useState("detalle");
+
+
+const [busquedaDetalle, setBusquedaDetalle] = useState("");
+const [ordenDetalle, setOrdenDetalle] = useState("default");
+
+
+const [busquedaCot, setBusquedaCot] = useState("");
+const [ordenCot, setOrdenCot] = useState("default");
+
+
 
   const productos = [
     {
@@ -61,6 +71,55 @@ export default function DetallePedido({
     }
   ];
 
+  const cotizaciones = [
+  {
+    id: "01",
+    producto: "Neumático Nieve",
+    proveedor: "Good Year",
+    estado: "Pendiente",
+    cantidad: 100,
+    precio: "1.350.000",
+    subtotal: "135.000.000"
+  },
+  {
+    id: "02",
+    producto: "Neumático Liso",
+    proveedor: "Pirelli",
+    estado: "Pendiente",
+    cantidad: 20,
+    precio: "2.000.000",
+    subtotal: "40.000.000"
+  },
+  {
+    id: "03",
+    producto: "Neumático Blando",
+    proveedor: "Continental",
+    estado: "Pendiente",
+    cantidad: 50,
+    precio: "850.000",
+    subtotal: "42.500.000"
+  },
+  {
+    id: "04",
+    producto: "Neumático Medio",
+    proveedor: "Bridgestone",
+    estado: "Pendiente",
+    cantidad: 35,
+    precio: "5.300.000",
+    subtotal: "450.500.000"
+  }
+];
+
+const productosFiltrados = productos
+    .filter((p) =>
+      p.producto.toLowerCase().includes(busquedaDetalle.toLowerCase())
+    );
+
+const cotizacionesFiltradas = cotizaciones
+    .filter((c) =>
+      c.producto.toLowerCase().includes(busquedaCot.toLowerCase())
+    );
+
   const columns = [
     { key: "id", label: "" },
     { key: "producto", label: "Producto" },
@@ -72,22 +131,27 @@ export default function DetallePedido({
       key: "precio",
       label: "Precio",
       render: (item) => (
-        <span style={{ color: "#2BA84A" }}>
+        <span style={{ color: "#000000" }}>
           {item.precio}
         </span>
       )
     },
     { key: "subtotal", label: "Subtotal estimado" },
-    {
-      key: "acciones",
-      label: "",
-      render: () => (
-        <button style={styles.botonAccion}>
-          <IconoEditar />
-        </button>
-      )
-    }
+   
   ];
+
+  const columnsCotizaciones = [
+    { key: "id", label: "#" },
+    { key: "producto", label: "Producto" },
+    { key: "proveedor", label: "Proveedor" },
+    { key: "estado", label: "Estado" },
+    { key: "cantidad", label: "Cantidad" },
+    { key: "precio", label: "Precio" },
+    { key: "subtotal", label: "Subtotal estimado" },
+   
+  ];
+
+  
 
   return (
     <div style={styles.pagina}>
@@ -148,57 +212,123 @@ export default function DetallePedido({
         {/* TABS */}
         <div style={styles.tabs}>
 
-          <div style={styles.tabActiva}>
+          <div
+            onClick={() => setTabActiva("detalle")}
+            style={
+              tabActiva === "detalle"
+                ? styles.tabActiva
+                : styles.tab
+            }
+          >
             Detalle del pedido
           </div>
 
-          <div style={styles.tab}>
+          <div
+            onClick={() => setTabActiva("cotizaciones")}
+            style={
+              tabActiva === "cotizaciones"
+                ? styles.tabActiva
+                : styles.tab
+            }
+          >
             Cotizaciones del pedido
           </div>
 
         </div>
 
-        {/* TABLA */}
-        <div style={styles.cardTabla}>
+        {/* CONTENIDO SEGUN TAB */}
+        {tabActiva === "detalle" && (
+          <div style={styles.cardTabla}>
 
-          <List
-            data={productos}
-            columns={columns}
-            controls={[
-              {
-                type: "search",
-                placeholder: "Buscar producto ...",
-                value: busqueda,
-                onChange: (e) => setBusqueda(e.target.value)
-              },
-              {
-                type: "select",
-                placeholder: "Ordenar por",
-                value: orden,
-                onChange: (e) => setOrden(e.target.value),
-                options: [
-                  {
-                    key: "default",
-                    label: "Por defecto"
-                  }
-                ]
-              }
-            ]}
-          />
+            <List
+              data={productosFiltrados}
+              columns={columns}
+              controls={[
+                {
+                  type: "search",
+                  placeholder: "Buscar producto...",
+                  value: busquedaDetalle,
+                  onChange: (e) => setBusquedaDetalle(e.target.value)
+                },
+                {
+                  type: "select",
+                  label: "Ordenar por",
+                  value: ordenDetalle,
+                  onChange: (e) => setOrdenDetalle(e.target.value),
+                  options: [
+                    { key: "default", label: "Por defecto", label: "SubTotal"  }
+                  ]
+                }
+              ]}
+            />
 
-          <div style={styles.footer}>
+            <div style={styles.footer}>
 
-            <h2>
-              Costo total estimado:
-            </h2>
+              <h2>
+                Costo total estimado:
+              </h2>
 
-            <button style={styles.botonGuardar}>
-              Guardar
-            </button>
+              <button style={styles.botonGuardar}>
+                Guardar
+              </button>
+
+            </div>
 
           </div>
+        )}
 
-        </div>
+        {tabActiva === "cotizaciones" && (
+          <div style={styles.cardTabla}>
+
+            <List
+              data={cotizacionesFiltradas}
+              columns={columnsCotizaciones}
+              controls={[
+                {
+                  type: "search",
+                  placeholder: "Buscar cotización...",
+                  value: busquedaCot,
+                  onChange: (e) => setBusquedaCot(e.target.value)
+                },
+                {
+                  type: "select",
+                  label: "Ordenar por",
+                  value: ordenCot,
+                  onChange: (e) => setOrdenCot(e.target.value),
+                  options: [
+                    { key: "default", label: "Por defecto" }
+                  ]
+                },
+                {
+                  type: "button",
+                  label: "Cargar Cotización",
+                  onClick: () => console.log("Cargar cotización")
+                }
+              ]}
+            />
+
+            <div style={styles.footer}>
+
+              <h2>
+                Costo total estimado:
+              </h2>
+
+              <div style={{ display: "flex", gap: 10 }}>
+
+                <button style={styles.botonGuardar}>
+                  Guardar
+                </button>
+
+                <button style={styles.botonGuardar}>
+                  Generar orden de compra
+                </button>
+
+              </div>
+
+            </div>
+
+          </div>
+        )}
 
       </main>
     </div>
@@ -210,7 +340,7 @@ const styles = {
   pagina: {
     display: "flex",
     minHeight: "100vh",
-    background: "#F5F5F5"
+    background: "#ffffff"
   },
 
   contenido: {
@@ -245,7 +375,7 @@ const styles = {
   },
 
   card: {
-    background: "#FFF",
+    background: "#ffffff",
     borderRadius: 16,
     padding: 20,
     border: "1px solid #000000",
@@ -277,11 +407,12 @@ const styles = {
     background: getColor("blanco"),
     padding: 12,
     textAlign: "center",
-    boxShadow: "0px 2px 10px rgba(0,0,0,0.2)",
+    boxShadow: "0px 2px 10px rgba(0, 0, 0, 0.2)",
     borderTopLeftRadius: 16,
     borderTopRightRadius: 16,
-    borderBottom: `3px solid ${getColor("amarillo")}`,
-    fontWeight: "bold"
+    borderBottom: `5px solid ${getColor("amarillo")}`,
+    fontWeight: "bold",
+    cursor: "pointer"
   },
 
   tab: {
@@ -289,7 +420,9 @@ const styles = {
     padding: 12,
     textAlign: "center",
     borderTopLeftRadius: 16,
-    borderTopRightRadius: 16
+    borderTopRightRadius: 16,
+    cursor: "pointer"
+    
   },
 
   cardTabla: {
@@ -304,12 +437,13 @@ const styles = {
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
-    marginTop: 20
+    marginTop: 20,
+    
   },
 
   botonGuardar: {
     background: getColor("amarillo"),
-    border: "1px solid #000",
+    border: "1px solid #000000",
     borderRadius: 999,
     padding: "10px 30px",
     cursor: "pointer",
