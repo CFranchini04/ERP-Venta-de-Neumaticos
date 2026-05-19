@@ -1,405 +1,472 @@
-import React, { useState, useEffect } from "react";
-import { IconoCerrar } from "../../../components/Icons";
+import React, { useMemo, useState, useEffect } from "react";
+import Sidebar from "../../../components/Sidebar";
+import List from "../../../components/Lista";
+import SearchBar from "../../../components/Searchbar";
+import NuevoProductoModal from "./NuevoProductoModal";
+import { useNavigate } from "react-router-dom";
+
+import {
+  IconoLupa,
+  IconoCalculadora,
+  IconoFlecha,
+  IconoMas,
+  IconoMenos
+} from "../../../components/Icons";
+
 import { getColor } from "../../../components/Colors";
 
 const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:9128/api";
 
-const FORM_INICIAL = {
-  nombre: "",
-  codigo: "",
-  descripcion: "",
-  precio_compra: "",
-  precio_venta: "",
-  stock_actual: "",
-  stock_minimo: "",
-  id_marca: "",
-  id_categoria: "",
-};
+const mapProductoFromAPI = (p) => ({
+  id:               p.id_producto,
+  nombre:           p.nombre          || "",
+  categoria:        p.categorias_productos?.nombre || "",
+  marca:            p.marcas?.nombre   || "",
+  inventario:       p.stock_actual     ?? 0,
+  inventarioMinimo: p.stock_minimo     ?? 0,
+  inventarioMaximo: null,
+  precio:           Number(p.precio_compra ?? 0),
+});
 
-export default function NuevoProductoModal({ open, onClose, onProductoCreado }) {
-  const [form, setForm] = useState(FORM_INICIAL);
-  const [marcas, setMarcas] = useState([]);
-  const [categorias, setCategorias] = useState([]);
+export default function NuevosPedidos({ usuario, onNavegar, onLogout }) {
+
+  const navigate = useNavigate();
+
+  const [cantidad, setCantidad] = useState(1);
+  const [productoSeleccionado, setProductoSeleccionado] = useState(null);
+  const [ordenCompra, setOrdenCompra] = useState([]);
+  const [proveedores, setProveedores] = useState([]);
+  const [mostrarModalConfirmar, setMostrarModalConfirmar] = useState(false);
+  const [mostrarModalProducto, setMostrarModalProducto] = useState(false);
   const [guardando, setGuardando] = useState(false);
-  const [error, setError] = useState("");
-  const [cargando, setCargando] = useState(true);
+  const [errorGuardar, setErrorGuardar] = useState("");
+  // Forzar re-render del SearchBar para recargar lista tras crear producto
+  const [searchKey, setSearchKey] = useState(0);
 
   useEffect(() => {
-    if (!open) return;
-    setForm(FORM_INICIAL);
-    setError("");
-
-    const cargarOpciones = async () => {
+    const cargarProveedores = async () => {
       try {
-        setCargando(true);
-        const [resMarcas, resCat] = await Promise.all([
-          fetch(`${API_BASE}/misc/productos/marcas`),
-          fetch(`${API_BASE}/misc/productos/categorias`),
-        ]);
-        const [dataMarcas, dataCat] = await Promise.all([
-          resMarcas.json(),
-          resCat.json(),
-        ]);
-        setMarcas(Array.isArray(dataMarcas) ? dataMarcas : []);
-        setCategorias(Array.isArray(dataCat) ? dataCat : []);
+        const res = await fetch(`${API_BASE}/compras/proveedores`);
+        const data = await res.json();
+        if (Array.isArray(data)) {
+          setProveedores(data.map((p) => ({
+            id: p.id_proveedor,
+            nombre: `${p.personas?.nombre ?? ""} ${p.personas?.apellido ?? ""}`.trim(),
+          })));
+        }
       } catch (err) {
-        console.error("Error cargando marcas/categorías:", err);
-      } finally {
-        setCargando(false);
+        console.error("Error cargando proveedores:", err);
       }
     };
+    cargarProveedores();
+  }, []);
 
-    cargarOpciones();
-  }, [open]);
+  const agregarAOrden = () => {
+    if (!productoSeleccionado) return;
+    const subtotal = productoSeleccionado.precio * cantidad;
+    setOrdenCompra((prev) => [
+      ...prev,
+      { ...productoSeleccionado, cantidad, subtotal, _uid: Date.now() + Math.random() }
+    ]);
+    setCantidad(1);
+  };
 
-  if (!open) return null;
+  const eliminarDeOrden = (uid) => {
+    setOrdenCompra((prev) => prev.filter((item) => item._uid !== uid));
+  };
 
-  const handleChange = (campo, valor) =>
-    setForm((prev) => ({ ...prev, [campo]: valor }));
+  const totalEstimado = useMemo(
+    () => ordenCompra.reduce((acc, item) => acc + item.subtotal, 0),
+    [ordenCompra]
+  );
 
-  const handleGuardar = async () => {
-    if (!form.nombre.trim()) {
-      setError("El nombre del producto es obligatorio.");
+  const handleGuardarClick = () => {
+    if (ordenCompra.length === 0) {
+      setErrorGuardar("Debes agregar al menos un producto antes de guardar.");
       return;
     }
-    if (!form.id_marca) {
-      setError("Debes seleccionar una marca.");
-      return;
-    }
+    setErrorGuardar("");
+    setMostrarModalConfirmar(true);
+  };
 
-    setError("");
+  const handleConfirmarGuardar = async () => {
     setGuardando(true);
+    setErrorGuardar("");
 
     try {
-      const payload = {
-        nombre: form.nombre.trim(),
-        codigo: form.codigo.trim() || null,
-        descripcion: form.descripcion.trim() || null,
-        precio_compra: form.precio_compra !== "" ? Number(form.precio_compra) : null,
-        precio_venta: form.precio_venta !== "" ? Number(form.precio_venta) : null,
-        stock_actual: form.stock_actual !== "" ? Number(form.stock_actual) : null,
-        stock_minimo: form.stock_minimo !== "" ? Number(form.stock_minimo) : null,
-        id_marca: Number(form.id_marca),
-        id_categoria: form.id_categoria !== "" ? Number(form.id_categoria) : null,
-      };
+      const codigoPedido = `PED_${Date.now()}`;
 
-      const res = await fetch(`${API_BASE}/misc/productos`, {
+      const resCabecera = await fetch(`${API_BASE}/compras/pedidos`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+        body: JSON.stringify({
+          fecha_creacion: new Date().toISOString().split("T")[0],
+          precio_total: totalEstimado,
+          id_estado: 1,
+          codigo_pedido: codigoPedido,
+        }),
       });
 
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Error al crear el producto");
+      const dataCabecera = await resCabecera.json();
+      if (!resCabecera.ok) {
+        throw new Error(dataCabecera?.message || "Error al crear el pedido");
+      }
 
-      if (onProductoCreado) onProductoCreado(data);
-      onClose();
+      const idPedido =
+        dataCabecera?.id_pedido ??
+        dataCabecera?.pedido?.id_pedido ??
+        dataCabecera?.[0]?.id_pedido;
+
+      if (!idPedido) throw new Error("No se obtuvo el ID del pedido creado");
+
+      const resDetalles = await fetch(`${API_BASE}/compras/pedidos/detalle`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(
+          ordenCompra.map((item) => ({
+            id_pedido_compra: idPedido,
+            id_producto: item.id,
+            cantidad: item.cantidad,
+            precio: item.precio,
+            id_estado: 1,
+          }))
+        ),
+      });
+
+      const dataDetalles = await resDetalles.json();
+      if (!resDetalles.ok) {
+        throw new Error(dataDetalles?.message || "Error al guardar los detalles");
+      }
+
+      setMostrarModalConfirmar(false);
+      navigate("/compras/pedidos");
+
     } catch (err) {
-      setError(err.message);
+      console.error("Error guardando pedido:", err);
+      setErrorGuardar(err.message || "Error inesperado al guardar");
     } finally {
       setGuardando(false);
     }
   };
 
-  return (
-    <div style={styles.overlay} onClick={onClose}>
-      <div style={styles.modal} onClick={(e) => e.stopPropagation()}>
+  // Al crear un producto nuevo, refrescar el SearchBar y seleccionarlo
+  const handleProductoCreado = (nuevoProducto) => {
+    const mapeado = mapProductoFromAPI(nuevoProducto);
+    setProductoSeleccionado(mapeado);
+    setSearchKey((k) => k + 1); // fuerza remount del SearchBar para recargar
+  };
 
-        {/* ── HEADER ── */}
-        <div style={styles.header}>
-          <h2 style={styles.headerTitulo}>Registrar Nuevo Producto</h2>
-          <button onClick={onClose} style={styles.botonCerrar} title="Cerrar">
-            <IconoCerrar />
+  const columns = [
+    { key: "id", label: "ID", width: "70px" },
+    { key: "nombre", label: "Producto" },
+    { key: "categoria", label: "Categoría" },
+    { key: "marca", label: "Marca" },
+    { key: "inventario", label: "Inventario" },
+    { key: "cantidad", label: "Cantidad" },
+    {
+      key: "precio",
+      label: "Último Precio",
+      render: (item) => item.precio.toLocaleString("es-PY")
+    },
+    {
+      key: "subtotal",
+      label: "Subtotal estimado",
+      render: (item) => item.subtotal.toLocaleString("es-PY")
+    },
+    {
+      key: "acciones",
+      label: "",
+      width: "90px",
+      render: (item) => (
+        <div style={styles.accionesCell}>
+          <button
+            style={styles.iconButton}
+            title="Ver detalle"
+            onClick={(e) => { e.stopPropagation(); }}
+          >
+            <IconoLupa />
+          </button>
+          <button
+            style={styles.iconButtonRojo}
+            title="Eliminar de la orden"
+            onClick={(e) => { e.stopPropagation(); eliminarDeOrden(item._uid); }}
+          >
+            <IconoMenos />
           </button>
         </div>
+      )
+    }
+  ];
 
-        {/* ── BODY ── */}
-        {cargando ? (
-          <div style={styles.cargando}>Cargando opciones...</div>
-        ) : (
-          <div style={styles.body}>
+  const nombresProveedores = proveedores.length > 0
+    ? proveedores.map((p) => p.nombre).join(", ")
+    : "Cargando proveedores...";
 
-            {/* Fila 1: Nombre + Código */}
-            <div style={styles.fila}>
-              <Campo label="Nombre *" style={{ flex: 2 }}>
-                <input
-                  style={styles.input}
-                  placeholder="Ej: Neumático Pirelli 195/65 R15"
-                  value={form.nombre}
-                  onChange={(e) => handleChange("nombre", e.target.value)}
-                />
-              </Campo>
-              <Campo label="Código" style={{ flex: 1 }}>
-                <input
-                  style={styles.input}
-                  placeholder="Ej: NEU-001"
-                  value={form.codigo}
-                  onChange={(e) => handleChange("codigo", e.target.value)}
-                />
-              </Campo>
-            </div>
+  return (
+    <div style={styles.pagina}>
+      <Sidebar usuario={usuario} onNavegar={onNavegar} onLogout={onLogout} />
 
-            {/* Fila 2: Marca + Categoría */}
-            <div style={styles.fila}>
-              <Campo label="Marca *" style={{ flex: 1 }}>
-                <select
-                  style={styles.select}
-                  value={form.id_marca}
-                  onChange={(e) => handleChange("id_marca", e.target.value)}
-                >
-                  <option value="">-- Seleccionar --</option>
-                  {marcas.map((m) => (
-                    <option key={m.id_marca} value={m.id_marca}>
-                      {m.nombre}
-                    </option>
-                  ))}
-                </select>
-              </Campo>
-              <Campo label="Categoría" style={{ flex: 1 }}>
-                <select
-                  style={styles.select}
-                  value={form.id_categoria}
-                  onChange={(e) => handleChange("id_categoria", e.target.value)}
-                >
-                  <option value="">-- Seleccionar --</option>
-                  {categorias.map((c) => (
-                    <option key={c.id_categoria} value={c.id_categoria}>
-                      {c.nombre}
-                    </option>
-                  ))}
-                </select>
-              </Campo>
-            </div>
+      <main style={styles.contenido}>
 
-            {/* Fila 3: Precio compra + Precio venta */}
-            <div style={styles.fila}>
-              <Campo label="Precio de Compra (Gs.)" style={{ flex: 1 }}>
-                <input
-                  style={styles.input}
-                  type="number"
-                  min="0"
-                  placeholder="0"
-                  value={form.precio_compra}
-                  onChange={(e) => handleChange("precio_compra", e.target.value)}
-                />
-              </Campo>
-              <Campo label="Precio de Venta (Gs.)" style={{ flex: 1 }}>
-                <input
-                  style={styles.input}
-                  type="number"
-                  min="0"
-                  placeholder="0"
-                  value={form.precio_venta}
-                  onChange={(e) => handleChange("precio_venta", e.target.value)}
-                />
-              </Campo>
-            </div>
+        {/* HEADER */}
+        <header style={styles.encabezado}>
+          <button
+            onClick={() => navigate("/compras/pedidos")}
+            style={styles.botonVolver}
+            title="Volver a pedidos"
+          >
+            <IconoFlecha />
+          </button>
+          <div style={{ flex: 1 }}>
+            <h1 style={styles.titulo}>Nuevo Pedido</h1>
+            <div style={styles.separador} />
+          </div>
+        </header>
 
-            {/* Fila 4: Stock actual + Stock mínimo */}
-            <div style={styles.fila}>
-              <Campo label="Stock Actual" style={{ flex: 1 }}>
-                <input
-                  style={styles.input}
-                  type="number"
-                  min="0"
-                  placeholder="0"
-                  value={form.stock_actual}
-                  onChange={(e) => handleChange("stock_actual", e.target.value)}
-                />
-              </Campo>
-              <Campo label="Stock Mínimo" style={{ flex: 1 }}>
-                <input
-                  style={styles.input}
-                  type="number"
-                  min="0"
-                  placeholder="0"
-                  value={form.stock_minimo}
-                  onChange={(e) => handleChange("stock_minimo", e.target.value)}
-                />
-              </Campo>
-            </div>
+        {/* CARD AGREGAR PRODUCTO */}
+        <div style={styles.card}>
+          <div style={styles.cardTitulo}>
+            <IconoMas />
+            <span>Añadir producto</span>
+          </div>
 
-            {/* Fila 5: Descripción */}
-            <Campo label="Descripción">
-              <textarea
-                style={{ ...styles.input, height: 80, resize: "vertical" }}
-                placeholder="Descripción opcional del producto..."
-                value={form.descripcion}
-                onChange={(e) => handleChange("descripcion", e.target.value)}
+          <div style={styles.controles}>
+            <SearchBar
+              key={searchKey}
+              apiUrl={`${API_BASE}/misc/productos`}
+              queryParam="search"
+              placeholder="Buscar producto ..."
+              fetchOnMount={true}
+              onSelect={(rawItem) => setProductoSeleccionado(mapProductoFromAPI(rawItem))}
+              onClear={() => setProductoSeleccionado(null)}
+              getLabel={(item) => item?.nombre || ""}
+              renderOption={(item) => (
+                <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                  <span style={{ fontWeight: 700, fontSize: 14 }}>{item.nombre}</span>
+                  <span style={{ fontSize: 12, color: "#888" }}>
+                    {item.categorias_productos?.nombre ?? "—"}
+                    {" · "}{item.marcas?.nombre ?? "—"}
+                    {" · Stock: "}{item.stock_actual ?? 0}
+                  </span>
+                </div>
+              )}
+              style={{ flex: 1, minWidth: 250 }}
+            />
+
+            <div style={styles.cantidadContainer}>
+              <span>Cantidad para añadir:</span>
+              <input
+                type="number"
+                min={1}
+                value={cantidad}
+                onChange={(e) => setCantidad(Number(e.target.value))}
+                style={styles.inputCantidad}
               />
-            </Campo>
+            </div>
 
-            {/* Error */}
-            {error && <div style={styles.error}>{error}</div>}
+            <button onClick={agregarAOrden} style={styles.botonAgregar}>
+              Añadir a la Orden
+            </button>
+
+            <button
+              style={styles.botonSecundario}
+              onClick={() => setMostrarModalProducto(true)}
+            >
+              Registrar Nuevo Producto
+            </button>
+          </div>
+
+          <div style={styles.infoProducto}>
+            <div style={styles.iconoContainer}><IconoCalculadora /></div>
+            <div style={styles.infoGrid}>
+              <div><strong>Nombre:</strong></div>
+              <div>{productoSeleccionado?.nombre || "-"}</div>
+              <div><strong>Último precio:</strong></div>
+              <div>{productoSeleccionado ? productoSeleccionado.precio.toLocaleString("es-PY") : "-"}</div>
+              <div><strong>Categoría:</strong></div>
+              <div>{productoSeleccionado?.categoria || "-"}</div>
+              <div><strong>Inventario mínimo:</strong></div>
+              <div>{productoSeleccionado?.inventarioMinimo ?? "-"}</div>
+              <div><strong>Marca:</strong></div>
+              <div>{productoSeleccionado?.marca || "-"}</div>
+              <div><strong>Inventario máximo:</strong></div>
+              <div>{productoSeleccionado?.inventarioMaximo ?? "-"}</div>
+            </div>
+          </div>
+        </div>
+
+        {/* ORDEN DE COMPRA */}
+        <div style={styles.cardTabla}>
+          <h2 style={styles.subtitulo}>Orden de Compra</h2>
+
+          <List
+            data={ordenCompra}
+            columns={columns}
+            selectable={false}
+            controls={[
+              { type: "search", placeholder: "Buscar producto..." },
+              {
+                type: "select",
+                placeholder: "Ordenar por",
+                options: [{ key: "default", label: "Por defecto" }]
+              }
+            ]}
+          />
+
+          {errorGuardar && <div style={styles.errorMsg}>{errorGuardar}</div>}
+
+          <div style={styles.footer}>
+            <h2>Costo total estimado: {totalEstimado.toLocaleString("es-PY")}</h2>
+            <button
+              style={{
+                ...styles.botonGuardar,
+                opacity: ordenCompra.length === 0 ? 0.5 : 1,
+                cursor: ordenCompra.length === 0 ? "not-allowed" : "pointer",
+              }}
+              onClick={handleGuardarClick}
+            >
+              Guardar
+            </button>
+          </div>
+        </div>
+
+        {/* ── MODAL CONFIRMACIÓN GUARDAR ── */}
+        {mostrarModalConfirmar && (
+          <div style={styles.modalOverlay}>
+            <div style={styles.modalConfirmar}>
+              <div style={styles.modalConfirmarTitulo}>
+                Confirmacion pedido a proveedor
+              </div>
+              <div style={styles.modalConfirmarCuerpo}>
+                <p style={styles.modalConfirmarTexto}>
+                  Se le enviara un pedido de cotizacion a los siguientes proveedores:
+                  <br />
+                  <strong>{nombresProveedores}</strong>
+                </p>
+                {errorGuardar && <div style={styles.errorMsg}>{errorGuardar}</div>}
+                <div style={styles.modalConfirmarBotones}>
+                  <button
+                    style={{
+                      ...styles.botonConfirmar,
+                      opacity: guardando ? 0.6 : 1,
+                      cursor: guardando ? "not-allowed" : "pointer",
+                    }}
+                    onClick={handleConfirmarGuardar}
+                    disabled={guardando}
+                  >
+                    {guardando ? "Guardando..." : "Confirmar"}
+                  </button>
+                  <button
+                    style={styles.botonCancelar}
+                    onClick={() => { setMostrarModalConfirmar(false); setErrorGuardar(""); }}
+                    disabled={guardando}
+                  >
+                    Cancelar
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         )}
 
-        {/* ── FOOTER ── */}
-        <div style={styles.footer}>
-          <button
-            style={styles.botonCancelar}
-            onClick={onClose}
-            disabled={guardando}
-          >
-            Cancelar
-          </button>
-          <button
-            style={{
-              ...styles.botonGuardar,
-              opacity: guardando || cargando ? 0.6 : 1,
-              cursor: guardando || cargando ? "not-allowed" : "pointer",
-            }}
-            onClick={handleGuardar}
-            disabled={guardando || cargando}
-          >
-            {guardando ? "Guardando..." : "Confirmar"}
-          </button>
-        </div>
+        {/* ── MODAL NUEVO PRODUCTO ── */}
+        <NuevoProductoModal
+          open={mostrarModalProducto}
+          onClose={() => setMostrarModalProducto(false)}
+          onProductoCreado={handleProductoCreado}
+        />
 
-      </div>
+      </main>
     </div>
   );
 }
 
-/* ── Campo wrapper ── */
-function Campo({ label, children, style = {} }) {
-  return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 6, ...style }}>
-      <label style={styles.label}>{label}</label>
-      {children}
-    </div>
-  );
-}
-
-/* ── Estilos ── */
 const styles = {
-  overlay: {
-    position: "fixed",
-    inset: 0,
-    background: "rgba(0,0,0,0.45)",
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    zIndex: 1000,
+  pagina: { display: "flex", minHeight: "100vh", background: "#ffffff" },
+  contenido: { flex: 1, padding: 20, display: "flex", flexDirection: "column", gap: 20 },
+  encabezado: { display: "flex", alignItems: "center", gap: 20 },
+  botonVolver: {
+    border: "none", background: "transparent", cursor: "pointer",
+    transform: "rotate(270deg)", display: "flex", alignItems: "center",
   },
-  modal: {
-    width: 680,
-    maxWidth: "95vw",
-    maxHeight: "92vh",
-    background: "#fff",
-    borderRadius: 16,
-    display: "flex",
-    flexDirection: "column",
-    overflow: "hidden",
-    boxShadow: "0 12px 40px rgba(0,0,0,0.3)",
+  titulo: { fontSize: 42, fontWeight: 700, margin: 0, textAlign: "center", fontFamily: "Lato" },
+  separador: { height: 4, background: "#000", marginTop: 10 },
+  card: { background: "#ffffff", borderRadius: 16, padding: 20, border: "1px solid #000000" },
+  cardTitulo: {
+    display: "flex", alignItems: "center", justifyContent: "center",
+    gap: 10, fontWeight: "bold", fontSize: 24, marginBottom: 20,
   },
-  header: {
-    background: getColor("amarillo"),
-    padding: "18px 24px",
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    flexShrink: 0,
+  controles: { display: "flex", gap: 15, alignItems: "center", marginBottom: 20, flexWrap: "wrap" },
+  cantidadContainer: { display: "flex", alignItems: "center", gap: 10 },
+  inputCantidad: { width: 80, padding: 8 },
+  botonAgregar: {
+    background: getColor("amarillo"), border: "1px solid #000",
+    borderRadius: 20, padding: "10px 20px", cursor: "pointer", fontWeight: "bold",
   },
-  headerTitulo: {
-    margin: 0,
-    fontSize: 24,
-    fontWeight: 700,
-    fontFamily: "Lato, sans-serif",
-    color: "#000",
+  botonSecundario: {
+    background: "#ffffff", border: "1px solid #000000",
+    borderRadius: 20, padding: "10px 20px", cursor: "pointer",
   },
-  botonCerrar: {
-    border: "none",
-    background: "transparent",
-    cursor: "pointer",
-    display: "flex",
-    alignItems: "center",
-    padding: 4,
+  infoProducto: {
+    background: getColor("gris-claro"), borderRadius: 16, padding: 20,
+    display: "flex", gap: 30, alignItems: "center",
   },
-  body: {
-    padding: "24px 28px",
-    overflowY: "auto",
-    flex: 1,
-    display: "flex",
-    flexDirection: "column",
-    gap: 18,
+  iconoContainer: {
+    width: 100, height: 100, borderRadius: 12, background: "#FFF",
+    display: "flex", alignItems: "center", justifyContent: "center",
   },
-  cargando: {
-    padding: 40,
-    textAlign: "center",
-    color: "#666",
-    fontFamily: "Lato, sans-serif",
-    fontSize: 16,
+  infoGrid: {
+    flex: 1, display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr",
+    rowGap: 15, columnGap: 30, alignItems: "center",
   },
-  fila: {
-    display: "flex",
-    gap: 16,
+  cardTabla: { background: "#ffffff", borderRadius: 16, padding: 20, border: "1px solid #000000" },
+  subtitulo: { textAlign: "center", marginBottom: 20, fontFamily: "Lato" },
+  footer: { marginTop: 20, display: "flex", justifyContent: "space-between", alignItems: "center" },
+  botonGuardar: {
+    background: getColor("amarillo"), border: "1px solid #000",
+    borderRadius: 20, padding: "10px 30px", fontWeight: "bold",
   },
-  label: {
-    fontSize: 13,
-    fontWeight: 700,
-    fontFamily: "Lato, sans-serif",
-    color: "#333",
+  errorMsg: {
+    color: "#E30613", background: "#fff0f0", border: "1px solid #E30613",
+    borderRadius: 8, padding: "10px 16px", marginTop: 10,
+    fontFamily: "Lato, sans-serif", fontSize: 14,
   },
-  input: {
-    padding: "10px 12px",
-    borderRadius: 8,
-    border: "1.5px solid #DADADA",
-    outline: "none",
-    fontSize: 14,
-    fontFamily: "Lato, sans-serif",
-    background: "#FAFAFA",
-    width: "100%",
-    boxSizing: "border-box",
-    transition: "border-color 0.2s",
+  accionesCell: { display: "flex", gap: 6, justifyContent: "center", alignItems: "center" },
+  iconButton: {
+    border: "none", background: getColor("amarillo"), borderRadius: 6,
+    cursor: "pointer", padding: 5, display: "flex", alignItems: "center", justifyContent: "center",
   },
-  select: {
-    padding: "10px 12px",
-    borderRadius: 8,
-    border: "1.5px solid #DADADA",
-    outline: "none",
-    fontSize: 14,
-    fontFamily: "Lato, sans-serif",
-    background: "#FAFAFA",
-    width: "100%",
-    boxSizing: "border-box",
-    cursor: "pointer",
+  iconButtonRojo: {
+    border: "none", background: getColor("negro"), borderRadius: 6,
+    cursor: "pointer", padding: 5, display: "flex", alignItems: "center",
+    justifyContent: "center", color: "#ffffff",
   },
-  error: {
-    background: "#fff0f0",
-    border: "1px solid #E30613",
-    borderRadius: 8,
-    padding: "10px 14px",
-    color: "#E30613",
-    fontSize: 14,
-    fontFamily: "Lato, sans-serif",
+  modalOverlay: {
+    position: "fixed", top: 0, left: 0, width: "100%", height: "100%",
+    background: "rgba(0,0,0,0.5)", display: "flex",
+    justifyContent: "center", alignItems: "center", zIndex: 999,
   },
-  footer: {
-    padding: "16px 28px",
-    borderTop: "1px solid #EBEBEB",
-    display: "flex",
-    justifyContent: "flex-end",
-    gap: 12,
-    flexShrink: 0,
-    background: "#fff",
+  modalConfirmar: {
+    width: 480, maxWidth: "90%", background: "#ffffff",
+    borderRadius: 16, overflow: "hidden", boxShadow: "0px 4px 20px rgba(0,0,0,0.4)",
+  },
+  modalConfirmarTitulo: {
+    background: "#f0f0f0", padding: "10px 20px", fontSize: 13,
+    color: "#555", fontFamily: "Lato, sans-serif", borderBottom: "1px solid #ddd",
+  },
+  modalConfirmarCuerpo: { padding: "30px 28px 24px", display: "flex", flexDirection: "column", gap: 20 },
+  modalConfirmarTexto: {
+    fontSize: 16, fontFamily: "Lato, sans-serif", fontWeight: 700,
+    textAlign: "center", lineHeight: 1.6, margin: 0,
+  },
+  modalConfirmarBotones: { display: "flex", justifyContent: "flex-end", gap: 12 },
+  botonConfirmar: {
+    background: getColor("amarillo"), border: "none", borderRadius: 999,
+    padding: "10px 24px", fontWeight: "bold", fontSize: 15,
+    cursor: "pointer", fontFamily: "Lato, sans-serif",
   },
   botonCancelar: {
-    padding: "10px 24px",
-    borderRadius: 999,
-    border: "1.5px solid #999",
-    background: "#fff",
-    cursor: "pointer",
-    fontSize: 15,
-    fontFamily: "Lato, sans-serif",
-  },
-  botonGuardar: {
-    padding: "10px 28px",
-    borderRadius: 999,
-    border: "none",
-    background: getColor("amarillo"),
-    cursor: "pointer",
-    fontSize: 15,
-    fontWeight: 700,
-    fontFamily: "Lato, sans-serif",
+    background: "#ffffff", border: "1px solid #999", borderRadius: 999,
+    padding: "10px 24px", fontSize: 15, cursor: "pointer", fontFamily: "Lato, sans-serif",
   },
 };
