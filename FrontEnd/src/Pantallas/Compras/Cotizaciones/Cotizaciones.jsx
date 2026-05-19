@@ -1,63 +1,109 @@
 import React from "react";
 import Sidebar from "../../../components/Sidebar";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 
 import {
   IconoLupa
 } from "../../../components/Icons";
 
+import { getColor } from "../../../components/Colors";
+
 export default function Cotizaciones({ usuario, onNavegar, onLogout }) {
-  const pedidosIniciales = [
-    { codigo: "COT_004", estado: "Aprobado", fecha: "2026-04-05" },
-    { codigo: "COT_003", estado: "En Espera", fecha: "2026-03-21" },
-    { codigo: "COT_002", estado: "Cancelado", fecha: "2026-01-30" },
-    { codigo: "COT_001", estado: "Aprobado", fecha: "2025-12-28" }
-  ];
+
+  const navigate = useNavigate();
+  
 
   const [busqueda, setBusqueda] = useState("");
   const [filtroEstado, setFiltroEstado] = useState("Todos");
   const [orden, setOrden] = useState("default");
+  const [cotizaciones, setCotizaciones] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const pedidosFiltrados = pedidosIniciales
-  .filter((p) => {
-    const texto = busqueda.toLowerCase();
-    return (
-      p.codigo.toLowerCase().includes(texto) ||
-      p.estado.toLowerCase().includes(texto) ||
-      p.fecha.toLowerCase().includes(texto)
-    );
-  })
-  .filter((p) =>
-    filtroEstado === "Todos" ? true : p.estado === filtroEstado
-  )
-  .sort((a, b) => {
-    if (orden === "fechaDesc") {
-      return new Date(b.fecha) - new Date(a.fecha); // más nuevos primero
-    }
 
-    if (orden === "fechaAsc") {
-      return new Date(a.fecha) - new Date(b.fecha);
-    }
-  
-    if (orden === "codigo") {
-      return a.codigo.localeCompare(b.codigo);
-    }
-  
-    return 0; // default
-  });
+  // FETCH AGREGADO
+
+  useEffect(() => {
+
+    const fetchCotizaciones = async () => {
+
+      try {
+
+        const response = await fetch(
+          "http://localhost:9128/api/compras/cotizaciones/tabla"
+        );
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.message);
+        }
+
+        setCotizaciones(data);
+
+      } catch (error) {
+
+        console.error(error.message);
+
+      } finally {
+
+        setLoading(false);
+
+      }
+    };
+
+    fetchCotizaciones();
+
+  }, []);
+
+
+    const pedidosFiltrados = cotizaciones
+      .filter((p) => {
+
+        const texto = busqueda.toLowerCase();
+
+        return (
+          p.codigo_cotizacion?.toLowerCase().includes(texto) ||
+          p.estados?.nombre?.toLowerCase().includes(texto) ||
+          p.fecha_respuesta?.toLowerCase().includes(texto)
+        );
+      })
+
+      .filter((p) =>
+        filtroEstado === "Todos"
+          ? true
+          : p.estados?.nombre === filtroEstado
+      )
+
+      .sort((a, b) => {
+
+        if (orden === "fechaDesc") {
+          return new Date(b.fecha_respuesta) - new Date(a.fecha_respuesta);
+        }
+
+        if (orden === "fechaAsc") {
+          return new Date(a.fecha_respuesta) - new Date(b.fecha_respuesta);
+        }
+
+        if (orden === "codigo") {
+          return a.codigo_cotizacion.localeCompare(b.codigo_cotizacion);
+        }
+
+        return 0;
+      });
   
   const FilaPedido = ({ pedido }) => (
   <div style={{ alignSelf: 'stretch', height: 50, display: 'flex' }}>
     <div style={{ flex: 1, padding: 10, display: 'flex', justifyContent: 'center' }}>
-      {pedido.codigo}
+      {pedido.codigo_cotizacion}
     </div>
   
     <div style={{ flex: 1, padding: 10, display: 'flex', justifyContent: 'center' }}>
-      {pedido.estado}
+      {pedido.estado?.nombre}
     </div>
   
     <div style={{ flex: 1, padding: 10, display: 'flex', justifyContent: 'center' }}>
-      {pedido.fecha}
+      {pedido.fecha_respuesta}
     </div>
   
     <div style={{ width: 200, display: 'flex', justifyContent: 'center' }}>
@@ -65,13 +111,36 @@ export default function Cotizaciones({ usuario, onNavegar, onLogout }) {
     </div>
   </div>
 );
+
+  if (loading) {
+    return (
+      <div
+        style={{
+          height: "100vh",
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          fontSize: 24
+        }}
+      >
+        Cargando cotizaciones...
+      </div>
+    );
+  }
   
   return (
     <div style={{ display: 'flex', height: '100vh' }}>
       <Sidebar usuario={usuario} onNavegar={onNavegar} onLogout={onLogout} />
 
-      <div style={{ flex: 1, padding: '40px', background: '#F9F9F9', alignItems: 'center'}}>
-        <h1 className="titulo">Cotizaciones</h1>
+      <div style={{
+            flex: 1,
+            padding: '10px',
+            background: '#ffffff',
+            textAlign: 'center',
+          }}
+        >
+          <h1 className="titulo" 
+            >Cotizaciones</h1>
  
 
         <div style={{width: '100%', height: '100%', paddingLeft: 25, paddingRight: 25, paddingTop: 10, paddingBottom: 10, overflow: 'hidden', flexDirection: 'column', justifyContent: 'flex-start', alignItems: 'center', gap: 10, display: 'inline-flex'}}>
@@ -156,9 +225,11 @@ export default function Cotizaciones({ usuario, onNavegar, onLogout }) {
 }}>
 
   {/* HEADER */}
+  
+
   <div style={{
     display: 'grid',
-    gridTemplateColumns: 'repeat(3, 1fr) 200px',
+    gridTemplateColumns: 'repeat(4, 1fr) 80px',
     background: '#FFCC00',
     padding: 10,
     fontWeight: '700'
@@ -170,26 +241,49 @@ export default function Cotizaciones({ usuario, onNavegar, onLogout }) {
   </div>
 
   {/* FILAS DINÁMICAS */}
-  {pedidosFiltrados.map((pedido, index) => (
-    <div
-      key={pedido.codigo}
-      style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(3, 1fr) 200px',
-        padding: 10,
-        background: index % 2 === 0 ? '#F9F9F9' : '#CECECE',
-        alignItems: 'center'
-      }}
-    >
-      <div>{pedido.codigo}</div>
-      <div>{pedido.estado}</div>
-      <div>{pedido.fecha}</div>
+  
 
-      <div style={{ display: 'flex', justifyContent: 'center' }}>
-        <IconoLupa />
+  {pedidosFiltrados.map((pedido, index) => (
+
+      <div
+        key={pedido.codigo_cotizacion}
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(4, 1fr) 200px',
+          padding: 10,
+          background: index % 2 === 0 ? '#F9F9F9' : '#CECECE',
+          alignItems: 'center'
+        }}
+      >
+
+        <div>{pedido.codigo_cotizacion}</div>
+
+        <div>
+          {pedido.proveedores?.personas?.nombre}
+          {" "}
+          {pedido.proveedores?.personas?.apellido}
+        </div>
+
+        <div>{pedido.estados?.nombre}</div>
+
+        <div>{pedido.fecha_respuesta}</div>
+
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'center',
+            cursor: 'pointer'
+          }}
+          onClick={() =>
+            navigate(`/compras/cotizaciones/${pedido.codigo_cotizacion}`)
+          }
+        >
+          <IconoLupa />
+        </div>
+
       </div>
-    </div>
-  ))}
+
+    ))}
 
 </div>
 
