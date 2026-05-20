@@ -27,6 +27,21 @@ const getTablePedidos = async (req, res) => {
         res.status(400).json({ message: error.message })
     }
 }
+
+// GET /api/compras/pedidos/:id/completo
+// Devuelve cabecera + detalle de productos + cotizaciones del pedido
+const getPedidoCompleto = async (req, res) => {
+    try {
+        const { id } = req.params
+        if (!id) return res.status(400).json({ message: 'Id requerido' })
+        const pedido = await pedidosService.getPedidoCompleto(id)
+        res.status(200).json(pedido)
+    } catch (error) {
+        const status = error.message === 'Pedido no encontrado' ? 404 : 400
+        res.status(status).json({ message: error.message })
+    }
+}
+
 const postPedido = async (req, res) => {
     try {
         const pedido = await pedidosService.postPedido(req.body)
@@ -45,4 +60,4 @@ const postDetallePedido = async (req, res) => {
     }
 }
 
-export default { getAllPedidos, getPedidos, getTablePedidos, postPedido, postDetallePedido }   
+export default { getAllPedidos, getPedidos, getTablePedidos, getPedidoCompleto, postPedido, postDetallePedido }

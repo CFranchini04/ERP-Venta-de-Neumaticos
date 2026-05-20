@@ -6,7 +6,6 @@ import NuevoProductoModal from "./NuevoProductoModal";
 import { useNavigate } from "react-router-dom";
 
 import {
-  IconoLupa,
   IconoCalculadora,
   IconoFlecha,
   IconoMas,
@@ -179,13 +178,6 @@ export default function NuevosPedidos({ usuario, onNavegar, onLogout }) {
       width: "90px",
       render: (item) => (
         <div style={styles.accionesCell}>
-          <button
-            style={styles.iconButton}
-            title="Ver detalle"
-            onClick={(e) => { e.stopPropagation(); }}
-          >
-            <IconoLupa />
-          </button>
           <button
             style={styles.iconButtonRojo}
             title="Eliminar de la orden"
