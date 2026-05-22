@@ -171,7 +171,7 @@ export default function OrdenesCompra({ usuario, onNavegar, onLogout }) {
       <main style={styles.contenido}>
         <header style={styles.encabezado}>
           <h1 style={styles.titulo}>Ordenes de Compra</h1>
-          <div style={styles.separador} />
+         
         </header>
 
         <div style={{ width: "100%", maxWidth: 1000, textAlign: "center" }}>
@@ -258,11 +258,6 @@ const styles = {
     lineHeight: 1.2,
     margin: 0,
     textAlign: 'center',
-  },
-  separador: {
-    width: 'min(1100px, 80%)',
-    height: 4,
-    background: '#000000',
   },
   botonAccion: {
     background: getColor("amarillo"),
