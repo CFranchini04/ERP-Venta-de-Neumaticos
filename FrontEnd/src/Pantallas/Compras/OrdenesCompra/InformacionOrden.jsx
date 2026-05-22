@@ -84,11 +84,12 @@ export default function InformacionOrden({
             <main style={styles.contenido}>
                 <header style={styles.encabezado}>
                     <h1 style={styles.titulo}>Ordenes de Compra</h1>
+                    <div style={styles.separador} />
                 </header>
 
                 {error && <div style={{ color: "red" }}>{error}</div>}
 
-               
+                {/* INFO */}
                 <div style={styles.contenedorEncabezado}>
                     <h3 style={styles.subtitulo}>Información de la Orden</h3>
 
@@ -111,9 +112,10 @@ export default function InformacionOrden({
                     </div>
                 </div>
 
-                {/* 🔵 DETALLE */}
+                {/* DETALLE */}
                 <div style={styles.detalle}>
 
+                    {/* TABS (solo estilo cambiado, lógica intacta) */}
                     <div style={styles.tabs}>
                         <div
                             onClick={() => setTabActiva("detalle")}
@@ -132,12 +134,72 @@ export default function InformacionOrden({
 
                     {loading && <div>Cargando...</div>}
 
+                    {/* 🔥 LIST CON CONTROLES RESTAURADOS */}
                     {!loading && tabActiva === "detalle" && (
-                        <List data={ordenActual.detalle || []} columns={columnsDetalle} />
+                        <List
+                            data={ordenActual.detalle || []}
+                            columns={columnsDetalle}
+                            controls={[
+                                {
+                                    type: "search",
+                                    placeholder: "Buscar producto...",
+                                    value: search,
+                                    onChange: (e) => setSearch(e.target.value)
+                                },
+                                {
+                                    type: "select",
+                                    label: "Ordenar por:",
+                                    placeholder: "Seleccionar",
+                                    value: orderBy,
+                                    onChange: (e) => setOrderBy(e.target.value),
+                                    options: [
+                                        { key: "producto", label: "Producto" },
+                                        { key: "categoria", label: "Categoría" },
+                                        { key: "marca", label: "Marca" },
+                                        { key: "estado", label: "Estado" },
+                                        { key: "cantidad", label: "Cantidad" },
+                                        { key: "precio", label: "Precio" },
+                                        { key: "total", label: "Total" },
+                                    ]
+                                },
+                            ]}
+                        />
                     )}
 
                     {!loading && tabActiva === "facturas" && (
-                        <List data={ordenActual.facturas || []} columns={columnsFacturas} />
+                        <List
+                            data={ordenActual.facturas || []}
+                            columns={columnsFacturas}
+                            controls={[
+                                {
+                                    type: "search",
+                                    placeholder: "Buscar factura...",
+                                    value: search,
+                                    onChange: (e) => setSearch(e.target.value)
+                                },
+                                {
+                                    type: "select",
+                                    label: "Ordenar por:",
+                                    placeholder: "Seleccionar",
+                                    value: orderBy,
+                                    onChange: (e) => setOrderBy(e.target.value),
+                                    options: [
+                                        { key: "codigo", label: "Código" },
+                                        { key: "proveedor", label: "Proveedor" },
+                                        { key: "nro_factura", label: "Nro. Factura" },
+                                        { key: "fecha_emision", label: "Fecha Emisión" },
+                                        { key: "fecha_vencimiento", label: "Fecha Vencimiento" },
+                                        { key: "estado", label: "Estado" },
+                                        { key: "importe_total", label: "Importe Total" },
+                                    ]
+                                },
+                                {
+                                    type: "button",
+                                    label: "Cargar Facturas",
+                                    onClick: () => console.log("Nuevo")
+                                }
+                            ]}
+                        />
                     )}
 
                 </div>
