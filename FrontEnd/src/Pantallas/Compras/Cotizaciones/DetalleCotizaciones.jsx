@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import Sidebar from "../../../components/Sidebar";
 import { useParams, useNavigate } from "react-router-dom";
 import List from "../../../components/Lista"
+import CargarCotizacionModal from "./CargarCotizacionModal";
 
 import { getColor } from "../../../components/Colors";
 
@@ -15,12 +16,14 @@ export default function DetalleCotizacion({
   onLogout
 }) {
 
+  
   const { codigo } = useParams();
   const navigate = useNavigate();
   const { id } = useParams();
 
   const [busquedaCot, setBusquedaCot] = useState("");
   const [ordenCot, setOrdenCot] = useState("default");
+  const [mostrarModalCotizacion, setMostrarModalCotizacion] = useState(false);
 
     const cotizaciones = [
     {
@@ -145,7 +148,7 @@ export default function DetalleCotizacion({
               {
                 type: "button",
                 label: "Cargar Cotización",
-                onClick: () => console.log("Cargar")
+                onClick: () => setMostrarModalCotizacion(true)
               }
             ]}
           />
@@ -164,6 +167,18 @@ export default function DetalleCotizacion({
 
         </div>
 
+            <CargarCotizacionModal
+              open={mostrarModalCotizacion}
+              onClose={() => setMostrarModalCotizacion(false)}
+              productos={cotizaciones}
+              proveedores={[
+                { id: 1, nombre: "Dinoco" },
+                { id: 2, nombre: "Rusteeze" }
+              ]}
+              onGuardar={(data) => {
+                console.log(data);
+              }}
+            />
 
       </main>
 
