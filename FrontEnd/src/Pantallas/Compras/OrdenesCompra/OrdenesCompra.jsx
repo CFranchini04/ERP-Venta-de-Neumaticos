@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import Sidebar from "../../../components/Sidebar";
 import List from "../../../components/Lista";
@@ -15,6 +15,7 @@ export default function OrdenesCompra({ usuario, onNavegar, onLogout }) {
   const [orden, setOrden] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const printRef = useRef();
 
   const handleVerOrden = (orden, e) => {
     if (e) e.stopPropagation();
@@ -70,6 +71,7 @@ export default function OrdenesCompra({ usuario, onNavegar, onLogout }) {
     });
 
   const columns = [
+    { key: "proveedor", label: "Proveedor" },
     { key: "codigo", label: "Código" },
     { key: "estado", label: "Estado" },
     { key: "fecha", label: "Fecha de Creación" },
@@ -77,22 +79,90 @@ export default function OrdenesCompra({ usuario, onNavegar, onLogout }) {
       key: "acciones",
       label: "Acciones",
       render: (orden) => (
-        <button
-          onClick={(e) => handleVerOrden(orden, e)}
-          style={{
-            margin: "0 10px",
-            display: "block",
-            background: getColor("amarillo"),
-            border: "none",
-            borderRadius: 4,
-            cursor: "pointer"
-          }}
-        >
-          <IconoLupa />
-        </button>
+        <div style={{ display: "flex", justifyContent: "center", width: "100%" }}>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              handleVerOrden(orden);
+            }}
+            style={styles.botonAccion}
+          >
+            <IconoLupa />
+          </button>
+        </div>
       )
     }
   ];
+
+  const handleImprimir = () => {
+    const filas = ordenesFiltradas.map((orden) => `
+    <tr>
+      <td>${orden.proveedor}</td>
+      <td>${orden.codigo}</td>
+      <td>${orden.estado}</td>
+      <td>${orden.fecha}</td>
+    </tr>
+  `).join("");
+
+    const ventana = window.open("", "", "width=900,height=700");
+
+    ventana.document.write(`
+    <html>
+      <head>
+        <title>Órdenes de Compra</title>
+
+        <style>
+          body {
+            font-family: Arial;
+            padding: 30px;
+          }
+
+          h1 {
+            text-align: center;
+            margin-bottom: 30px;
+          }
+
+          table {
+            width: 100%;
+            border-collapse: collapse;
+          }
+
+          th, td {
+            border: 1px solid #ccc;
+            padding: 12px;
+            text-align: left;
+          }
+
+          th {
+            background: #f2f2f2;
+          }
+        </style>
+      </head>
+
+      <body>
+        <h1>Órdenes de Compra</h1>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Proveedor</th>
+              <th>Código</th>
+              <th>Estado</th>
+              <th>Fecha</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            ${filas}
+          </tbody>
+        </table>
+      </body>
+    </html>
+  `);
+
+    ventana.document.close();
+    ventana.print();
+  };
 
   return (
     <div style={styles.pagina}>
@@ -104,46 +174,54 @@ export default function OrdenesCompra({ usuario, onNavegar, onLogout }) {
           <div style={styles.separador} />
         </header>
 
-        <div style={{ width: "100%", maxWidth: 860 }}>
+        <div style={{ width: "100%", maxWidth: 1000, textAlign: "center" }}>
           {loading && <div>Cargando órdenes...</div>}
           {error && <div style={{ color: "red", marginBottom: 12 }}>{error}</div>}
 
           {!loading && !error && (
-            <List
-              data={ordenesFiltradas}
-              columns={columns}
-              selectable={false}
-              controls={[
-                {
-                  type: "search",
-                  placeholder: "Buscar orden...",
-                  value: busqueda,
-                  onChange: (e) => setBusqueda(e.target.value)
-                },
-                {
-                  type: "select",
-                  placeholder: "Filtrar por estado",
-                  value: filtroEstado,
-                  onChange: (e) => setFiltroEstado(e.target.value),
-                  options: [
-                    { key: "Confirmado", label: "Confirmado" },
-                    { key: "En Espera", label: "En Espera" },
-                    { key: "Cancelado", label: "Cancelado" }
-                  ]
-                },
-                {
-                  type: "select",
-                  placeholder: "Ordenar por",
-                  value: orden,
-                  onChange: (e) => setOrden(e.target.value),
-                  options: [
-                    { key: "fechaDesc", label: "Más recientes" },
-                    { key: "fechaAsc", label: "Más antiguos" },
-                    { key: "codigo", label: "Código" }
-                  ]
-                }
-              ]}
-            />
+
+            
+              <List
+                data={ordenesFiltradas}
+                columns={columns}
+                selectable={false}
+                controls={[
+                  {
+                    type: "search",
+                    placeholder: "Buscar orden...",
+                    value: busqueda,
+                    onChange: (e) => setBusqueda(e.target.value)
+                  },
+                  {
+                    type: "select",
+                    placeholder: "Filtrar por estado",
+                    value: filtroEstado,
+                    onChange: (e) => setFiltroEstado(e.target.value),
+                    options: [
+                      { key: "Confirmado", label: "Confirmado" },
+                      { key: "En Espera", label: "En Espera" },
+                      { key: "Cancelado", label: "Cancelado" }
+                    ]
+                  },
+                  {
+                    type: "select",
+                    placeholder: "Ordenar por",
+                    value: orden,
+                    onChange: (e) => setOrden(e.target.value),
+                    options: [
+                      { key: "fechaDesc", label: "Más recientes" },
+                      { key: "fechaAsc", label: "Más antiguos" },
+                      { key: "codigo", label: "Código" }
+                    ]
+                  },
+                  {
+                    type: "button",
+                    label: "Imprimir",
+                    onClick: handleImprimir,
+                  }
+                ]}
+              />
+
           )}
         </div>
       </main>
@@ -185,5 +263,15 @@ const styles = {
     width: 'min(1100px, 80%)',
     height: 4,
     background: '#000000',
+  },
+  botonAccion: {
+    background: getColor("amarillo"),
+    border: "none",
+    borderRadius: 6,
+    cursor: "pointer",
+    padding: 6,
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
   },
 };
