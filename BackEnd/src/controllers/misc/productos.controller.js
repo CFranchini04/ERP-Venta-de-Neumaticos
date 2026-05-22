@@ -22,7 +22,7 @@ const getProducto = async (req, res) => {
 
 const postProducto = async (req, res) => {
     try {
-        const { nombre, codigo, descripcion, precio_compra, precio_venta, stock_actual, stock_minimo, id_marca, id_categoria } = req.body
+        const {  nombre, codigo, descripcion, precio_compra, precio_venta, stock_minimo, stock_maximo, id_marca, id_categoria } = req.body
 
         if (!nombre || !id_marca)
             return res.status(400).json({ message: 'Nombre y marca son requeridos' })
@@ -30,7 +30,7 @@ const postProducto = async (req, res) => {
         const producto = await productosService.postProducto({
             nombre, codigo, descripcion,
             precio_compra, precio_venta,
-            stock_actual, stock_minimo,
+            stock_minimo, stock_maximo,
             id_marca, id_categoria
         })
 

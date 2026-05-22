@@ -1,20 +1,27 @@
 import supabase from '../../config/supabase.js'
+const SELECT_FULL = `
+            *,
+            inventarios(*),
+            marcas(*),
+            categorias_productos(*)
+        `
 
-const searchProductos = async (search = '') => {
-    let query = supabase
-        .from('productos')
-        .select(`
+const SELECT_SINGLE = `
             id_producto,
             nombre,
             codigo,
             descripcion,
             precio_compra,
             precio_venta,
-            stock_actual,
-            stock_minimo,
-            marcas(id_marca, nombre),
+            inventarios(cantidad, stock_minimo, stock_maximo),
+            marcas(nombre),
             categorias_productos(id_categoria, nombre)
-        `)
+        `
+
+const searchProductos = async (search = '') => {
+    let query = supabase
+        .from('productos')
+        .select(SELECT_FULL)
 
     if (search && search.trim()) {
         query = query.ilike('nombre', `%${search.trim()}%`)
@@ -28,43 +35,29 @@ const searchProductos = async (search = '') => {
 const getProducto = async (id) => {
     const { data, error } = await supabase
         .from('productos')
-        .select(`
-            id_producto,
-            nombre,
-            codigo,
-            descripcion,
-            precio_compra,
-            precio_venta,
-            stock_actual,
-            stock_minimo,
-            marcas(id_marca, nombre),
-            categorias_productos(id_categoria, nombre)
-        `)
+        .select(SELECT_SINGLE)
         .eq('id_producto', id)
         .single()
     if (error) throw new Error(error.message)
     return data
 }
 
-const postProducto = async ({ nombre, codigo, descripcion, precio_compra, precio_venta, stock_actual, stock_minimo, id_marca, id_categoria }) => {
-    const { data, error } = await supabase
+const postProducto = async ({ nombre, codigo, descripcion, precio_compra, precio_venta, stock_minimo, stock_maximo, id_marca, id_categoria }) => {
+    const { data: producto, error } = await supabase
         .from('productos')
-        .insert({ nombre, codigo, descripcion, precio_compra, precio_venta, stock_actual, stock_minimo, id_marca, id_categoria })
-        .select(`
-            id_producto,
-            nombre,
-            codigo,
-            descripcion,
-            precio_compra,
-            precio_venta,
-            stock_actual,
-            stock_minimo,
-            marcas(id_marca, nombre),
-            categorias_productos(id_categoria, nombre)
-        `)
+        .insert({ nombre, codigo, descripcion, precio_compra, precio_venta, id_marca, id_categoria })
+        .select(SELECT_SINGLE)
         .single()
     if (error) throw new Error(error.message)
-    return data
+    const id_producto = producto.id_producto;
+    const id_deposito = 1;
+    const { data: dataStock, error: errorStock } = await supabase
+        .from('inventarios')
+        .insert({ id_deposito, id_producto, stock_minimo, stock_maximo})
+        .select()
+        .single()
+    if(errorStock) throw new Error(errorStock.message)
+    return {producto, stock: dataStock}
 }
 
 const getAllMarcas = async () => {

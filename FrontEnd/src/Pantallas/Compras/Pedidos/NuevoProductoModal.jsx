@@ -10,7 +10,7 @@ const FORM_INICIAL = {
   descripcion: "",
   precio_compra: "",
   precio_venta: "",
-  stock_actual: "",
+  stock_maximo: "",
   stock_minimo: "",
   id_marca: "",
   id_categoria: "",
@@ -77,8 +77,8 @@ export default function NuevoProductoModal({ open, onClose, onProductoCreado }) 
         descripcion: form.descripcion.trim() || null,
         precio_compra: form.precio_compra !== "" ? Number(form.precio_compra) : null,
         precio_venta: form.precio_venta !== "" ? Number(form.precio_venta) : null,
-        stock_actual: form.stock_actual !== "" ? Number(form.stock_actual) : null,
         stock_minimo: form.stock_minimo !== "" ? Number(form.stock_minimo) : null,
+        stock_maximo: form.stock_maximo !== "" ? Number(form.stock_maximo) : null,
         id_marca: Number(form.id_marca),
         id_categoria: form.id_categoria !== "" ? Number(form.id_categoria) : null,
       };
@@ -195,16 +195,16 @@ export default function NuevoProductoModal({ open, onClose, onProductoCreado }) 
               </Campo>
             </div>
 
-            {/* Fila 4: Stock actual + Stock mínimo */}
+            {/* Fila 4: Stock maximo + Stock mínimo */}
             <div style={styles.fila}>
-              <Campo label="Stock Actual" style={{ flex: 1 }}>
+              <Campo label="Stock Máximo" style={{ flex: 1 }}>
                 <input
                   style={styles.input}
                   type="number"
                   min="0"
                   placeholder="0"
-                  value={form.stock_actual}
-                  onChange={(e) => handleChange("stock_actual", e.target.value)}
+                  value={form.stock_maximo}
+                  onChange={(e) => handleChange("stock_maximo", e.target.value)}
                 />
               </Campo>
               <Campo label="Stock Mínimo" style={{ flex: 1 }}>
