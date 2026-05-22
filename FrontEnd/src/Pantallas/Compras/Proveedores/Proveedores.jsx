@@ -1,25 +1,36 @@
-import React, { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import React, { useState } from "react";
 import Sidebar from "../../../components/Sidebar";
-import { Button } from "../../../components/Buttons";
-import { getColor } from "../../../components/Colors";
 import Lista from "../../../components/Lista";
 import { IconoLupa, IconoCompras } from "../../../components/Icons";
-import List from "../../../components/Lista";
+import { getColor } from "../../../components/Colors";
 
 export default function Proveedores({ usuario, onLogout, onNavegar }) {
-
     const [search, setSearch] = useState("");
     const [orderBy, setOrderBy] = useState("");
     const [filtroProveedor, setFiltroProveedor] = useState("");
-    const [proveedores, setProveedores] = useState([]);
-    const [modalOpen, setModalOpen] = useState(false);
-    const [proveedorSeleccionado, setProveedorSeleccionado] = useState(null);
-    const [modalType, setModalType] = useState(null);
 
+    const [proveedorSeleccionado, setProveedorSeleccionado] = useState(null);
+    const [formProveedor, setFormProveedor] = useState(null);
+
+    const [modalType, setModalType] = useState(null);
+    const [modoEdicion, setModoEdicion] = useState(false);
+
+    const [modoEdicionOrdenes, setModoEdicionOrdenes] = useState(false);
+    const [formOrdenes, setFormOrdenes] = useState(null);
+
+    function handleVerOrdenes(proveedor, e) {
+        e.stopPropagation();
+
+        setProveedorSeleccionado(proveedor);
+        setFormOrdenes(proveedor);
+        setModoEdicionOrdenes(false);
+        setModalType("ordenes");
+    }
 
     function handleVerProveedor(proveedor) {
         setProveedorSeleccionado(proveedor);
+        setFormProveedor(proveedor);
+        setModoEdicion(false);
         setModalType("info");
     }
 
@@ -32,8 +43,15 @@ export default function Proveedores({ usuario, onLogout, onNavegar }) {
     function cerrarModal() {
         setModalType(null);
         setProveedorSeleccionado(null);
+        setFormProveedor(null);
+        setModoEdicion(false);
     }
 
+    function guardarProveedor() {
+        setProveedorSeleccionado(formProveedor);
+        setModoEdicion(false);
+        console.log("Guardado:", formProveedor);
+    }
 
     const columns = [
         { key: "proveedor", label: "Proveedor" },
@@ -44,18 +62,10 @@ export default function Proveedores({ usuario, onLogout, onNavegar }) {
         {
             key: "acciones",
             label: "Acciones",
-            render: (orden) => (
-                <div
-                    style={{
-                        display: "flex",
-                        justifyContent: "center",
-                        alignItems: "center",
-                        gap: 10,
-                        width: "100%"
-                    }}
-                >
+            render: (p) => (
+                <div style={{ display: "flex", justifyContent: "center", gap: 10 }}>
                     <button
-                        onClick={(e) => handleVerProveedor(orden)}
+                        onClick={() => handleVerProveedor(p)}
                         style={{
                             background: getColor("grisOscuro"),
                             border: "none",
@@ -65,23 +75,9 @@ export default function Proveedores({ usuario, onLogout, onNavegar }) {
                     >
                         <IconoLupa color="#FFD600" />
                     </button>
-                </div>
-            )
-        },
-        {
-            key: "acciones",
-            label: "Acciones",
-            render: (orden) => (
-                <div
-                    style={{
-                        display: "flex",
-                        justifyContent: "center",
-                        alignItems: "center",
-                        width: "100%"
-                    }}
-                >
+
                     <button
-                        onClick={(e) => handleVerOrdenes(orden, e)}
+                        onClick={(e) => handleVerOrdenes(p, e)}
                         style={{
                             background: getColor("amarillo"),
                             border: "none",
@@ -96,9 +92,21 @@ export default function Proveedores({ usuario, onLogout, onNavegar }) {
         }
     ];
 
-    function handleNuevo() {
-        //Deberia llevar a la pag de crear proveedor
-        console.log("Nuevo proveedor");
+    function InputEdit({ value, onChange }) {
+        const [focus, setFocus] = useState(false);
+
+        return (
+            <input
+                value={value}
+                onChange={onChange}
+                onFocus={() => setFocus(true)}
+                onBlur={() => setFocus(false)}
+                style={{
+                    ...styles.inputEdit,
+                    ...(focus ? styles.inputEditFocus : {})
+                }}
+            />
+        );
     }
 
     return (
@@ -106,97 +114,46 @@ export default function Proveedores({ usuario, onLogout, onNavegar }) {
             <Sidebar usuario={usuario} onLogout={onLogout} onNavegar={onNavegar} />
 
             <main style={styles.contenido}>
-                <header style={styles.encabezado}>
-                    <h1 style={styles.titulo}>Proveedores</h1>
-                    <div style={styles.separador} />
-                </header>
+                <h1 style={styles.titulo}>Proveedores</h1>
 
-                <section style={styles.listaStyle}>
-                    <Lista
-                        data={[
-                            {
-                                proveedor: "Distribuidora Central",
-                                ruc: "80012345-6",
-                                ubicacion: "Asunción",
-                                telefono: "0981 123 456",
-                                entrega: "2 días"
-                            },
-                            {
-                                proveedor: "Importadora San José",
-                                ruc: "80198765-4",
-                                ubicacion: "Luque",
-                                telefono: "0972 555 888",
-                                entrega: "5 días"
-                            }
-                        ]}
-                        columns={columns}
-                        controls={[
-                            {
-                                type: "search",
-                                placeholder: "Buscar proveedor...",
-                                value: search,
-                                onChange: (e) => setSearch(e.target.value)
-                            },
-                            {
-                                type: "select",
-                                label: "Ordenar por:",
-                                placeholder: "Seleccionar",
-                                value: orderBy,
-                                onChange: (e) => setOrderBy(e.target.value),
-
-                                options: [
-                                    { key: "proveedor", label: "Proveedor" },
-                                    { key: "ruc", label: "RUC" },
-                                    { key: "ubicacion", label: "Ubicación" },
-                                    { key: "telefono", label: "Teléfono" },
-                                    { key: "entrega", label: "Tiempo de entrega" },
-
-                                ]
-                            },
-                            {
-                                type: "select",
-                                label: "Filtrar por:",
-                                placeholder: "Seleccionar",
-                                value: filtroProveedor,
-                                onChange: (e) => setFiltroProveedor(e.target.value),
-
-                                options: [
-                                    { key: "proveedor", label: "Proveedor" },
-                                    { key: "ruc", label: "RUC" },
-                                    { key: "ubicacion", label: "Ubicación" },
-                                    { key: "telefono", label: "Teléfono" },
-                                    { key: "entrega", label: "Tiempo de entrega" },
-
-                                ]
-
-                            },
-                            {
-                                type: "button",
-                                label: "Registrar Proveedor",
-                                size: "lg",
-                                onClick: handleNuevo
-                            }
-                        ]}
-                        searchWidth={250}
-                    />
-                </section>
-
+                <Lista
+                    data={[
+                        {
+                            proveedor: "Distribuidora Central",
+                            ruc: "80012345-6",
+                            ubicacion: "Asunción",
+                            telefono: "0981 123 456",
+                            entrega: "2 días"
+                        },
+                        {
+                            proveedor: "Importadora San José",
+                            ruc: "80198765-4",
+                            ubicacion: "Luque",
+                            telefono: "0972 555 888",
+                            entrega: "5 días"
+                        }
+                    ]}
+                    columns={columns}
+                    controls={[
+                        {
+                            type: "search",
+                            placeholder: "Buscar proveedor...",
+                            value: search,
+                            onChange: (e) => setSearch(e.target.value)
+                        }
+                    ]}
+                />
             </main>
 
-            {/* MODAL de información del proveedor */}
             {modalType === "info" && proveedorSeleccionado && (
-                <div
-                    style={styles.overlay}
-                    onClick={() => cerrarModal()}
-                >
+                <div style={styles.overlay} onClick={cerrarModal}>
                     <div
                         style={styles.modal}
                         onClick={(e) => e.stopPropagation()}
                     >
 
-                        {/* HEADER */}
+                        {/* HEADER (igual al tuyo) */}
                         <div style={styles.modalHeader}>
-
                             <div style={styles.modalHeaderLeft}>
                                 <IconoCompras size={28} color="#1D1D1D" />
 
@@ -205,21 +162,16 @@ export default function Proveedores({ usuario, onLogout, onNavegar }) {
                                 </span>
                             </div>
 
-                            <button
-                                onClick={() => cerrarModal()}
-                                style={styles.closeIcon}
-                            >
+                            <button onClick={cerrarModal} style={styles.closeIcon}>
                                 ✕
                             </button>
-
                         </div>
 
-                        {/* BODY */}
+                        {/* BODY (RESPETANDO TUS 3 COLUMNAS) */}
                         <div style={styles.modalBodyInfo}>
 
-                            {/* COLUMNA 1 */}
+                            {/* COLUMNA FOTO */}
                             <div style={styles.columnaFoto}>
-
                                 <img
                                     src="https://placehold.co/140x140"
                                     alt="Proveedor"
@@ -233,7 +185,6 @@ export default function Proveedores({ usuario, onLogout, onNavegar }) {
                                 <span style={styles.estadoProveedor}>
                                     Activo
                                 </span>
-
                             </div>
 
                             {/* COLUMNA 2 */}
@@ -241,27 +192,89 @@ export default function Proveedores({ usuario, onLogout, onNavegar }) {
 
                                 <div style={styles.dataCard}>
                                     <span style={styles.dataLabel}>Nombre</span>
-                                    <span>{proveedorSeleccionado.proveedor}</span>
+
+                                    {modoEdicion ? (
+                                        <InputEdit
+                                            value={formProveedor.proveedor || ""}
+                                            onChange={(e) =>
+                                                setFormProveedor({
+                                                    ...formProveedor,
+                                                    proveedor: e.target.value
+                                                })
+                                            }
+                                        />
+                                    ) : (
+                                        <span>{proveedorSeleccionado.proveedor}</span>
+                                    )}
                                 </div>
 
                                 <div style={styles.dataCard}>
                                     <span style={styles.dataLabel}>Ubicación</span>
-                                    <span>{proveedorSeleccionado.ubicacion}</span>
+
+                                    {modoEdicion ? (
+                                        <InputEdit
+                                            value={formProveedor.ubicacion || ""}
+                                            onChange={(e) =>
+                                                setFormProveedor({
+                                                    ...formProveedor,
+                                                    ubicacion: e.target.value
+                                                })
+                                            }
+                                        />
+                                    ) : (
+                                        <span>{proveedorSeleccionado.ubicacion}</span>
+                                    )}
                                 </div>
 
                                 <div style={styles.dataCard}>
                                     <span style={styles.dataLabel}>Fecha de Registro</span>
-                                    <span>12/05/2026</span>
+                                    {modoEdicion ? (
+                                        <InputEdit
+                                            value={formProveedor.fechaRegistro || ""}
+                                            onChange={(e) =>
+                                                setFormProveedor({
+                                                    ...formProveedor,
+                                                    fechaRegistro: e.target.value
+                                                })
+                                            }
+                                        />
+                                    ) : (
+                                        <span>{proveedorSeleccionado.fechaRegistro}</span>
+                                    )}
                                 </div>
 
                                 <div style={styles.dataCard}>
                                     <span style={styles.dataLabel}>Email</span>
-                                    <span>proveedor@email.com</span>
+                                    {modoEdicion ? (
+                                        <InputEdit
+                                            value={formProveedor.email || ""}
+                                            onChange={(e) =>
+                                                setFormProveedor({
+                                                    ...formProveedor,
+                                                    email: e.target.value
+                                                })
+                                            }
+                                        />
+                                    ) : (
+                                        <span>{proveedorSeleccionado.email}</span>
+                                    )}
                                 </div>
 
                                 <div style={styles.dataCard}>
                                     <span style={styles.dataLabel}>Horario</span>
-                                    <span>08:00 - 17:00</span>
+                                    {modoEdicion ? (
+                                        <InputEdit
+                                            value={formProveedor.horario || ""}
+                                            onChange={(e) =>
+                                                setFormProveedor({
+                                                    ...formProveedor,
+                                                    horario: e.target.value
+                                                })
+                                            }
+                                        />
+                                    ) : (
+                                        <span>{proveedorSeleccionado.horario}</span>
+                                    )}
                                 </div>
 
                             </div>
@@ -271,48 +284,114 @@ export default function Proveedores({ usuario, onLogout, onNavegar }) {
 
                                 <div style={styles.dataCard}>
                                     <span style={styles.dataLabel}>RUC / Identificación</span>
-                                    <span>{proveedorSeleccionado.ruc}</span>
+                                    {modoEdicion ? (
+                                        <InputEdit
+                                            value={formProveedor.ruc || ""}
+                                            onChange={(e) =>
+                                                setFormProveedor({
+                                                    ...formProveedor,
+                                                    ruc: e.target.value
+                                                })
+                                            }
+                                        />
+                                    ) : (
+                                        <span>{proveedorSeleccionado.ruc}</span>
+                                    )}
                                 </div>
 
                                 <div style={styles.dataCard}>
                                     <span style={styles.dataLabel}>Tipo de Proveedor</span>
-                                    <span>Distribuidor</span>
+                                    {modoEdicion ? (
+                                        <InputEdit
+                                            value={formProveedor.tipoProveedor || ""}
+                                            onChange={(e) =>
+                                                setFormProveedor({
+                                                    ...formProveedor,
+                                                    tipoProveedor: e.target.value
+                                                })
+                                            }
+                                        />
+                                    ) : (
+                                        <span>{proveedorSeleccionado.tipoProveedor}</span>
+                                    )}
+
                                 </div>
 
                                 <div style={styles.dataCard}>
                                     <span style={styles.dataLabel}>Teléfono</span>
-                                    <span>{proveedorSeleccionado.telefono}</span>
+
+                                    {modoEdicion ? (
+                                        <InputEdit
+                                            value={formProveedor.telefono || ""}
+                                            onChange={(e) =>
+                                                setFormProveedor({
+                                                    ...formProveedor,
+                                                    telefono: e.target.value
+                                                })
+                                            }
+                                        />
+                                    ) : (
+                                        <span>{proveedorSeleccionado.telefono}</span>
+                                    )}
                                 </div>
 
                                 <div style={styles.dataCard}>
                                     <span style={styles.dataLabel}>Dirección</span>
-                                    <span>Av. España 1234</span>
+                                    {modoEdicion ? (
+                                        <InputEdit
+                                            value={formProveedor.direccion || ""}
+                                            onChange={(e) =>
+                                                setFormProveedor({
+                                                    ...formProveedor,
+                                                    direccion: e.target.value
+                                                })
+                                            }
+                                        />
+                                    ) : (
+                                        <span>{proveedorSeleccionado.direccion}</span>
+                                    )}
                                 </div>
 
                             </div>
 
                         </div>
 
+                        {/* FOOTER (MISMO DISEÑO + EDITABLE) */}
                         <div style={styles.modalFooter}>
 
                             <button
-                                onClick={() => cerrarModal()}
+                                onClick={() => {
+                                    if (modoEdicion) {
+                                        setModoEdicion(false);
+                                        setFormProveedor(proveedorSeleccionado);
+                                    } else {
+                                        cerrarModal();
+                                    }
+                                }}
                                 style={{
                                     ...styles.footerBtn,
                                     ...styles.btnCerrar
                                 }}
                             >
-                                Cerrar
+                                {modoEdicion ? "Cancelar" : "Cerrar"}
                             </button>
 
                             <button
-                                onClick={() => cerrarModal()}
+                                onClick={() => {
+                                    if (modoEdicion) {
+                                        setProveedorSeleccionado(formProveedor);
+                                        setModoEdicion(false);
+                                        console.log("Guardado:", formProveedor);
+                                    } else {
+                                        setModoEdicion(true);
+                                    }
+                                }}
                                 style={{
                                     ...styles.footerBtn,
                                     ...styles.btnEditar
                                 }}
                             >
-                                Editar
+                                {modoEdicion ? "Guardar" : "Editar"}
                             </button>
 
                         </div>
@@ -321,12 +400,8 @@ export default function Proveedores({ usuario, onLogout, onNavegar }) {
                 </div>
             )}
 
-            {/* MODAL de Compras y Ordenes */}
             {modalType === "ordenes" && proveedorSeleccionado && (
-                <div
-                    style={styles.overlay}
-                    onClick={() => cerrarModal()}
-                >
+                <div style={styles.overlay} onClick={cerrarModal}>
                     <div
                         style={styles.modal}
                         onClick={(e) => e.stopPropagation()}
@@ -334,7 +409,6 @@ export default function Proveedores({ usuario, onLogout, onNavegar }) {
 
                         {/* HEADER */}
                         <div style={styles.modalHeader}>
-
                             <div style={styles.modalHeaderLeft}>
                                 <IconoCompras size={28} color="#1D1D1D" />
 
@@ -343,16 +417,12 @@ export default function Proveedores({ usuario, onLogout, onNavegar }) {
                                 </span>
                             </div>
 
-                            <button
-                                onClick={() => cerrarModal()}
-                                style={styles.closeIcon}
-                            >
+                            <button onClick={cerrarModal} style={styles.closeIcon}>
                                 ✕
                             </button>
-
                         </div>
 
-                        {/* BODY */}
+                        {/* BODY (RESPETANDO TUS 2 COLUMNAS) */}
                         <div style={styles.modalBodyOrdenes}>
 
                             {/* COLUMNA 1 */}
@@ -360,12 +430,38 @@ export default function Proveedores({ usuario, onLogout, onNavegar }) {
 
                                 <div style={styles.dataCardOrdenes}>
                                     <span style={styles.dataLabel}>Condiciones de Pago</span>
-                                    <span>Crédito - 30 días.</span>
+
+                                    {modoEdicionOrdenes ? (
+                                        <InputEdit
+                                            value={formOrdenes?.condicionesPago || ""}
+                                            onChange={(e) =>
+                                                setFormOrdenes({
+                                                    ...formOrdenes,
+                                                    condicionesPago: e.target.value
+                                                })
+                                            }
+                                        />
+                                    ) : (
+                                        <span>Crédito - 30 días.</span>
+                                    )}
                                 </div>
 
                                 <div style={styles.dataCardOrdenes}>
                                     <span style={styles.dataLabel}>Stock Disponible</span>
-                                    <span>Consultar por producto.</span>
+
+                                    {modoEdicionOrdenes ? (
+                                        <InputEdit
+                                            value={formOrdenes?.stock || ""}
+                                            onChange={(e) =>
+                                                setFormOrdenes({
+                                                    ...formOrdenes,
+                                                    stock: e.target.value
+                                                })
+                                            }
+                                        />
+                                    ) : (
+                                        <span>Consultar por producto.</span>
+                                    )}
                                 </div>
 
                             </div>
@@ -375,38 +471,80 @@ export default function Proveedores({ usuario, onLogout, onNavegar }) {
 
                                 <div style={styles.dataCardOrdenes}>
                                     <span style={styles.dataLabel}>Tiempo de Entrega</span>
-                                    <span>6-7 días hábiles.</span>
+
+                                    {modoEdicionOrdenes ? (
+                                        <InputEdit
+                                            value={formOrdenes?.entrega || ""}
+                                            onChange={(e) =>
+                                                setFormOrdenes({
+                                                    ...formOrdenes,
+                                                    entrega: e.target.value
+                                                })
+                                            }
+                                        />
+                                    ) : (
+                                        <span>6-7 días hábiles.</span>
+                                    )}
                                 </div>
 
                                 <div style={styles.dataCardOrdenes}>
                                     <span style={styles.dataLabel}>Frecuencia de Compra</span>
-                                    <span>Quincenal</span>
+
+                                    {modoEdicionOrdenes ? (
+                                        <InputEdit
+                                            value={formOrdenes?.frecuencia || ""}
+                                            onChange={(e) =>
+                                                setFormOrdenes({
+                                                    ...formOrdenes,
+                                                    frecuencia: e.target.value
+                                                })
+                                            }
+                                        />
+                                    ) : (
+                                        <span>Quincenal</span>
+                                    )}
                                 </div>
 
                             </div>
 
                         </div>
 
+                        {/* FOOTER */}
                         <div style={styles.modalFooter}>
 
                             <button
-                                onClick={() => cerrarModal()}
+                                onClick={() => {
+                                    if (modoEdicionOrdenes) {
+                                        setModoEdicionOrdenes(false);
+                                        setFormOrdenes(proveedorSeleccionado);
+                                    } else {
+                                        cerrarModal();
+                                    }
+                                }}
                                 style={{
                                     ...styles.footerBtn,
                                     ...styles.btnCerrar
                                 }}
                             >
-                                Cerrar
+                                {modoEdicionOrdenes ? "Cancelar" : "Cerrar"}
                             </button>
 
                             <button
-                                onClick={() => cerrarModal()}
+                                onClick={() => {
+                                    if (modoEdicionOrdenes) {
+                                        setProveedorSeleccionado(formOrdenes);
+                                        setModoEdicionOrdenes(false);
+                                        console.log("Guardado órdenes:", formOrdenes);
+                                    } else {
+                                        setModoEdicionOrdenes(true);
+                                    }
+                                }}
                                 style={{
                                     ...styles.footerBtn,
                                     ...styles.btnEditar
                                 }}
                             >
-                                Editar
+                                {modoEdicionOrdenes ? "Guardar" : "Editar"}
                             </button>
 
                         </div>
@@ -414,9 +552,7 @@ export default function Proveedores({ usuario, onLogout, onNavegar }) {
                     </div>
                 </div>
             )}
-
-        </div >
-
+        </div>
     );
 }
 
@@ -668,4 +804,20 @@ const styles = {
         background: getColor("amarillo"),
         color: "#1D1D1D",
     },
+    inputEdit: {
+        width: "100%",
+        border: "1px solid #D0D0D0",
+        borderRadius: 8,
+        padding: "8px 10px",
+        fontFamily: "Lato",
+        fontSize: 14,
+        outline: "none",
+        background: "#FFFFFF",
+        boxSizing: "border-box",
+    },
+
+    inputEditFocus: {
+        border: `1px solid ${getColor("amarillo")}`,
+        boxShadow: `0 0 0 2px rgba(255, 214, 0, 0.25)`,
+    }
 };
