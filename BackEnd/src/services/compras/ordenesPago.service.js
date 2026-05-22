@@ -31,7 +31,7 @@ const getOrdPagoByCodigo = async (codigo) => {
 const getTableOrdPago = async () => {
     const { data, error } = await supabase
         .from('ordenes_pago')
-        .select('codigo_orden_pago, fecha_creacion, estados(nombre)')
+        .select('codigo_orden_pago, fecha_creacion, proveedores( personas(nombre)), estados(nombre)')
     if (error) throw new Error(error.message)
     return data
 }
