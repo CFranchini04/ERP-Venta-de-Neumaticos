@@ -17,6 +17,24 @@ export default function Proveedores({ usuario, onLogout, onNavegar }) {
 
     const [modoEdicionOrdenes, setModoEdicionOrdenes] = useState(false);
     const [formOrdenes, setFormOrdenes] = useState(null);
+    const [modoNuevo, setModoNuevo] = useState(false);
+
+    const [proveedores, setProveedores] = useState([
+        {
+            proveedor: "Distribuidora Central",
+            ruc: "80012345-6",
+            ubicacion: "Asunción",
+            telefono: "0981 123 456",
+            entrega: "2 días"
+        },
+        {
+            proveedor: "Importadora San José",
+            ruc: "80198765-4",
+            ubicacion: "Luque",
+            telefono: "0972 555 888",
+            entrega: "5 días"
+        }
+    ]);
 
     function handleVerOrdenes(proveedor, e) {
         e.stopPropagation();
@@ -34,23 +52,51 @@ export default function Proveedores({ usuario, onLogout, onNavegar }) {
         setModalType("info");
     }
 
-    function handleVerOrdenes(proveedor, e) {
-        e.stopPropagation();
-        setProveedorSeleccionado(proveedor);
-        setModalType("ordenes");
-    }
-
     function cerrarModal() {
         setModalType(null);
         setProveedorSeleccionado(null);
         setFormProveedor(null);
         setModoEdicion(false);
+        setModoNuevo(false);
+    }
+
+    function handleNuevoProveedor() {
+        const nuevoProveedor = {
+            proveedor: "",
+            ruc: "",
+            ubicacion: "",
+            telefono: "",
+            entrega: "",
+            email: "",
+            direccion: "",
+            tipoProveedor: "",
+            horario: "",
+            fechaRegistro: ""
+        };
+        setProveedorSeleccionado(nuevoProveedor);
+        setFormProveedor(nuevoProveedor);
+        setModoNuevo(true);
+        setModoEdicion(true);
+        setModalType("info");
     }
 
     function guardarProveedor() {
+        if (modoNuevo) {
+            // Agregar nuevo proveedor
+            setProveedores([...proveedores, formProveedor]);
+            console.log("CREAR proveedor:", formProveedor);
+        } else {
+            // Editar proveedor existente
+            setProveedores(
+                proveedores.map(p =>
+                    p.ruc === proveedorSeleccionado.ruc ? formProveedor : p
+                )
+            );
+            console.log("EDITAR proveedor:", formProveedor);
+        }
         setProveedorSeleccionado(formProveedor);
         setModoEdicion(false);
-        console.log("Guardado:", formProveedor);
+        setModoNuevo(false);
     }
 
     const columns = [
@@ -109,6 +155,19 @@ export default function Proveedores({ usuario, onLogout, onNavegar }) {
         );
     }
 
+    // Filtrar proveedores por búsqueda y filtro
+    const proveedoresFiltrados = proveedores.filter(proveedor => {
+        const coincideBusqueda = proveedor.proveedor
+            .toLowerCase()
+            .includes(search.toLowerCase()) ||
+            proveedor.ruc.toLowerCase().includes(search.toLowerCase()) ||
+            proveedor.ubicacion.toLowerCase().includes(search.toLowerCase());
+
+        if (!coincideBusqueda) return false;
+
+        return true;
+    });
+
     return (
         <div style={styles.pagina}>
             <Sidebar usuario={usuario} onLogout={onLogout} onNavegar={onNavegar} />
@@ -117,22 +176,7 @@ export default function Proveedores({ usuario, onLogout, onNavegar }) {
                 <h1 style={styles.titulo}>Proveedores</h1>
 
                 <Lista
-                    data={[
-                        {
-                            proveedor: "Distribuidora Central",
-                            ruc: "80012345-6",
-                            ubicacion: "Asunción",
-                            telefono: "0981 123 456",
-                            entrega: "2 días"
-                        },
-                        {
-                            proveedor: "Importadora San José",
-                            ruc: "80198765-4",
-                            ubicacion: "Luque",
-                            telefono: "0972 555 888",
-                            entrega: "5 días"
-                        }
-                    ]}
+                    data={proveedoresFiltrados}
                     columns={columns}
                     controls={[
                         {
@@ -140,6 +184,24 @@ export default function Proveedores({ usuario, onLogout, onNavegar }) {
                             placeholder: "Buscar proveedor...",
                             value: search,
                             onChange: (e) => setSearch(e.target.value)
+                        },
+                        {
+                            type: "select",
+                            label: "Filtrar por:",
+                            value: filtroProveedor,
+                            onChange: (e) => setFiltroProveedor(e.target.value),
+                            options: [
+                                { key: "proveedor", label: "Proveedor" },
+                                { key: "ruc", label: "RUC" },
+                                { key: "ubicacion", label: "Ubicación" },
+                                { key: "telefono", label: "Teléfono" },
+                                { key: "tiempoentrega", label: "Tiempo de Entrega" }
+                            ]
+                        },
+                        {
+                            type: "button",
+                            label: "Agregar Proveedor",
+                            onClick: () => handleNuevoProveedor()
                         }
                     ]}
                 />
@@ -152,13 +214,13 @@ export default function Proveedores({ usuario, onLogout, onNavegar }) {
                         onClick={(e) => e.stopPropagation()}
                     >
 
-                        {/* HEADER (igual al tuyo) */}
+
                         <div style={styles.modalHeader}>
                             <div style={styles.modalHeaderLeft}>
                                 <IconoCompras size={28} color="#1D1D1D" />
 
                                 <span style={styles.modalTitle}>
-                                    Información Proveedor - {proveedorSeleccionado.proveedor}
+                                    {modoNuevo ? "Nuevo Proveedor" : `Información Proveedor - ${proveedorSeleccionado?.proveedor || ""}`}
                                 </span>
                             </div>
 
@@ -167,7 +229,7 @@ export default function Proveedores({ usuario, onLogout, onNavegar }) {
                             </button>
                         </div>
 
-                        {/* BODY (RESPETANDO TUS 3 COLUMNAS) */}
+
                         <div style={styles.modalBodyInfo}>
 
                             {/* COLUMNA FOTO */}
@@ -356,13 +418,13 @@ export default function Proveedores({ usuario, onLogout, onNavegar }) {
 
                         </div>
 
-                        {/* FOOTER (MISMO DISEÑO + EDITABLE) */}
                         <div style={styles.modalFooter}>
 
                             <button
                                 onClick={() => {
                                     if (modoEdicion) {
                                         setModoEdicion(false);
+                                        setModoNuevo(false);
                                         setFormProveedor(proveedorSeleccionado);
                                     } else {
                                         cerrarModal();
@@ -379,9 +441,8 @@ export default function Proveedores({ usuario, onLogout, onNavegar }) {
                             <button
                                 onClick={() => {
                                     if (modoEdicion) {
-                                        setProveedorSeleccionado(formProveedor);
-                                        setModoEdicion(false);
-                                        console.log("Guardado:", formProveedor);
+                                        guardarProveedor();
+                                        cerrarModal();
                                     } else {
                                         setModoEdicion(true);
                                     }
@@ -391,7 +452,10 @@ export default function Proveedores({ usuario, onLogout, onNavegar }) {
                                     ...styles.btnEditar
                                 }}
                             >
-                                {modoEdicion ? "Guardar" : "Editar"}
+                                {modoNuevo
+                                    ? (modoEdicion ? "Crear Proveedor" : "Crear Proveedor")
+                                    : (modoEdicion ? "Guardar Cambios" : "Editar")
+                                }
                             </button>
 
                         </div>
@@ -422,7 +486,7 @@ export default function Proveedores({ usuario, onLogout, onNavegar }) {
                             </button>
                         </div>
 
-                        {/* BODY (RESPETANDO TUS 2 COLUMNAS) */}
+
                         <div style={styles.modalBodyOrdenes}>
 
                             {/* COLUMNA 1 */}
@@ -507,45 +571,26 @@ export default function Proveedores({ usuario, onLogout, onNavegar }) {
 
                             </div>
 
-                        </div>
+                            <div style={styles.Historial}>
+                                <h3 style={{ marginBottom: 12 }}>Historial de Órdenes</h3>
 
-                        {/* FOOTER */}
-                        <div style={styles.modalFooter}>
+                                <Lista
+                                    data={[
+                                        { producto: "Nuematico Bridgeston", ultimo_precio: "G.450.000", cantidad: "10", fecha: "15/08/2024" },
+                                        { producto: "Aceite Motor 5W30", ultimo_precio: "G.250.000", cantidad: "20", fecha: "10/08/2024" },
+                                        { producto: "Bateria Bosch 12V", ultimo_precio: "G.600.000", cantidad: "5", fecha: "05/08/2024" }
+                                    ]}
+                                    columns={[
+                                        { key: "producto", label: "Producto" },
+                                        { key: "ultimo_precio", label: "Último Precio" },
+                                        { key: "cantidad", label: "Cantidad" },
+                                        { key: "fecha", label: "Fecha de Compra" }
+                                    ]}
+                                    selectable={false}
 
-                            <button
-                                onClick={() => {
-                                    if (modoEdicionOrdenes) {
-                                        setModoEdicionOrdenes(false);
-                                        setFormOrdenes(proveedorSeleccionado);
-                                    } else {
-                                        cerrarModal();
-                                    }
-                                }}
-                                style={{
-                                    ...styles.footerBtn,
-                                    ...styles.btnCerrar
-                                }}
-                            >
-                                {modoEdicionOrdenes ? "Cancelar" : "Cerrar"}
-                            </button>
+                                />
 
-                            <button
-                                onClick={() => {
-                                    if (modoEdicionOrdenes) {
-                                        setProveedorSeleccionado(formOrdenes);
-                                        setModoEdicionOrdenes(false);
-                                        console.log("Guardado órdenes:", formOrdenes);
-                                    } else {
-                                        setModoEdicionOrdenes(true);
-                                    }
-                                }}
-                                style={{
-                                    ...styles.footerBtn,
-                                    ...styles.btnEditar
-                                }}
-                            >
-                                {modoEdicionOrdenes ? "Guardar" : "Editar"}
-                            </button>
+                            </div>
 
                         </div>
 
@@ -819,5 +864,10 @@ const styles = {
     inputEditFocus: {
         border: `1px solid ${getColor("amarillo")}`,
         boxShadow: `0 0 0 2px rgba(255, 214, 0, 0.25)`,
+    },
+    Historial: {
+        gridColumn: "1 / -1",
+        width: "100%",
+        marginTop: 10,
     }
 };
