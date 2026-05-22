@@ -3,7 +3,7 @@ import { getColor } from "./Colors";
 
 export const Button = ({
   disabled = false,
-  variant = "amarilloclaro",
+  variant = "amarillo",
   label,
   onClick,
   size = "md",
@@ -42,7 +42,7 @@ export const Button = ({
       }}
     >
       <span style={{
-        color: "#1D1D1D",
+        color: getColor("negro"),
         fontSize: sizes[size].fontSize,
         fontFamily: "Lato"
       }}>
