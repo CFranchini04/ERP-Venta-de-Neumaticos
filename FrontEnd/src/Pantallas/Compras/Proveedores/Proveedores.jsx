@@ -215,7 +215,7 @@ export default function Proveedores({ usuario, onLogout, onNavegar }) {
                         </div>
 
                         {/* BODY */}
-                        <div style={styles.modalBody}>
+                        <div style={styles.modalBodyInfo}>
 
                             {/* COLUMNA 1 */}
                             <div style={styles.columnaFoto}>
@@ -292,6 +292,7 @@ export default function Proveedores({ usuario, onLogout, onNavegar }) {
                             </div>
 
                         </div>
+
                         <div style={styles.modalFooter}>
 
                             <button
@@ -305,7 +306,7 @@ export default function Proveedores({ usuario, onLogout, onNavegar }) {
                             </button>
 
                             <button
-                                onClick={() => cerrarModal()} // por ahora
+                                onClick={() => cerrarModal()}
                                 style={{
                                     ...styles.footerBtn,
                                     ...styles.btnEditar
@@ -316,12 +317,9 @@ export default function Proveedores({ usuario, onLogout, onNavegar }) {
 
                         </div>
 
-
-
                     </div>
                 </div>
-            )
-            }
+            )}
 
             {/* MODAL de Compras y Ordenes */}
             {modalType === "ordenes" && proveedorSeleccionado && (
@@ -341,7 +339,7 @@ export default function Proveedores({ usuario, onLogout, onNavegar }) {
                                 <IconoCompras size={28} color="#1D1D1D" />
 
                                 <span style={styles.modalTitle}>
-                                    Información Proveedor - {proveedorSeleccionado.proveedor}
+                                    Compras y Órdenes - {proveedorSeleccionado.proveedor}
                                 </span>
                             </div>
 
@@ -355,20 +353,20 @@ export default function Proveedores({ usuario, onLogout, onNavegar }) {
                         </div>
 
                         {/* BODY */}
-                        <div style={styles.modalBody}>
+                        <div style={styles.modalBodyOrdenes}>
 
                             {/* COLUMNA 1 */}
                             <div style={styles.columnaDatosOrdenes}>
+
                                 <div style={styles.dataCardOrdenes}>
                                     <span style={styles.dataLabel}>Condiciones de Pago</span>
-                                    <span>{"Credito - 30 dias."}</span>
+                                    <span>Crédito - 30 días.</span>
                                 </div>
 
                                 <div style={styles.dataCardOrdenes}>
                                     <span style={styles.dataLabel}>Stock Disponible</span>
-                                    <span>{"Consultar por producto."}</span>
+                                    <span>Consultar por producto.</span>
                                 </div>
-
 
                             </div>
 
@@ -377,17 +375,18 @@ export default function Proveedores({ usuario, onLogout, onNavegar }) {
 
                                 <div style={styles.dataCardOrdenes}>
                                     <span style={styles.dataLabel}>Tiempo de Entrega</span>
-                                    <span>{"6-7 dias habiles."}</span>
+                                    <span>6-7 días hábiles.</span>
                                 </div>
 
                                 <div style={styles.dataCardOrdenes}>
                                     <span style={styles.dataLabel}>Frecuencia de Compra</span>
-                                    <span>{"Quincenal"}</span>
+                                    <span>Quincenal</span>
                                 </div>
 
                             </div>
 
                         </div>
+
                         <div style={styles.modalFooter}>
 
                             <button
@@ -401,7 +400,7 @@ export default function Proveedores({ usuario, onLogout, onNavegar }) {
                             </button>
 
                             <button
-                                onClick={() => cerrarModal()} // por ahora
+                                onClick={() => cerrarModal()}
                                 style={{
                                     ...styles.footerBtn,
                                     ...styles.btnEditar
@@ -412,12 +411,9 @@ export default function Proveedores({ usuario, onLogout, onNavegar }) {
 
                         </div>
 
-
-
                     </div>
                 </div>
-            )
-            }
+            )}
 
         </div >
 
@@ -430,6 +426,7 @@ const styles = {
         minHeight: "100vh",
         background: "#F5F5F5",
     },
+
     contenido: {
         flex: 1,
         padding: 20,
@@ -437,6 +434,7 @@ const styles = {
         flexDirection: "column",
         alignItems: "center",
     },
+
     encabezado: {
         width: "100%",
         display: "flex",
@@ -445,6 +443,7 @@ const styles = {
         gap: 10,
         padding: "21px 0",
     },
+
     titulo: {
         color: "#000000",
         fontSize: 42,
@@ -453,6 +452,7 @@ const styles = {
         margin: 0,
         textAlign: "center",
     },
+
     separador: {
         width: "min(1100px, 80%)",
         height: 4,
@@ -472,17 +472,11 @@ const styles = {
         zIndex: 9999,
     },
 
-    modal: {
-        background: "#FFFFFF",
-        width: "950px",
-        maxWidth: "95vw",
-        borderRadius: 12,
-        overflow: "hidden",
-        boxShadow: "0px 6px 20px rgba(0,0,0,0.25)",
-        margin: "0 auto"
-    },
+    /* =========================
+       MODAL INFO
+    ========================== */
 
-    modalBody: {
+    modalBodyInfo: {
         padding: 24,
         display: "grid",
         gridTemplateColumns: "240px 1fr 1fr",
@@ -490,6 +484,34 @@ const styles = {
         alignItems: "start",
         justifyContent: "center",
     },
+
+    /* =========================
+       MODAL ORDENES
+    ========================== */
+
+    modal: {
+        background: "#FFFFFF",
+        width: "950px",
+        maxWidth: "90vw",
+        borderRadius: 12,
+        overflow: "hidden",
+        boxShadow: "0px 6px 20px rgba(0,0,0,0.25)",
+        margin: "0 auto",
+    },
+
+    modalBodyOrdenes: {
+        padding: 24,
+        display: "grid",
+        gridTemplateColumns: "1fr 1fr",
+        gap: 20,
+        alignItems: "start",
+        justifyContent: "center",
+        width: "100%",
+    },
+
+    /* =========================
+       FOTO Y PERFIL
+    ========================== */
 
     columnaFoto: {
         display: "flex",
@@ -522,6 +544,10 @@ const styles = {
         fontSize: 14,
     },
 
+    /* =========================
+       COLUMNAS
+    ========================== */
+
     columnaDatos: {
         display: "flex",
         flexDirection: "column",
@@ -530,13 +556,15 @@ const styles = {
     },
 
     columnaDatosOrdenes: {
-    display: "flex",
-    flexDirection: "column",
-    gap: 14,
-    width: "100%",
-    maxWidth: "900px",
-    margin: "0 auto",
-},
+        display: "flex",
+        flexDirection: "column",
+        gap: 14,
+        width: "100%",
+    },
+
+    /* =========================
+       CARDS
+    ========================== */
 
     dataCard: {
         background: "#F9F9F9",
@@ -561,8 +589,6 @@ const styles = {
         minHeight: 72,
         justifyContent: "center",
         width: "100%",
-        maxWidth: "900px",
-        margin: "0 auto",
     },
 
     dataLabel: {
@@ -571,6 +597,10 @@ const styles = {
         color: "#777",
         textTransform: "uppercase",
     },
+
+    /* =========================
+       HEADER MODAL
+    ========================== */
 
     modalHeader: {
         width: "100%",
@@ -604,18 +634,11 @@ const styles = {
         cursor: "pointer",
         color: "#1D1D1D",
     },
-    infoRow: {
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-        paddingBottom: 10,
-        borderBottom: "1px solid #E5E5E5",
-    },
 
-    label: {
-        fontWeight: 700,
-        color: "#555",
-    },
+    /* =========================
+       FOOTER MODAL
+    ========================== */
+
     modalFooter: {
         width: "100%",
         background: getColor("gris"),
@@ -626,6 +649,7 @@ const styles = {
         justifyContent: "space-between",
         alignItems: "center",
     },
+
     footerBtn: {
         padding: "10px 18px",
         border: "none",
@@ -634,10 +658,12 @@ const styles = {
         fontWeight: 700,
         fontFamily: "Lato",
     },
+
     btnCerrar: {
         background: "#E0E0E0",
         color: "#1D1D1D",
     },
+
     btnEditar: {
         background: getColor("amarillo"),
         color: "#1D1D1D",
