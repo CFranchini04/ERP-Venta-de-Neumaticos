@@ -48,7 +48,7 @@ const getPedidoCompleto = async (id) => {
             productos(
                 id_producto,
                 nombre,
-                stock_actual,
+                inventarios(cantidad),
                 marcas(nombre),
                 categorias_productos(nombre)
             )
@@ -91,7 +91,7 @@ const getPedidoCompleto = async (id) => {
         producto: d.productos?.nombre ?? '—',
         categoria: d.productos?.categorias_productos?.nombre ?? '—',
         marca: d.productos?.marcas?.nombre ?? '—',
-        inventario: d.productos?.stock_actual ?? 0,
+        inventario: d.productos?.inventarios?.cantidad ?? 0,
         cantidad: Number(d.cantidad ?? 0),
         precio: Number(d.precio ?? 0),
         subtotal: Number(d.cantidad ?? 0) * Number(d.precio ?? 0),
