@@ -1,4 +1,5 @@
 import React from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from 'react-router-dom';
 import Sidebar from "../../components/Sidebar";
 import { Button } from "../../components/Buttons";
@@ -93,6 +94,10 @@ const styles = `
 
 export default function Compras({ usuario = 'Empleado', onNavegar, onLogout }) {
   const navigate = useNavigate();
+  const [facturas, setFacturas] = useState([]);
+  const [cotizaciones, setCotizaciones] = useState([]);
+  const [loadingFac, setLoadingFac] = useState(true);
+  const [loadingCot, setLoadingCot] = useState(true);
 
   const handleNavegar = (clave) => {
     const rutas = {
@@ -107,10 +112,43 @@ export default function Compras({ usuario = 'Empleado', onNavegar, onLogout }) {
     const ruta = rutas[clave] || (clave.startsWith('/') ? clave : `/compras/${clave}`);
     navigate(ruta);
     if (typeof onNavegar === 'function') {
-      try { onNavegar(ruta); } catch (e) {}
+      try { onNavegar(ruta); } catch (e) { }
     }
   };
-  
+
+  useEffect(() => {
+    const fetchFacturas = async () => {
+      try {
+        const response = await fetch('http://localhost:9128/api/compras/facturas/tabla')
+        const data = await response.json()
+        if (!response.ok) throw new Error(data.message)
+        setFacturas(Array.isArray(data) ? data : [])
+      } catch (error) {
+        console.error(error.message)
+      } finally {
+        setLoadingFac(false)
+      }
+    }
+    fetchFacturas()
+  }, [])
+
+  useEffect(() => {
+    const fetchCotizaciones = async () => {
+      try {
+        const response = await fetch('http://localhost:9128/api/compras/cotizaciones/tabla')
+        const data = await response.json()
+        if (!response.ok) throw new Error(data.message)
+        setCotizaciones(Array.isArray(data) ? data : [])
+      } catch (error) {
+        console.error(error.message)
+      } finally {
+        setLoadingCot(false)
+      }
+    }
+    fetchCotizaciones()
+  }, [])
+
+
   // FACTURAS
   const columnasFacturas = [
     { key: "codigo", label: "Código" },
@@ -119,22 +157,14 @@ export default function Compras({ usuario = 'Empleado', onNavegar, onLogout }) {
     { key: "fechaVencimiento", label: "Fecha de Vencimiento" }
   ];
 
-  const dataFacturas = [
-    {
-      id: 1,
-      codigo: "FAC_COM_048",
-      proveedor: "Rusteeze",
-      fechaCreacion: "05/04/2026",
-      fechaVencimiento: "05/04/2036"
-    },
-    {
-      id: 2,
-      codigo: "FAC_COM_049",
-      proveedor: "Dinoco",
-      fechaCreacion: "05/03/2026",
-      fechaVencimiento: "05/03/2036"
-    }
-  ];
+  const dataFacturas = facturas
+    .filter((p) => p.estados?.nombre === "Pendiente")
+    .map((p) => ({
+      codigo: p.codigo_factura,
+      proveedor: p.proveedores?.personas?.nombre,
+      fechaCreacion: p.fecha_emision,
+      fechaVencimiento: p.fecha_vencimiento,
+    }))
 
   //COTIZACIONES
   const columnasCotizaciones = [
@@ -144,47 +174,55 @@ export default function Compras({ usuario = 'Empleado', onNavegar, onLogout }) {
     { key: "accion", label: "" }
   ];
 
-  const dataCotizaciones = [
-    {
-      id: 1,
-      codigo: "COT_038",
-      estado: "Lista",
-      fecha: "05/04/2026",
-      accion: <IconoLupa />
-    },
-    {
-      id: 2,
-      codigo: "COT_167",
-      estado: "Lista",
-      fecha: "21/03/2026",
-      accion: <IconoLupa />
-    }
-  ];
+  const dataCotizaciones = Object.values(
+    cotizaciones.reduce((acc, cotizacion) => {
+      const codigoPedido = cotizacion.pedidos_compras?.codigo_pedido
 
- 
+      if (!acc[codigoPedido]) {
+        acc[codigoPedido] = {
+          id: codigoPedido,
+          codigo: codigoPedido.replace('PED', 'COT'), // PED-0001 → COT-0001
+          estado: cotizacion.estados?.nombre,
+          fecha: cotizacion.fecha_respuesta,
+          accion: <IconoLupa />
+        }
+      }
+
+      return acc
+    }, {})
+  )
+
+  if (loadingFac || loadingCot) {
+    return (
+      <div style={{ height: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center', fontSize: 24 }}>
+        Cargando datos...
+      </div>
+    );
+  }
+
   return (
     <div style={{ display: 'flex', height: '100vh' }}>
       <Sidebar usuario={usuario} onNavegar={handleNavegar} onLogout={onLogout} />
 
-      <div style={{ 
-          flex: 1, 
-          padding: '50px', 
-          overflowY: 'auto', 
-          background: getColor("blanco"),
-          fontFamily: 'Lato, sans-serif',
-        }}>
+      <div style={{
+        flex: 1,
+        padding: '50px',
+        overflowY: 'auto',
+        background: getColor("blanco"),
+        fontFamily: 'Lato, sans-serif',
+      }}>
         <style>{styles}</style>
 
         <h1 className="titulo">Módulo de Compras</h1>
- 
+
         {/*CARDS */}
         <div className="cards-grid">
-          <CardModulo titulo="Pedidos" Icono={IconoPedidos} onClick={() => handleNavegar("pedidos")}/>
+          <CardModulo titulo="Pedidos" Icono={IconoPedidos} onClick={() => handleNavegar("pedidos")} />
           <CardModulo titulo="Cotizaciones" Icono={IconoCotizaciones} onClick={() => handleNavegar("cotizaciones")} />
           <CardModulo titulo="Órdenes de compra" Icono={IconoOrdenCompra} onClick={() => handleNavegar("ordenesCompra")} />
           <CardModulo titulo="Órdenes de pago" Icono={IconoOrdenPago} onClick={() => handleNavegar("ordenesPago")} />
-          <CardModulo titulo="Facturas" Icono={IconoFactura} onClick={() => handleNavegar("facturas")}/>
-          <CardModulo titulo="Proveedores" Icono={IconoProveedor} onClick={() => handleNavegar("proveedores")}/>
+          <CardModulo titulo="Facturas" Icono={IconoFactura} onClick={() => handleNavegar("facturas")} />
+          <CardModulo titulo="Proveedores" Icono={IconoProveedor} onClick={() => handleNavegar("proveedores")} />
         </div>
 
         {/* 🔹 TABLAS */}
@@ -210,6 +248,6 @@ export default function Compras({ usuario = 'Empleado', onNavegar, onLogout }) {
         </div>
       </div>
     </div>
-    
+
   );
- }
+}
