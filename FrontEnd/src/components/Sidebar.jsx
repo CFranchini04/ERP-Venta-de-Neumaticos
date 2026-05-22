@@ -73,7 +73,8 @@ export default function Sidebar({ onNavegar }) {
       try {
         onNavegar(ruta);
       } catch (err) {
-        console.error('Error en onNavegar:', err);}
+        console.error('Error en onNavegar:', err);
+      }
     }
   };
 
@@ -217,6 +218,11 @@ const styles = {
     width: 250,
     minWidth: 250,
     height: '100vh',
+    position: 'sticky',
+    top: 0,
+    alignSelf: 'flex-start',
+    overflowY: 'auto',
+    zIndex: 100,
     background: getColor("negro"),
     borderRight: '1px solid #1D1D1D',
     display: 'flex',
