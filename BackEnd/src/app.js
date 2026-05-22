@@ -9,7 +9,7 @@ import productosRoutes from './routes/misc/productos.routes.js'
 import facturasRoutes from './routes/compras/facturas.routes.js'
 import cotizacionesRoutes from './routes/compras/cotizaciones.routes.js'
 import empleadosRoutes from './routes/rrhh/empleados.routes.js'
-
+import facturasVentasRoutes from './routes/ventas/facturas.routes.js'
 
 const app = express()
 
@@ -29,5 +29,7 @@ app.use('/api/misc/productos', productosRoutes)
 app.use('/api/compras/facturas', facturasRoutes)
 app.use('/api/compras/cotizaciones', cotizacionesRoutes)
 app.use('/api/rrhh/empleados', empleadosRoutes)
+app.use('/api/ventas/facturas', facturasVentasRoutes)
+
 
 export default app

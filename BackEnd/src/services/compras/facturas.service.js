@@ -1,9 +1,49 @@
 import supabase from '../../config/supabase.js'
 
+const SELECT_FULL = `
+  *,
+  proveedores(*, personas(*)),
+  ordenes_compras(*),
+  detalles_facturas_compras(
+    *,
+    productos(
+      *,
+      marcas(nombre),
+      categorias_productos(nombre)
+    )
+  ),
+  estados(nombre),
+  notas_credito_compras(*, estados(nombre))
+`
+
+const SELECT_SINGLE = `
+  *,
+  proveedores(plazo_entrega, personas(nombre, apellido, ruc, direccion, telefono, correo, tipo_persona)),
+  ordenes_compras(codigo_orden),
+  detalles_facturas_compras(
+    cantidad,
+    precio_unitario,
+    porcentaje_iva,
+    monto_iva,
+    subtotal,
+    productos(
+      nombre,
+      codigo,
+      descripcion,
+      precio_compra,
+      precio_venta,
+      marcas(nombre),
+      categorias_productos(nombre)
+    )
+  ),
+  estados(nombre),
+  notas_credito_compras(*, estados(nombre))
+`
+
 const getAllFacturas = async () => {
     const { data, error } = await supabase
         .from('facturas_compras')
-        .select('*, proveedores(*, personas(*)), ordenes_compras(*), estados(nombre), notas_credito_compras(*, estados(nombre))')
+        .select(SELECT_FULL)
     if (error) throw new Error(error.message)
     return data
 }
@@ -11,13 +51,7 @@ const getAllFacturas = async () => {
 const getFactura = async (id) => {
     const { data, error } = await supabase
         .from('facturas_compras')
-        .select(`
-      *,
-      proveedores(id_proveedor, plazo_entrega, personas(id_persona, nombre, apellido, ruc, direccion, telefono, correo, tipo_persona)),
-      ordenes_compras(codigo_orden),
-      estados(nombre),
-      notas_credito_compras(*, estados(nombre))
-    `)
+        .select(SELECT_SINGLE)
         .eq('id_factura_compra', id)
         .single()
     if (error) throw new Error(error.message)
@@ -27,13 +61,7 @@ const getFactura = async (id) => {
 const getFacturaByCodigo = async (codigo) => {
     const { data, error } = await supabase
         .from('facturas_compras')
-        .select(`
-      *,
-      proveedores(id_proveedor, plazo_entrega, personas(id_persona, nombre, apellido, ruc, direccion, telefono, correo, tipo_persona)),
-      ordenes_compras(codigo_orden),
-      estados(nombre),
-      notas_credito_compras(*, estados(nombre))
-    `)
+        .select(SELECT_SINGLE)
         .eq('codigo_factura', codigo)
         .single()
     if (error) throw new Error(error.message)
@@ -122,7 +150,18 @@ const updateEstadoFactura = async (id, id_estado) => {
 }
 
 const deleteFactura = async (id) => {
-    
+    const { error: errorDetalles } = await supabase
+        .from('detalles_facturas_compras')
+        .delete()
+        .eq('id_factura_compra', id)
+    if (errorDetalles) throw new Error(errorDetalles.message)
+
+    const { error: errorNotas } = await supabase
+        .from('notas_credito_compras')
+        .delete()
+        .eq('id_factura_compra', id)
+    if (errorNotas) throw new Error(errorNotas.message)
+
     const { error } = await supabase
         .from('facturas_compras')
         .delete()
