@@ -9,3 +9,4 @@ export { default as Proveedores } from './Proveedores/Proveedores';
 export { default as NuevosPedidos } from './Pedidos/NuevosPedidos';
 export { default as DetallePedido } from './Pedidos/DetallePedido';
 export { default as InformacionOrden } from './OrdenesCompra/InformacionOrden';
+export { default as SeleccionFacturas} from './OrdenesPago/SeleccionFacturas';
