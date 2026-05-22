@@ -174,12 +174,9 @@ export default function Searchbar({
             </svg>
           </button>
         ) : (
-          /* Icono lupa / spinner */
+          /* Icono lupa */
           <div style={styles.iconStatic}>
-            {loading
-              ? <span style={styles.spinner}>⏳</span>
-              : <IconoLupa />
-            }
+            <IconoLupa />
           </div>
         )}
       </div>

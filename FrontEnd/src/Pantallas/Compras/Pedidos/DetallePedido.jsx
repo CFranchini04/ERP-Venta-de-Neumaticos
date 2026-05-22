@@ -190,14 +190,12 @@ export default function DetallePedido({ usuario, onNavegar, onLogout }) {
             style={tabActiva === "detalle" ? styles.tabActiva : styles.tab}
           >
             Detalle del pedido
-            <span style={styles.badge}>{pedido?.detalle?.length ?? 0}</span>
           </div>
           <div
             onClick={() => setTabActiva("cotizaciones")}
             style={tabActiva === "cotizaciones" ? styles.tabActiva : styles.tab}
           >
             Cotizaciones del pedido
-            <span style={styles.badge}>{pedido?.cotizaciones?.length ?? 0}</span>
           </div>
         </div>
 
