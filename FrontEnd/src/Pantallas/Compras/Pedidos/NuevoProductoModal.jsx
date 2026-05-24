@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { IconoCerrar } from "../../../components/Icons";
 import { getColor } from "../../../components/Colors";
+import fetchConToken from "../../../token";
 
 const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:9128/api";
 
@@ -33,8 +34,8 @@ export default function NuevoProductoModal({ open, onClose, onProductoCreado }) 
       try {
         setCargando(true);
         const [resMarcas, resCat] = await Promise.all([
-          fetch(`${API_BASE}/misc/productos/marcas`),
-          fetch(`${API_BASE}/misc/productos/categorias`),
+          fetchConToken(`${API_BASE}/misc/productos/marcas`),
+          fetchConToken(`${API_BASE}/misc/productos/categorias`),
         ]);
         const [dataMarcas, dataCat] = await Promise.all([
           resMarcas.json(),
@@ -83,7 +84,7 @@ export default function NuevoProductoModal({ open, onClose, onProductoCreado }) 
         id_categoria: form.id_categoria !== "" ? Number(form.id_categoria) : null,
       };
 
-      const res = await fetch(`${API_BASE}/misc/productos`, {
+      const res = await fetchConToken(`${API_BASE}/misc/productos`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),

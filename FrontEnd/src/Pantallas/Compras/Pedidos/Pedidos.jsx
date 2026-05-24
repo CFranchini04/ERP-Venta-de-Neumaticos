@@ -8,6 +8,7 @@ import {
 } from "../../../components/Icons";
 
 import { getColor } from "../../../components/Colors";
+import fetchConToken from "../../../token";
 
 export default function Pedidos({ usuario, onNavegar, onLogout }) {
  
@@ -21,7 +22,7 @@ export default function Pedidos({ usuario, onNavegar, onLogout }) {
   useEffect(() => {
     const fetchPedidos = async () => {
       try {
-        const response = await fetch('http://localhost:9128/api/compras/pedidos/tabla');
+        const response = await fetchConToken('http://localhost:9128/api/compras/pedidos/tabla');
         const data = await response.json();
         if (!response.ok) throw new Error(data.message);
         setPedidos(data);

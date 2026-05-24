@@ -5,6 +5,7 @@ import List from "../../../components/Lista";
 import { Button } from "../../../components/Buttons";
 import { getColor } from "../../../components/Colors";
 import { IconoLupa, IconoDropdown } from "../../../components/Icons";
+import fetchConToken from "../../../token";
 
 const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:9128/api";
 
@@ -30,7 +31,7 @@ export default function PagoFacturas({ usuario, onNavegar, onLogout }) {
                 setLoading(true);
                 setError("");
 
-                const response = await fetch(`${API_BASE}/compras/facturas`);
+                const response = await fetchConToken(`${API_BASE}/compras/facturas`);
 
                 if (!response.ok) throw new Error(`Error ${response.status}: No se pudieron cargar las facturas`);
 

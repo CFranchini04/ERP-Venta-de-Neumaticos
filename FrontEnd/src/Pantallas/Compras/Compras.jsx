@@ -17,6 +17,7 @@ import {
   IconoProveedor,
   IconoLupa
 } from "../../components/Icons";
+import fetchConToken from "../../token";
 
 const CardModulo = ({ titulo, Icono, onClick }) => (
   <div className="card">
@@ -99,6 +100,8 @@ export default function Compras({ usuario = 'Empleado', onNavegar, onLogout }) {
   const [loadingFac, setLoadingFac] = useState(true);
   const [loadingCot, setLoadingCot] = useState(true);
 
+  const token = localStorage.getItem('token');
+
   const handleNavegar = (clave) => {
     const rutas = {
       pedidos: '/compras/pedidos',
@@ -119,7 +122,7 @@ export default function Compras({ usuario = 'Empleado', onNavegar, onLogout }) {
   useEffect(() => {
     const fetchFacturas = async () => {
       try {
-        const response = await fetch('http://localhost:9128/api/compras/facturas/tabla')
+        const response = await fetchConToken('http://localhost:9128/api/compras/facturas/tabla')
         const data = await response.json()
         if (!response.ok) throw new Error(data.message)
         setFacturas(Array.isArray(data) ? data : [])
@@ -135,7 +138,7 @@ export default function Compras({ usuario = 'Empleado', onNavegar, onLogout }) {
   useEffect(() => {
     const fetchCotizaciones = async () => {
       try {
-        const response = await fetch('http://localhost:9128/api/compras/cotizaciones/tabla')
+        const response = await fetchConToken('http://localhost:9128/api/compras/cotizaciones/tabla')
         const data = await response.json()
         if (!response.ok) throw new Error(data.message)
         setCotizaciones(Array.isArray(data) ? data : [])

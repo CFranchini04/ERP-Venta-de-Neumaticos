@@ -5,6 +5,7 @@ import { Button } from "../../../components/Buttons";
 import { getColor } from "../../../components/Colors";
 import List from "../../../components/Lista";
 import { IconoLupa } from "../../../components/Icons";
+import fetchConToken from "../../../token";
 
 const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:9128/api";
 
@@ -33,7 +34,7 @@ export default function InformacionOrden({
                 setLoading(true);
                 setError("");
 
-                const response = await fetch(`${API_BASE}/compras/ordenes-compra/${idOrden}`);
+                const response = await fetchConToken(`${API_BASE}/compras/ordenes-compra/${idOrden}`);
                 const dataOrden = await response.json();
 
                 if (!response.ok) throw new Error(dataOrden.message || "No se pudo cargar la orden");

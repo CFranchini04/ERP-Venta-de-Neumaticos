@@ -15,6 +15,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { getColor } from './Colors';
 import { IconoLupa } from './Icons';
+import fetchConToken from '../token';
 
 export default function Searchbar({
   apiUrl,
@@ -57,7 +58,7 @@ export default function Searchbar({
       try {
         setLoading(true);
         const url  = `${apiUrl}?${queryParam}=`;
-        const res  = await fetch(url);
+        const res  = await fetchConToken(url);
         const data = await res.json();
         const arr  = Array.isArray(data) ? data : [];
         setResults(arr);
@@ -92,7 +93,7 @@ export default function Searchbar({
       try {
         setLoading(true);
         const url  = `${apiUrl}?${queryParam}=${encodeURIComponent(text.trim())}`;
-        const res  = await fetch(url);
+        const res  = await fetchConToken(url);
         const data = await res.json();
         setResults(Array.isArray(data) ? data : []);
         setShowDropdown(true);

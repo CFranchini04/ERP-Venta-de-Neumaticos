@@ -10,6 +10,8 @@ import facturasRoutes from './routes/compras/facturas.routes.js'
 import cotizacionesRoutes from './routes/compras/cotizaciones.routes.js'
 import empleadosRoutes from './routes/rrhh/empleados.routes.js'
 import facturasVentasRoutes from './routes/ventas/facturas.routes.js'
+import verificarToken from './middlewares/auth.middleware.js'
+import soloRol from './middlewares/roles.middleware.js'
 
 const app = express()
 
@@ -21,6 +23,12 @@ app.get('/api/health', (req, res) => {
 })
 
 app.use('/auth', authRoutes)
+app.use('/api/', verificarToken)
+app.use('/api/compras/', soloRol('admin', 'compras'))
+app.use('/api/ventas/', soloRol('admin', 'ventas'))
+app.use('/api/rrhh/', soloRol('admin', 'rrhh'))
+app.use('/api/contabilidad/', soloRol('admin', 'contabilidad'))
+app.use('/api/tesoreria/', soloRol('admin', 'tesoreria'))
 app.use('/api/compras/proveedores', proveedoresRoutes)
 app.use('/api/compras/ordenes-compra', ordenesCompraRoutes)
 app.use('/api/compras/ordenes-pago', ordPagoRoutes)

@@ -23,9 +23,11 @@ export default function Login() {
       })
 
       const data = await response.json()
+      console.log('data completa:', data)
       if (!response.ok) throw new Error(data.message)
 
       localStorage.setItem('token', data.token)
+      localStorage.setItem('refresh_token', data.refresh_token)
 
       const response2 = await fetch('http://localhost:9128/auth/rol', {
         method: 'GET',

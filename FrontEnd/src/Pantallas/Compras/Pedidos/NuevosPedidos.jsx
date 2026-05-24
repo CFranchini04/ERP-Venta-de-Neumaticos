@@ -13,6 +13,7 @@ import {
 } from "../../../components/Icons";
 
 import { getColor } from "../../../components/Colors";
+import fetchConToken from "../../../token";
 
 const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:9128/api";
 
@@ -45,7 +46,7 @@ export default function NuevosPedidos({ usuario, onNavegar, onLogout }) {
   useEffect(() => {
     const cargarProveedores = async () => {
       try {
-        const res = await fetch(`${API_BASE}/compras/proveedores`);
+        const res = await fetchConToken(`${API_BASE}/compras/proveedores`);
         const data = await res.json();
         if (Array.isArray(data)) {
           setProveedores(data.map((p) => ({
@@ -95,7 +96,7 @@ export default function NuevosPedidos({ usuario, onNavegar, onLogout }) {
     try {
       const codigoPedido = `PED_${Date.now()}`;
 
-      const resCabecera = await fetch(`${API_BASE}/compras/pedidos`, {
+      const resCabecera = await fetchConToken(`${API_BASE}/compras/pedidos`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -118,7 +119,7 @@ export default function NuevosPedidos({ usuario, onNavegar, onLogout }) {
 
       if (!idPedido) throw new Error("No se obtuvo el ID del pedido creado");
 
-      const resDetalles = await fetch(`${API_BASE}/compras/pedidos/detalle`, {
+      const resDetalles = await fetchConToken(`${API_BASE}/compras/pedidos/detalle`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(

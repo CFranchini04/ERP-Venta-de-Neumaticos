@@ -16,4 +16,13 @@ const getRol = async (token) => {
     return user.user_metadata.rol
 }
 
-export default { login, getRol }
+const refresh = async (refresh_token) => {
+    const { data, error } = await supabase.auth.refreshSession({ refresh_token })
+    if (error) throw new Error(error.message)
+    return {
+        token: data.session.access_token,
+        refresh_token: data.session.refresh_token
+    }
+}
+
+export default { login, getRol, refresh }

@@ -4,6 +4,7 @@ import Sidebar from "../../../components/Sidebar";
 import List from "../../../components/Lista";
 import { IconoLupa } from "../../../components/Icons";
 import { getColor } from "../../../components/Colors";
+import fetchConToken from "../../../token";
 
 const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:9128/api";
 
@@ -29,7 +30,7 @@ export default function OrdenesPago({ usuario, onNavegar, onLogout }) {
         setLoading(true);
         setError("");
 
-        const response = await fetch(`${API_BASE}/compras/ordenes-pago`);
+        const response = await fetchConToken(`${API_BASE}/compras/ordenes-pago`);
         const data = await response.json();
 
         if (!response.ok) {
