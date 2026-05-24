@@ -1,3 +1,30 @@
+// cotizaciones.service.js
+// Sin cambios respecto al original: ya tiene postCotizacion con el formato correcto.
+// Se incluye aquí solo para referencia de la estructura que usa el modal.
+//
+// El modal CargarCotizacionModal hace POST a /api/compras/cotizaciones con:
+// {
+//   id_pedido: number,
+//   id_proveedor: number,
+//   fecha_respuesta: "YYYY-MM-DD",
+//   observacion: string | null,
+//   id_estado: number,
+//   codigo_cotizacion: string,
+//   detalles: [
+//     {
+//       id_producto: number,
+//       cantidad: number,
+//       precio_unitario: number,
+//       es_mejor_opcion: boolean,
+//       observacion: string | null,
+//     }
+//   ]
+// }
+//
+// El service inserta en cotizaciones_proveedores y luego en
+// cotizaciones_proveedores_detalle (con subtotal calculado en BD).
+// No requiere ninguna modificación.
+
 import supabase from '../../config/supabase.js'
 
 const getAllCotizaciones = async () => {
@@ -35,8 +62,9 @@ const getTableCotizaciones = async () => {
     if (error) throw new Error(error.message)
     return data
 }
+
 const postCotizacion = async (id_pedido, id_proveedor, fecha_respuesta, observacion, id_estado, codigo_cotizacion, detalles) => {
-    // 1. Crear la cotizacion
+    // 1. Crear la cabecera de la cotización
     const { data: cotizacion, error } = await supabase
         .from('cotizaciones_proveedores')
         .insert({ id_pedido, id_proveedor, fecha_respuesta, observacion, id_estado, codigo_cotizacion })
@@ -44,14 +72,14 @@ const postCotizacion = async (id_pedido, id_proveedor, fecha_respuesta, observac
         .single()
     if (error) throw new Error(error.message)
 
-    // 2. Crear los detalles apuntando a la cotizacion creada
+    // 2. Crear los detalles apuntando a la cotización creada
     const detallesConId = detalles.map(d => ({
-        id_producto: d.id_producto,
-        cantidad: d.cantidad,
-        precio_unitario: d.precio_unitario,
-        es_mejor_opcion: d.es_mejor_opcion ?? false,
-        observacion: d.observacion,
-        id_cotizacion: cotizacion.id_cotizacion
+        id_producto:      d.id_producto,
+        cantidad:         d.cantidad,
+        precio_unitario:  d.precio_unitario,
+        es_mejor_opcion:  d.es_mejor_opcion ?? false,
+        observacion:      d.observacion,
+        id_cotizacion:    cotizacion.id_cotizacion
     }))
 
     const { data: detallesCreados, error: errorDetalles } = await supabase
@@ -118,4 +146,13 @@ const deleteCotizacion = async (id) => {
     return { message: 'Cotizacion eliminada correctamente' }
 }
 
-export default { getAllCotizaciones, getCotizacion, getCotizacionByCodigo, getTableCotizaciones, postCotizacion, updateCotizacion, updateEstadoCotizacion, deleteCotizacion }
+export default {
+    getAllCotizaciones,
+    getCotizacion,
+    getCotizacionByCodigo,
+    getTableCotizaciones,
+    postCotizacion,
+    updateCotizacion,
+    updateEstadoCotizacion,
+    deleteCotizacion
+}
