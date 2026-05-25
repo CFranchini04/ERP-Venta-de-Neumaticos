@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Sidebar from "../../components/Sidebar";
 import List from '../../components/Lista';
 import {
@@ -19,6 +20,7 @@ const columns = [
 ];
 
 export default function Ventas({ usuario = 'Empleado', onLogout, onNavegar }) {
+    const navigate = useNavigate();
     const [orderBy, setOrderBy] = useState("");
     const [busqueda, setBusqueda] = useState('');
     const [facturas, setFacturas] = useState([]);
@@ -58,6 +60,7 @@ export default function Ventas({ usuario = 'Empleado', onLogout, onNavegar }) {
     );
 
 function handleNavegar(moduloId) {
+    navigate(`/ventas/${moduloId}`);
     if (onNavegar) onNavegar(moduloId);
 }
 

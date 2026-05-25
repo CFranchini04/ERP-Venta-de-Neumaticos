@@ -5,11 +5,11 @@ import proveedoresRoutes from './routes/compras/proveedores.routes.js'
 import ordenesCompraRoutes from './routes/compras/ordenesCompra.routes.js'
 import ordPagoRoutes from './routes/compras/ordenesPago.routes.js'
 import pedidosRoutes from './routes/compras/pedidos.routes.js'
-import productosRoutes from './routes/misc/productos.routes.js'
 import facturasRoutes from './routes/compras/facturas.routes.js'
 import cotizacionesRoutes from './routes/compras/cotizaciones.routes.js'
 import empleadosRoutes from './routes/rrhh/empleados.routes.js'
 import facturasVentasRoutes from './routes/ventas/facturas.routes.js'
+import presupuestosRoutes from './routes/ventas/presupuestos.routes.js'
 import verificarToken from './middlewares/auth.middleware.js'
 import soloRol from './middlewares/roles.middleware.js'
 
@@ -33,11 +33,11 @@ app.use('/api/compras/proveedores', proveedoresRoutes)
 app.use('/api/compras/ordenes-compra', ordenesCompraRoutes)
 app.use('/api/compras/ordenes-pago', ordPagoRoutes)
 app.use('/api/compras/pedidos', pedidosRoutes)
-app.use('/api/misc/productos', productosRoutes)
 app.use('/api/compras/facturas', facturasRoutes)
 app.use('/api/compras/cotizaciones', cotizacionesRoutes)
 app.use('/api/rrhh/empleados', empleadosRoutes)
 app.use('/api/ventas/facturas', facturasVentasRoutes)
+app.use('/api/ventas/presupuestos', presupuestosRoutes)
 
 
 export default app

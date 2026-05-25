@@ -20,6 +20,9 @@ import {
   SeleccionFacturas
 } from './Pantallas/Compras';
 import Ventas from './Pantallas/Ventas/Ventas';
+import Presupuestos from './Pantallas/Ventas/Presupuestos/Presupuestos';
+import NuevosPresupuestos from './Pantallas/Ventas/Presupuestos/NuevosPresupuestos';
+import DetallePresupuesto from './Pantallas/Ventas/Presupuestos/DetallePresupuesto';
 import Tesoreria from './Pantallas/Tesoreria/Tesoreria';
 import Contabilidad from './Pantallas/Contabilidad/Contabilidad';
 import RoleRoute from './RoleRoute';
@@ -61,6 +64,9 @@ export default function App() {
             <Route path="/rrhh/gestion-de-empleado/:id" element={<GestionPersonal />} />
             <Route path="/rrhh/gestion-salarial" element={<GestionSalarial />} />
             <Route path="/ventas" element={<Ventas />} />
+            <Route path="/ventas/presupuestos" element={<Presupuestos />} />
+            <Route path="/ventas/presupuestos/nuevo" element={<NuevosPresupuestos />} />
+            <Route path="/ventas/presupuestos/:id" element={<DetallePresupuesto />} />
             <Route path="/compras" element={<Compras />} />
             <Route path="/compras/pedidos" element={<Pedidos />} />
             <Route path="/compras/pedidos/:id" element={<DetallePedido />} />
