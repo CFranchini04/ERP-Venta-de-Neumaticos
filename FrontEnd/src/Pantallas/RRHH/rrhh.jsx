@@ -160,8 +160,8 @@ export default function RRHH({ usuario = 'Empleado', onLogout, onNavegar }) {
 
                 <section style={styles.acciones}>
                     {[
-                        { label: 'Gestión de Empleados', icon: <IconoRRHH size={36} />, id: 'gestion-personal' },
-                        { label: 'Gestión de Salarios', icon: <IconoDinero size={36} />, id: 'gestion-salarios' },
+                        { label: 'Gestión de Empleados', icon: <IconoRRHH size={36} />, id: 'gestion-de-empleado' },
+                        { label: 'Gestión de Salarios', icon: <IconoDinero size={36} />, id: 'gestion-salarial' },
 
                     ].map((item) => (
                         <button
