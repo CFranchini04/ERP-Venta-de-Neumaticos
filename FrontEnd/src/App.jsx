@@ -17,8 +17,8 @@ import {
   InformacionOrden,
   Facturas,
   Proveedores,
-  SeleccionFacturas,
-} from "./Pantallas/Compras";
+  SeleccionFacturas
+} from './Pantallas/Compras';
 import {
   Ventas,
   Presupuestos,
@@ -27,9 +27,18 @@ import {
   NotasCredito,
   VentaDirecta
 } from "./Pantallas/Ventas";
-import Tesoreria from "./Pantallas/Tesoreria/Tesoreria";
-import Contabilidad from "./Pantallas/Contabilidad/Contabilidad";
-import RoleRoute from "./RoleRoute";
+import Tesoreria from './Pantallas/Tesoreria/Tesoreria';
+
+import Contabilidad from './Pantallas/Contabilidad/Contabilidad';
+import PlanDeCuentas from "./Pantallas/Contabilidad/PlanDeCuentas";
+import LibroDiario from "./Pantallas/Contabilidad/LibroDiario";
+import LibroMayor from "./Pantallas/Contabilidad/LibroMayor";
+import BalanceGeneral from "./Pantallas/Contabilidad/BalanceGeneral";
+import BalanceSumasSaldos from "./Pantallas/Contabilidad/BalanceSumasSaldos";
+import BalanceResultados from "./Pantallas/Contabilidad/BalanceResultados";
+
+import RoleRoute from './RoleRoute';
+
 
 function Redirect404() {
   useEffect(() => {
@@ -87,10 +96,16 @@ export default function App() {
             <Route path="/compras/proveedores" element={<Proveedores />} />
             <Route path="/tesoreria" element={<Tesoreria />} />
             <Route path="/contabilidad" element={<Contabilidad />} />
+            <Route path="/contabilidad/plan-de-cuentas" element={<PlanDeCuentas />} />
+            <Route path="/contabilidad/libro-diario" element={<LibroDiario />} />
+            <Route path="/contabilidad/libro-mayor" element={<LibroMayor />} />
+            <Route path="/contabilidad/balance-general" element={<BalanceGeneral />} />
+            <Route path="/contabilidad/balance-sumas-saldos" element={<BalanceSumasSaldos />} />
+            <Route path="/contabilidad/balance-resultados" element={<BalanceResultados />} />
           </Route>
 
           <Route path="*" element={<Redirect404 />} />
-        
+
         </Routes>
       </BrowserRouter>
     </AuthProvider>
