@@ -31,7 +31,7 @@ export default function NuevosPresupuestos({ usuario, onNavegar, onLogout }) {
           console.error("Error productos:", resProductos.status, resProductos.statusText);
         }
 
-const resClientes = await fetchConToken(`${API_BASE}/misc/clientes`);
+const resClientes = await fetchConToken(`${API_BASE}/ventas/presupuestos/clientes/all`);
 if (resClientes.ok) {
   const dataClientes = await resClientes.json();
   console.log("STATUS:", resClientes.status);
