@@ -41,6 +41,7 @@ import {
   NuevosPresupuestos,
   DetallePresupuesto,
   NotasCredito,
+  VentaDirecta
 } from "./Pantallas/Ventas";
 import Tesoreria from "./Pantallas/Tesoreria/Tesoreria";
 import Contabilidad from "./Pantallas/Contabilidad/Contabilidad";
@@ -87,6 +88,7 @@ export default function App() {
             <Route path="/ventas/presupuestos/nuevo" element={<NuevosPresupuestos />} />
             <Route path="/ventas/presupuestos/:id" element={<DetallePresupuesto />} />
             <Route path="/ventas/notas-credito" element={<NotasCredito />} />
+            <Route path="/ventas/venta-directa" element={<VentaDirecta />} />
             <Route path="/compras" element={<Compras />} />
             <Route path="/compras/pedidos" element={<Pedidos />} />
             <Route path="/compras/pedidos/:id" element={<DetallePedido />} />

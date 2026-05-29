@@ -7,7 +7,7 @@ import fetchConToken from "../../../token";
 
 const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:9128/api";
 
-export default function NuevosPresupuestos({ usuario, onNavegar, onLogout }) {
+export default function NuevaVentaDirecta({ usuario, onNavegar, onLogout }) {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -23,7 +23,7 @@ export default function NuevosPresupuestos({ usuario, onNavegar, onLogout }) {
   useEffect(() => {
     const cargarDatos = async () => {
       try {
-        const resProductos = await fetchConToken(`${API_BASE}/ventas/presupuestos/productos/search`);
+        const resProductos = await fetchConToken(`${API_BASE}/ventas/facturas/productos/search`);
         if (resProductos.ok) {
           const dataProductos = await resProductos.json();
           setProductosDisponibles(Array.isArray(dataProductos) ? dataProductos : []);
@@ -31,15 +31,13 @@ export default function NuevosPresupuestos({ usuario, onNavegar, onLogout }) {
           console.error("Error productos:", resProductos.status, resProductos.statusText);
         }
 
-const resClientes = await fetchConToken(`${API_BASE}/misc/clientes`);
-if (resClientes.ok) {
-  const dataClientes = await resClientes.json();
-  console.log("STATUS:", resClientes.status);
-  console.log("CLIENTES:", dataClientes);
-  setClientesDisponibles(Array.isArray(dataClientes) ? dataClientes : []);
-} else {
-  console.error("Error clientes:", resClientes.status, resClientes.statusText);
-}
+        const resClientes = await fetchConToken(`${API_BASE}/misc/clientes`);
+        if (resClientes.ok) {
+          const dataClientes = await resClientes.json();
+          setClientesDisponibles(Array.isArray(dataClientes) ? dataClientes : []);
+        } else {
+          console.error("Error clientes:", resClientes.status, resClientes.statusText);
+        }
       } catch (err) {
         console.error("Error cargando datos:", err);
       }
@@ -80,7 +78,6 @@ if (resClientes.ok) {
 
   const hoy = new Date();
   const fechaHoy = hoy.toISOString().split("T")[0];
-  const fechaValida = new Date(hoy.setDate(hoy.getDate() + 10)).toISOString().split("T")[0];
 
   const clienteSeleccionado = clientesDisponibles.find(c => c.id_cliente === parseInt(idCliente));
 
@@ -100,31 +97,31 @@ if (resClientes.ok) {
     try {
       const fechaHoy = new Date().toISOString().split("T")[0];
 
-      const resPresupuesto = await fetchConToken(`${API_BASE}/ventas/presupuestos`, {
+      const resFactura = await fetchConToken(`${API_BASE}/ventas/facturas`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           id_cliente: parseInt(idCliente),
-          fecha_creacion: fechaHoy
+          fecha_emision: fechaHoy
         })
       });
 
-      if (!resPresupuesto.ok) {
-        const errorData = await resPresupuesto.json();
-        throw new Error(errorData.message || "Error al crear presupuesto");
+      if (!resFactura.ok) {
+        const errorData = await resFactura.json();
+        throw new Error(errorData.message || "Error al crear factura");
       }
 
-      const dataPresupuesto = await resPresupuesto.json();
-      const idPresupuesto = dataPresupuesto.id_presupuesto;
+      const dataFactura = await resFactura.json();
+      const idFactura = dataFactura.id_factura_venta;
 
       const detallesPayload = productos.map(p => ({
-        id_presupuesto: idPresupuesto,
+        id_factura_venta: idFactura,
         id_producto: p.id_producto,
         cantidad: p.cantidad,
         precio_unitario: p.precio_unitario
       }));
 
-      const resDetalles = await fetchConToken(`${API_BASE}/ventas/presupuestos/detalle`, {
+      const resDetalles = await fetchConToken(`${API_BASE}/ventas/facturas/detalle`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(detallesPayload)
@@ -135,9 +132,9 @@ if (resClientes.ok) {
         throw new Error(errorData.message || "Error al agregar detalles");
       }
 
-      navigate(`/ventas/presupuestos/${idPresupuesto}`);
+      navigate(`/ventas/facturas/${idFactura}`);
     } catch (err) {
-      setError(err.message || "Error al guardar presupuesto");
+      setError(err.message || "Error al generar factura");
     } finally {
       setLoading(false);
     }
@@ -149,7 +146,7 @@ if (resClientes.ok) {
 
       <main style={styles.contenido}>
         <header style={styles.encabezado}>
-          <h1 style={styles.titulo}>Nuevo Presupuesto</h1>
+          <h1 style={styles.titulo}>Nueva Venta</h1>
           <div style={styles.separador} />
         </header>
 
@@ -279,11 +276,6 @@ if (resClientes.ok) {
                 </div>
 
                 <div style={styles.filaResumen}>
-                  <span>Válido hasta:</span>
-                  <span style={{ fontWeight: "600" }}>{fechaValida}</span>
-                </div>
-
-                <div style={styles.filaResumen}>
                   <span>Subtotal:</span>
                   <span style={{ fontWeight: "600" }}>
                     {Number(subtotal || 0).toLocaleString("es-PY")} Gs.
@@ -302,13 +294,6 @@ if (resClientes.ok) {
                   <span>{Number(total || 0).toLocaleString("es-PY")} Gs.</span>
                 </div>
 
-                <div style={styles.cardInfo}>
-                  <strong>Información</strong>
-                  <p style={{ margin: "8px 0 0 0", fontSize: 12 }}>
-                    El presupuesto tendrá una validez de 10 días hábiles desde su creación.
-                  </p>
-                </div>
-
                 {error && <div style={styles.errorMsg}>{error}</div>}
 
                 <button
@@ -319,7 +304,7 @@ if (resClientes.ok) {
                     opacity: loading ? 0.6 : 1
                   }}
                 >
-                  {loading ? "Guardando..." : "Guardar Presupuesto"}
+                  {loading ? "Generando..." : "Generar Factura"}
                 </button>
               </div>
             </div>
