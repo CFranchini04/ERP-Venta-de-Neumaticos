@@ -251,18 +251,13 @@ const styles = {
     },
     titulo: {
         color: '#000000',
-        fontSize: 42,
+        fontSize: 30,
         fontFamily: 'Lato, sans-serif',
         fontWeight: 700,
         lineHeight: 1.2,
         margin: 0,
         textAlign: 'center',
         marginTop: 15,
-    },
-    separador: {
-        width: 'min(1100px, 80%)',
-        height: 4,
-        background: '#000000',
     },
     actionContainer: {
         display: 'flex',

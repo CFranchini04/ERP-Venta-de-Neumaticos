@@ -14,7 +14,7 @@ export default function Cuenta({ usuario = 'Empleado', onLogout, onNavegar }) {
     }
     const navigate = useNavigate();
 
-    
+
     return (
         <div style={styles.pagina}>
             <Sidebar usuario={usuario} onNavegar={handleNavegar} onLogout={onLogout} />
@@ -22,9 +22,13 @@ export default function Cuenta({ usuario = 'Empleado', onLogout, onNavegar }) {
             <main style={styles.contenido}>
 
                 <header style={styles.encabezado}>
-                    <h1 style={styles.titulo}>hola</h1>
+                    <h1 style={styles.titulo}>Informacion de la cuenta</h1>
                     <div style={styles.separador} />
                 </header>
+
+                <div style={styles.informacion}>
+    
+                </div>
             </main>
         </div>
     );

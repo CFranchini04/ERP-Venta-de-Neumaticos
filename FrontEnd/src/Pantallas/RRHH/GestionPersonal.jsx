@@ -163,6 +163,7 @@ export default function GestionPersonal({ usuario, empleado, onVolver, onLogout,
               </div>
 
               {!isCreating && (
+                <div style={{ transform: "scale(1.1)", display: "inline-block", alignSelf:"center", marginTop: 20 }}>
                 <Button
                   label="Editar"
                   variant="amarillo"
@@ -171,6 +172,7 @@ export default function GestionPersonal({ usuario, empleado, onVolver, onLogout,
                     setEditOpen(true);
                   }}
                 />
+                </div>
               )}
             </div>
 
@@ -211,6 +213,7 @@ export default function GestionPersonal({ usuario, empleado, onVolver, onLogout,
                 </div>
 
                 {!isCreating && (
+                  <div style={{ transform: "scale(1.1)", display: "inline-block", alignSelf:"center" }}>
                   <Button
                     label="Editar"
                     variant="amarillo"
@@ -219,6 +222,7 @@ export default function GestionPersonal({ usuario, empleado, onVolver, onLogout,
                       setEditOpen(true);
                     }}
                   />
+                  </div>
                 )}
               </div>
 
@@ -256,6 +260,7 @@ export default function GestionPersonal({ usuario, empleado, onVolver, onLogout,
                 </div>
 
                 {!isCreating && (
+                  <div style={{ transform: "scale(1.1)", display: "inline-block", alignSelf:"center" }}>
                   <Button
                     label="Editar"
                     variant="amarillo"
@@ -264,14 +269,11 @@ export default function GestionPersonal({ usuario, empleado, onVolver, onLogout,
                       setEditOpen(true);
                     }}
                   />
+                  </div>
                 )}
               </div>
 
             </div>
-          </div>
-
-          <div style={{ marginTop: 30, display: "flex", gap: 10 }}>
-            <Button label="Volver" onClick={onVolver} variant="amarillo" />
 
             {isCreating && (
               <Button
@@ -281,6 +283,7 @@ export default function GestionPersonal({ usuario, empleado, onVolver, onLogout,
                   //Modificar luego para que anhada en la bd
                   console.log("CREAR:", form);
                 }}
+                size="md"
               />
             )}
           </div>
@@ -332,7 +335,7 @@ const styles = {
 
   grid: {
     display: "grid",
-    gridTemplateColumns: "1.5fr 1fr",
+    gridTemplateColumns: "1fr 1.5fr",
     gap: 20,
   },
 
