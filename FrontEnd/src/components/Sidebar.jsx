@@ -43,10 +43,10 @@ export default function Sidebar({ onNavegar }) {
         nuevo_empleado: '/rrhh/nuevo-empleado',
       },
       ventas: {
-        presupuestos: 'https://http.cat/images/501.jpg',
-        facturas_ventas: 'https://http.cat/images/501.jpg',
-        notas_credito: 'https://http.cat/images/501.jpg',
-        venta_directa: 'https://http.cat/images/501.jpg',
+        presupuestos: '/ventas/presupuestos',
+        facturas_ventas: '/ventas/facturas',
+        notas_credito: '/ventas/notas-credito',
+        venta_directa: '/ventas/venta-directa',
       },
       contabilidad: {
         plan_de_cuentas: '/contabilidad/plan-de-cuentas',
