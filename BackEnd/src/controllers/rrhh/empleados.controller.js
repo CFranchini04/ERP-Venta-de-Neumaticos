@@ -9,6 +9,15 @@ const getAllEmpleados = async (req, res) => {
     }
 }
 
+const getTableEmpleado = async (req, res) => {
+    try {
+        const empleados = await empleadosService.getTableEmpleado()
+        res.status(200).json(empleados)
+    } catch (error) {
+        res.status(400).json({ message: error.message })
+    }
+}
+
 const getEmpleado = async (req, res) => {
     try {
         const { id } = req.params
@@ -86,4 +95,4 @@ const deleteEmpleado = async (req, res) => {
     }
 }
 
-export default { getAllEmpleados, getEmpleado, getEmpleadoByNombre, getEmpleadoByCi, getEmpleadoByRuc, postEmpleado, updateEmpleado, deleteEmpleado }
+export default { getAllEmpleados, getTableEmpleado, getEmpleado, getEmpleadoByNombre, getEmpleadoByCi, getEmpleadoByRuc, postEmpleado, updateEmpleado, deleteEmpleado }
