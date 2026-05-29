@@ -23,7 +23,7 @@ import Ventas from './Pantallas/Ventas/Ventas';
 import Presupuestos from './Pantallas/Ventas/Presupuestos/Presupuestos';
 import NuevosPresupuestos from './Pantallas/Ventas/Presupuestos/NuevosPresupuestos';
 import DetallePresupuesto from './Pantallas/Ventas/Presupuestos/DetallePresupuesto';
-import Tesoreria from './Pantallas/Tesoreria/Tesoreria';
+import { Tesoreria, BancosSaldos, Cuenta } from "./Pantallas/Tesoreria";
 
 import Contabilidad from './Pantallas/Contabilidad/Contabilidad';
 import PlanDeCuentas from "./Pantallas/Contabilidad/PlanDeCuentas";
@@ -100,6 +100,9 @@ export default function App() {
             <Route path="/compras/facturas" element={<Facturas />} />
             <Route path="/compras/proveedores" element={<Proveedores />} />
             <Route path="/tesoreria" element={<Tesoreria />} />
+            <Route path="/tesoreria/bancos-saldos" element={<BancosSaldos />} />
+            <Route path="/tesoreria/cuentas" element={<Cuenta />} />
+            <Route path="/tesoreria/cuentas/:id" element={<Cuenta />} />
             <Route path="/contabilidad" element={<Contabilidad />} />
             <Route path="/contabilidad/plan-de-cuentas" element={<PlanDeCuentas />} />
             <Route path="/contabilidad/libro-diario" element={<LibroDiario />} />
