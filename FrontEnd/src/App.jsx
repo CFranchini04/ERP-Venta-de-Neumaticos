@@ -1,10 +1,10 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import { useEffect } from 'react';
-import { AuthProvider } from './AuthContext';
-import PublicRoute from './PublicRoute';
-import Login from './Pantallas/Login/Login';
-import HomePage from './Pantallas/Main/HomePage';
-import { RRHH, GestionPersonal, GestionSalarial } from './Pantallas/RRHH';
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { useEffect } from "react";
+import { AuthProvider } from "./AuthContext";
+import PublicRoute from "./PublicRoute";
+import Login from "./Pantallas/Login/Login";
+import HomePage from "./Pantallas/Main/HomePage";
+import { RRHH, GestionPersonal, GestionSalarial } from "./Pantallas/RRHH";
 import {
   Compras,
   Pedidos,
@@ -17,6 +17,7 @@ import {
   InformacionOrden,
   Facturas,
   Proveedores,
+<<<<<<< HEAD
   SeleccionFacturas
 } from './Pantallas/Compras';
 import Ventas from './Pantallas/Ventas/Ventas';
@@ -34,10 +35,24 @@ import BalanceSumasSaldos from "./Pantallas/Contabilidad/BalanceSumasSaldos";
 import BalanceResultados from "./Pantallas/Contabilidad/BalanceResultados";
 
 import RoleRoute from './RoleRoute';
+=======
+  SeleccionFacturas,
+} from "./Pantallas/Compras";
+import {
+  Ventas,
+  Presupuestos,
+  NuevosPresupuestos,
+  DetallePresupuesto,
+  NotasCredito,
+} from "./Pantallas/Ventas";
+import Tesoreria from "./Pantallas/Tesoreria/Tesoreria";
+import Contabilidad from "./Pantallas/Contabilidad/Contabilidad";
+import RoleRoute from "./RoleRoute";
+>>>>>>> 4e304c1df2b07f98955c27a09e7304a8366cbcbb
 
 function Redirect404() {
   useEffect(() => {
-    window.location.href = 'https://http.cat/404';
+    window.location.href = "https://http.cat/404";
   }, []);
 
   return null;
@@ -45,14 +60,13 @@ function Redirect404() {
 
 function Redirect501() {
   useEffect(() => {
-    window.location.href = 'https://http.cat/images/501.jpg';
+    window.location.href = "https://http.cat/images/501.jpg";
   }, []);
 
   return null;
 }
 
 export default function App() {
-
 
   return (
     <AuthProvider>
@@ -76,6 +90,7 @@ export default function App() {
             <Route path="/ventas/presupuestos" element={<Presupuestos />} />
             <Route path="/ventas/presupuestos/nuevo" element={<NuevosPresupuestos />} />
             <Route path="/ventas/presupuestos/:id" element={<DetallePresupuesto />} />
+            <Route path="/ventas/notas-credito" element={<NotasCredito />} />
             <Route path="/compras" element={<Compras />} />
             <Route path="/compras/pedidos" element={<Pedidos />} />
             <Route path="/compras/pedidos/:id" element={<DetallePedido />} />
@@ -99,7 +114,7 @@ export default function App() {
           </Route>
 
           <Route path="*" element={<Redirect404 />} />
-
+        
         </Routes>
       </BrowserRouter>
     </AuthProvider>
