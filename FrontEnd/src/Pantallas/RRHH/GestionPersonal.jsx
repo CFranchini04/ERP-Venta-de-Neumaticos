@@ -38,22 +38,36 @@ export default function GestionPersonal({ usuario, empleado, onVolver, onLogout,
     const cargarEmpleado = async () => {
       try {
         const res = await fetchConToken(`${API_BASE}/rrhh/empleados/${id}`);
-        const data = await res.json();
+        const dataArr = await res.json();
+        //Ns pq lql trae los datos dentro de un array, abajo lo traigo como un object
+        const data = dataArr[0];
         console.log("Respuesta de la API:", data);
-        
+        // EXTRACCION DE DATOS 
+        const hoy = new Date();
+        const parseFecha = hoy.toISOString().split('T')[0];
+        const familiares = data.familiares //lista de familiares
+        const hijos = familiares.filter(f => f.relacion.toLowerCase() === 'hijo' || f.relacion.toLowerCase() === 'hija') //lista de hijos
+        const hijos_menores = familiares.filter(h => {    // lista de hijos menores
+          var cumple = new Date(h.personas.fecha_nacimiento)
+          var edad = hoy.getFullYear() - cumple.getFullYear()
+          if (hoy.getMonth() <= cumple.getMonth()) edad--
+          return (edad < 18 && (h.relacion.toLowerCase() === 'hijo' || h.relacion.toLowerCase() === 'hija'))
+        })
+        const conyugue = familiares.filter(f => f.relacion.toLowerCase() === 'conyugue') // Conyugue
+
         setForm({
-          nombre: data?.personas?.nombre ?? '',
+          nombre: data.personas?.nombre ?? '',
           apellido: data.personas?.apellido ?? '',
-          CI: data. ci?? '',
-          ciudad: data.ciudad ?? '',
+          CI: data.ci ?? '',
+          ciudad: data?.ciudad ?? '', //Este dato no hay en la db todavia
           direccion: data.personas?.direccion ?? '',
-          correo_electronico: data.personas?.correo_electronico ?? '',
+          correo_electronico: data.personas?.correo ?? '',
           fecha_inicio: data.personas_horario_cargo?.[0]?.fecha_inicio ?? '',
           cargo: data.personas_horario_cargo?.[0]?.cargo?.nombre ?? '',
           estado: data.personas_horario_cargo?.[0]?.estados?.nombre ?? '',
-          conyugue: data.conyugue ?? '',
-          hijos: data.hijos ?? '',
-          hijos_menores: data.hijos_menores ?? '',
+          conyugue: conyugue ?? '',
+          hijos: hijos.length ?? '',
+          hijos_menores: hijos_menores.length ?? '',
         });
       } catch (error) {
         console.error("Error cargando empleado:", error);

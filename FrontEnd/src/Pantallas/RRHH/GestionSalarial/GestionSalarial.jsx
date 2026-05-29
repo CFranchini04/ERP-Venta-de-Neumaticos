@@ -12,20 +12,13 @@ export default function GestionSalarial({ usuario, onLogout, onNavegar }) {
   const [cargando, setCargando] = useState(true);
   const [periodoExpanded, setPeriodoExpanded] = useState(true);
   const [nominaExpanded, setNominaExpanded] = useState(false);
+  const [mostrarResumen, setMostrarResumen] = useState(false);
+
 
   const [periodo, setPeriodo] = useState({
     fechaInicio: "",
     fechaFin: ""
   });
-
-  const handlePeriodoChange = (nuevoPeriodo) => {
-    setPeriodo(nuevoPeriodo);
-
-    if (nuevoPeriodo.fechaInicio && nuevoPeriodo.fechaFin) {
-      setNominaExpanded(true);
-    }
-  };
-
 
   const [nomina, setNomina] = useState({
     salarioBase: 0,
@@ -35,6 +28,14 @@ export default function GestionSalarial({ usuario, onLogout, onNavegar }) {
   });
 
   const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:9128/api";
+
+  const handlePeriodoChange = (nuevoPeriodo) => {
+    setPeriodo(nuevoPeriodo);
+
+    if (nuevoPeriodo.fechaInicio && nuevoPeriodo.fechaFin) {
+      setNominaExpanded(true);
+    }
+  };
 
   useEffect(() => {
     if (!id) {
@@ -66,11 +67,156 @@ export default function GestionSalarial({ usuario, onLogout, onNavegar }) {
   if (cargando) return <div>Cargando...</div>;
   if (!empleado) return <div>No hay empleado seleccionado</div>;
 
+  const salarioBase = Number(empleado.salarioBase || 0);
+
+  // IPS 9%
+  const ips = salarioBase * 0.09;
+
+  // Hora normal (30 días, 8 horas)
+  const horaNormal = salarioBase / (30 * 8);
+
+  // Hora extra 150%
+  const valorHoraExtra = horaNormal * 1.5;
+
+  // Pago horas extras
+  const pagoHorasExtras =
+    (Number(nomina.horasExtras) || 0) * valorHoraExtra;
+
+  // Valor día
+  const valorDia = salarioBase / 30;
+
+  // Descuento por ausencias
+  const descuentoAusencias =
+    (Number(nomina.ausencias) || 0) * valorDia;
+
+  // Bonos
+  const bonos = Number(nomina.bonos || 0);
+
+  // SALARIO FINAL
+  const salarioFinal =
+    salarioBase +
+    pagoHorasExtras +
+    bonos -
+    ips -
+    descuentoAusencias;
+
+  const imprimirRecibo = () => {
+    const ventana = window.open('', '_blank');
+
+    ventana.document.write(`
+    <html>
+      <head>
+        <title>Recibo de Pago</title>
+
+        <style>
+          body {
+            font-family: Arial, sans-serif;
+            padding: 40px;
+            color: #222;
+          }
+
+          h1 {
+            text-align: center;
+            margin-bottom: 40px;
+          }
+
+          .fila {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 14px;
+            font-size: 16px;
+          }
+
+          .linea {
+            border-top: 1px solid #ccc;
+            margin: 20px 0;
+          }
+
+          .total {
+            font-size: 22px;
+            font-weight: bold;
+          }
+
+          .footer {
+            margin-top: 50px;
+            text-align: center;
+            color: #666;
+            font-size: 14px;
+          }
+        </style>
+      </head>
+
+      <body>
+
+        <h1>Recibo de Pago</h1>
+
+        <div class="fila">
+          <span>Empleado:</span>
+          <strong>${empleado.nombre} ${empleado.apellido}</strong>
+        </div>
+
+        <div class="fila">
+          <span>Cargo:</span>
+          <strong>${empleado.cargo}</strong>
+        </div>
+
+        <div class="fila">
+          <span>Período:</span>
+          <strong>${periodo.fechaInicio} - ${periodo.fechaFin}</strong>
+        </div>
+
+        <div class="linea"></div>
+
+        <div class="fila">
+          <span>Salario Base:</span>
+          <strong>Gs. ${empleado.salarioBase}</strong>
+        </div>
+
+        <div class="fila">
+          <span>Horas Extras:</span>
+          <strong>Gs. ${nomina.horasExtras || 0}</strong>
+        </div>
+
+        <div class="fila">
+          <span>Bonos:</span>
+          <strong>Gs. ${nomina.bonos || 0}</strong>
+        </div>
+
+        <div class="fila">
+          <span>IPS (9%):</span>
+          <strong>- Gs. ${ips.toFixed(0)}</strong>
+        </div>
+
+        <div class="fila">
+          <span>Ausencias:</span>
+          <strong>- Gs. ${nomina.ausencias || 0}</strong>
+        </div>
+
+        <div class="linea"></div>
+
+        <div class="fila total">
+          <span>Total Neto:</span>
+          <strong>Gs. ${salarioFinal.toFixed(0)}</strong>
+        </div>
+
+        <div class="footer">
+          Recibo generado automáticamente por el sistema de gestión salarial.
+        </div>
+
+      </body>
+    </html>
+  `);
+
+    ventana.document.close();
+    ventana.print();
+  };
+
+  const periodoIncompleto = !periodo.fechaInicio || !periodo.fechaFin;
+
   return (
     <div style={styles.pagina}>
 
       <Sidebar usuario={usuario} onLogout={onLogout} onNavegar={onNavegar} />
-
 
       <main style={styles.contenido}>
 
@@ -86,7 +232,9 @@ export default function GestionSalarial({ usuario, onLogout, onNavegar }) {
           <div style={styles.infoEmpleadoContainer}>
             <div style={styles.infoEmpleado}>
               <span style={styles.labelInfo}>Nombre:</span>
-              <span style={styles.valorInfo}>{empleado.nombre}</span>
+              <span style={styles.valorInfo}>
+                {empleado.nombre} {empleado.apellido}
+              </span>
             </div>
 
             <div style={styles.infoEmpleado}>
@@ -97,7 +245,7 @@ export default function GestionSalarial({ usuario, onLogout, onNavegar }) {
 
         </div>
 
-        {/* ================= PERÍODO (ABANICO) ================= */}
+        {/* ================= PERÍODO ================= */}
         <div style={styles.seccion}>
 
           <div
@@ -106,6 +254,7 @@ export default function GestionSalarial({ usuario, onLogout, onNavegar }) {
           >
             <h2 style={styles.subtitulo}>
               Seleccionar período
+
               {(periodo.fechaInicio || periodo.fechaFin) && (
                 <span style={styles.badge}>
                   {periodo.fechaInicio} - {periodo.fechaFin}
@@ -172,7 +321,7 @@ export default function GestionSalarial({ usuario, onLogout, onNavegar }) {
 
             <div style={styles.nominaContainer}>
 
-              {/* SALARIO BASE (NO EDITABLE) */}
+              {/* SALARIO BASE */}
               <div style={styles.nominaCard}>
                 <span style={styles.dataLabel}>Salario Base</span>
 
@@ -191,11 +340,15 @@ export default function GestionSalarial({ usuario, onLogout, onNavegar }) {
 
                 <div style={styles.nominaCard}>
                   <span style={styles.dataLabel}>Horas extras</span>
+
                   <input
                     type="number"
                     value={nomina.horasExtras}
                     onChange={(e) =>
-                      setNomina({ ...nomina, horasExtras: e.target.value })
+                      setNomina({
+                        ...nomina,
+                        horasExtras: e.target.value
+                      })
                     }
                     style={styles.inputNumero}
                   />
@@ -203,11 +356,15 @@ export default function GestionSalarial({ usuario, onLogout, onNavegar }) {
 
                 <div style={styles.nominaCard}>
                   <span style={styles.dataLabel}>Bonos por desempeño</span>
+
                   <input
                     type="number"
                     value={nomina.bonos}
                     onChange={(e) =>
-                      setNomina({ ...nomina, bonos: e.target.value })
+                      setNomina({
+                        ...nomina,
+                        bonos: e.target.value
+                      })
                     }
                     style={styles.inputNumero}
                   />
@@ -222,22 +379,26 @@ export default function GestionSalarial({ usuario, onLogout, onNavegar }) {
 
                 <div style={styles.nominaCard}>
                   <span style={styles.dataLabel}>IPS (9%)</span>
+
                   <input
-                    type="number"
-                    value={`${(empleado.salarioBase * 0.09).toFixed(0)} (9%)`}
+                    type="text"
+                    value={`${ips.toFixed(0)} Gs. (9%)`}
                     disabled
                     style={styles.inputNumeroDisabled}
-
                   />
                 </div>
 
                 <div style={styles.nominaCard}>
                   <span style={styles.dataLabel}>Ausencias</span>
+
                   <input
                     type="number"
                     value={nomina.ausencias}
                     onChange={(e) =>
-                      setNomina({ ...nomina, ausencias: e.target.value })
+                      setNomina({
+                        ...nomina,
+                        ausencias: e.target.value
+                      })
                     }
                     style={styles.inputNumero}
                   />
@@ -246,26 +407,139 @@ export default function GestionSalarial({ usuario, onLogout, onNavegar }) {
               </div>
 
             </div>
+
           </div>
         )}
 
         {/* ================= BOTÓN ================= */}
+        {/* ================= BOTÓN ================= */}
         <div style={styles.botonContainer}>
+
+          {periodoIncompleto && (
+            <p style={{ color: "red", margin: 0 }}>
+              Debes seleccionar un período antes de continuar
+            </p>
+          )}
+          <div style={{ flex: 1 }}></div>
           <button
-            style={styles.btnContinuar}
-            onClick={() => onNavegar("siguientePagina")}
+            style={{
+              ...styles.btnContinuar,
+              opacity: periodoIncompleto ? 0.5 : 1,
+              cursor: periodoIncompleto ? "not-allowed" : "pointer",
+            }}
+            disabled={periodoIncompleto}
+            onClick={() => setMostrarResumen(true)}
           >
             Continuar
           </button>
+
         </div>
 
+
+        {/* ================= MODAL RESUMEN ================= */}
+        {mostrarResumen && (
+          <div style={styles.overlay}>
+
+            <div style={styles.modal}>
+
+              <h2 style={styles.modalTitulo}>
+                Resumen de Nómina
+              </h2>
+
+              <div style={styles.modalContenido}>
+
+                <div style={styles.modalFila}>
+                  <span>Empleado</span>
+                  <strong>
+                    {empleado.nombre} {empleado.apellido}
+                  </strong>
+                </div>
+
+                <div style={styles.modalFila}>
+                  <span>Cargo</span>
+                  <strong>{empleado.cargo}</strong>
+                </div>
+
+                <div style={styles.modalFila}>
+                  <span>Período</span>
+
+                  <strong>
+                    {periodo.fechaInicio} - {periodo.fechaFin}
+                  </strong>
+                </div>
+
+                <div style={styles.linea}></div>
+
+                <div style={styles.modalFila}>
+                  <span>Salario Base</span>
+                  <strong>Gs. {empleado.salarioBase}</strong>
+                </div>
+
+                <div style={styles.modalFila}>
+                  <span>Horas Extras</span>
+                  <strong>Gs. {nomina.horasExtras || 0}</strong>
+                </div>
+
+                <div style={styles.modalFila}>
+                  <span>Bonos</span>
+                  <strong>Gs. {nomina.bonos || 0}</strong>
+                </div>
+
+                <div style={styles.modalFila}>
+                  <span>IPS (9%)</span>
+                  <strong>- Gs. {ips.toFixed(0)}</strong>
+                </div>
+
+                <div style={styles.modalFila}>
+                  <span>Ausencias</span>
+                  <strong>- Gs. {nomina.ausencias || 0}</strong>
+                </div>
+
+                <div style={styles.linea}></div>
+
+                <div style={styles.modalFilaTotal}>
+                  <span>Total Neto</span>
+                  <strong>
+                    Gs. {salarioFinal.toFixed(0)}
+                  </strong>
+                </div>
+
+              </div>
+
+              <p style={styles.mensajeRevision}>
+                Revise cuidadosamente los datos antes de continuar
+              </p>
+
+              <div style={styles.modalBotones}>
+
+                <button
+                  style={styles.btnEditar}
+                  onClick={() => setMostrarResumen(false)}
+                >
+                  Seguir editando
+                </button>
+
+                <button
+                  style={styles.btnPagar}
+                  onClick={imprimirRecibo}
+                >
+                  Pagar
+                </button>
+
+              </div>
+
+            </div>
+
+          </div>
+        )}
+
       </main>
+
     </div>
   );
 }
 
 const styles = {
-
   pagina: {
     display: "flex",
     width: "100vw",
@@ -284,9 +558,9 @@ const styles = {
   },
 
   titulo: {
-    fontSize: 35,
+    fontSize: 30,
     fontWeight: 700,
-    marginTop: 10,
+    marginTop: 5,
   },
 
   headerTitulo: {
@@ -294,6 +568,7 @@ const styles = {
     display: "flex",
     justifyContent: "center",
   },
+
   seccion: {
     width: "100%",
     display: "flex",
@@ -302,6 +577,7 @@ const styles = {
   },
 
   seccionHeader: {
+    marginBottom: 0,
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
@@ -310,7 +586,7 @@ const styles = {
   },
 
   subtitulo: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: 700,
     margin: 0,
     display: "flex",
@@ -325,12 +601,10 @@ const styles = {
     borderRadius: 6,
   },
 
-
-
   infoEmpleadoContainer: {
     display: "flex",
     flexDirection: "column",
-    gap: 10,
+    gap: 5,
     paddingLeft: 10,
   },
 
@@ -349,17 +623,15 @@ const styles = {
     color: "#1D1D1D",
   },
 
-
-
-periodoGeneral: {
-  width: "100%",
-  maxWidth: 750,
-  alignSelf: "center",   
-  background: "#F5F5F5",
-  border: "1px solid #E5E5E5",
-  borderRadius: 12,
-  padding: 24,
-},
+  periodoGeneral: {
+    width: "100%",
+    maxWidth: 750,
+    alignSelf: "center",
+    background: "#F5F5F5",
+    border: "1px solid #E5E5E5",
+    borderRadius: 12,
+    padding: 24,
+  },
 
   periodoContainer: {
     display: "flex",
@@ -390,8 +662,6 @@ periodoGeneral: {
     border: "1px solid #ccc",
   },
 
-
-
   botonContainer: {
     width: "100%",
     display: "flex",
@@ -406,6 +676,7 @@ periodoGeneral: {
     fontWeight: 700,
     cursor: "pointer",
   },
+
   nominaContainer: {
     width: "100%",
     maxWidth: 750,
@@ -456,5 +727,93 @@ periodoGeneral: {
     fontWeight: 700,
     marginTop: 10,
     color: "#444",
+  },
+
+  overlay: {
+    position: "fixed",
+    top: 0,
+    left: 0,
+    width: "100%",
+    height: "100%",
+    background: "rgba(0,0,0,0.4)",
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    zIndex: 999,
+  },
+
+  modal: {
+    width: "100%",
+    maxWidth: 520,
+    background: "#fff",
+    borderRadius: 18,
+    padding: 28,
+    display: "flex",
+    flexDirection: "column",
+    gap: 20,
+    boxShadow: "0 10px 35px rgba(0,0,0,0.15)",
+  },
+
+  modalTitulo: {
+    margin: 0,
+    fontSize: 26,
+    fontWeight: 700,
+    textAlign: "center",
+  },
+
+  modalContenido: {
+    display: "flex",
+    flexDirection: "column",
+    gap: 14,
+  },
+
+  modalFila: {
+    display: "flex",
+    justifyContent: "space-between",
+    fontSize: 15,
+  },
+
+  modalFilaTotal: {
+    display: "flex",
+    justifyContent: "space-between",
+    fontSize: 18,
+    fontWeight: 700,
+  },
+
+  linea: {
+    width: "100%",
+    height: 1,
+    background: "#E5E5E5",
+  },
+
+  mensajeRevision: {
+    margin: 0,
+    textAlign: "center",
+    color: "#777",
+    fontSize: 14,
+  },
+
+  modalBotones: {
+    display: "flex",
+    justifyContent: "flex-end",
+    gap: 12,
+  },
+
+  btnEditar: {
+    background: "#E0E0E0",
+    border: "none",
+    padding: "12px 18px",
+    borderRadius: 8,
+    fontWeight: 700,
+    cursor: "pointer",
+  },
+
+  btnPagar: {
+    background: getColor("amarillo"),
+    border: "none",
+    padding: "12px 22px",
+    borderRadius: 8,
+    fontWeight: 700,
+    cursor: "pointer",
   },
 };
