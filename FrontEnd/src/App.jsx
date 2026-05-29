@@ -27,11 +27,10 @@ import {
   NotasCredito,
   VentaDirecta
 } from "./Pantallas/Ventas";
-<<<<<<< HEAD
 import {Tesoreria, BancosSaldos, Cuenta} from "./Pantallas/Tesoreria";
 import Contabilidad from "./Pantallas/Contabilidad/Contabilidad";
 import RoleRoute from "./RoleRoute";
-=======
+
 import Tesoreria from './Pantallas/Tesoreria/Tesoreria';
 
 import Contabilidad from './Pantallas/Contabilidad/Contabilidad';
@@ -44,7 +43,6 @@ import BalanceResultados from "./Pantallas/Contabilidad/BalanceResultados";
 
 import RoleRoute from './RoleRoute';
 
->>>>>>> 8a53098616449c303dd3f94c2704198244a1ddbb
 
 function Redirect404() {
   useEffect(() => {
