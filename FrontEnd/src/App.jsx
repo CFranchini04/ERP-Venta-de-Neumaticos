@@ -17,7 +17,6 @@ import {
   InformacionOrden,
   Facturas,
   Proveedores,
-<<<<<<< HEAD
   SeleccionFacturas
 } from './Pantallas/Compras';
 import Ventas from './Pantallas/Ventas/Ventas';
@@ -35,9 +34,7 @@ import BalanceSumasSaldos from "./Pantallas/Contabilidad/BalanceSumasSaldos";
 import BalanceResultados from "./Pantallas/Contabilidad/BalanceResultados";
 
 import RoleRoute from './RoleRoute';
-=======
-  SeleccionFacturas,
-} from "./Pantallas/Compras";
+
 import {
   Ventas,
   Presupuestos,
@@ -48,7 +45,6 @@ import {
 import Tesoreria from "./Pantallas/Tesoreria/Tesoreria";
 import Contabilidad from "./Pantallas/Contabilidad/Contabilidad";
 import RoleRoute from "./RoleRoute";
->>>>>>> 4e304c1df2b07f98955c27a09e7304a8366cbcbb
 
 function Redirect404() {
   useEffect(() => {
@@ -114,7 +110,7 @@ export default function App() {
           </Route>
 
           <Route path="*" element={<Redirect404 />} />
-        
+
         </Routes>
       </BrowserRouter>
     </AuthProvider>
