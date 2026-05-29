@@ -28,11 +28,6 @@ import {
   VentaDirecta
 } from "./Pantallas/Ventas";
 import {Tesoreria, BancosSaldos, Cuenta} from "./Pantallas/Tesoreria";
-import Contabilidad from "./Pantallas/Contabilidad/Contabilidad";
-import RoleRoute from "./RoleRoute";
-
-import Tesoreria from './Pantallas/Tesoreria/Tesoreria';
-
 import Contabilidad from './Pantallas/Contabilidad/Contabilidad';
 import PlanDeCuentas from "./Pantallas/Contabilidad/PlanDeCuentas";
 import LibroDiario from "./Pantallas/Contabilidad/LibroDiario";
@@ -40,9 +35,7 @@ import LibroMayor from "./Pantallas/Contabilidad/LibroMayor";
 import BalanceGeneral from "./Pantallas/Contabilidad/BalanceGeneral";
 import BalanceSumasSaldos from "./Pantallas/Contabilidad/BalanceSumasSaldos";
 import BalanceResultados from "./Pantallas/Contabilidad/BalanceResultados";
-
 import RoleRoute from './RoleRoute';
-
 
 function Redirect404() {
   useEffect(() => {
