@@ -49,8 +49,12 @@ export default function Sidebar({ onNavegar }) {
         venta_directa: 'https://http.cat/images/501.jpg',
       },
       contabilidad: {
-        conta_1: 'https://http.cat/images/501.jpg',
-        conta_2: 'https://http.cat/images/501.jpg',
+        plan_de_cuentas: '/contabilidad/plan-de-cuentas',
+        libro_diario: '/contabilidad/libro-diario',
+        libro_mayor: '/contabilidad/libro-mayor',
+        balance_general: '/contabilidad/balance-general',
+        balance_sumas_saldos: '/contabilidad/balance-sumas-saldos',
+        balance_resultados: '/contabilidad/balance-resultados',
       },
       tesoreria: {
         teso_1: 'https://http.cat/images/501.jpg',
@@ -98,8 +102,12 @@ export default function Sidebar({ onNavegar }) {
       { id: 'venta_directa', label: 'Venta directa' },
     ],
     contabilidad: [
-      { id: 'conta_1', label: 'Placeholder 1' },
-      { id: 'conta_2', label: 'Placeholder 2' },
+      { id: 'plan_de_cuentas',      label: 'Plan de Cuentas' },
+      { id: 'libro_diario',         label: 'Libro Diario' },
+      { id: 'libro_mayor',          label: 'Libro Mayor' },
+      { id: 'balance_general',      label: 'Balance General' },
+      { id: 'balance_sumas_saldos', label: 'Sumas y Saldos' },
+      { id: 'balance_resultados',   label: 'Balance de Resultados' },
     ],
     tesoreria: [
       { id: 'teso_1', label: 'Placeholder 1' },

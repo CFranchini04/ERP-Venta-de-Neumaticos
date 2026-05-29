@@ -1,0 +1,54 @@
+[
+  {
+    "id": 1,
+    "numero": 1,
+    "fecha": "2026-01-02",
+    "concepto": "Aporte inicial de los socios",
+    "lineas": [
+      { "codigo": "1.1.1.1.01", "cuenta": "CAJA EN MONEDA NACIONAL", "debe": 5000000, "haber": 0 },
+      { "codigo": "3.1.1.01",   "cuenta": "ACCIONES EN CIRCULACION", "debe": 0,       "haber": 5000000 }
+    ]
+  },
+  {
+    "id": 2,
+    "numero": 2,
+    "fecha": "2026-01-05",
+    "concepto": "Compra de mercaderías de contado",
+    "lineas": [
+      { "codigo": "1.1.4.1.01", "cuenta": "MERCADERIAS DE REVENTA",  "debe": 800000, "haber": 0 },
+      { "codigo": "1.1.3.2.07", "cuenta": "I.V.A. CREDITO FISCAL",   "debe": 168000, "haber": 0 },
+      { "codigo": "1.1.1.1.01", "cuenta": "CAJA EN MONEDA NACIONAL", "debe": 0,      "haber": 968000 }
+    ]
+  },
+  {
+    "id": 3,
+    "numero": 3,
+    "fecha": "2026-01-10",
+    "concepto": "Venta a clientes en cuenta corriente",
+    "lineas": [
+      { "codigo": "1.1.3.1.01", "cuenta": "DEUDORES POR VENTAS",     "debe": 1452000, "haber": 0 },
+      { "codigo": "4.1.1.1.01", "cuenta": "VENTAS",                  "debe": 0,       "haber": 1200000 },
+      { "codigo": "2.1.1.4.01", "cuenta": "I.V.A. DEBITO FISCAL",    "debe": 0,       "haber": 252000 }
+    ]
+  },
+  {
+    "id": 4,
+    "numero": 4,
+    "fecha": "2026-01-15",
+    "concepto": "Pago de sueldos del personal",
+    "lineas": [
+      { "codigo": "4.1.1.4.1.01", "cuenta": "SUELDOS Y CARGAS SOCIALES - ADM.-", "debe": 600000, "haber": 0 },
+      { "codigo": "1.1.1.2.01",   "cuenta": "BANCO ... CTA/CTE.",                 "debe": 0,      "haber": 600000 }
+    ]
+  },
+  {
+    "id": 5,
+    "numero": 5,
+    "fecha": "2026-01-20",
+    "concepto": "Cobranza parcial a clientes",
+    "lineas": [
+      { "codigo": "1.1.1.2.01", "cuenta": "BANCO ... CTA/CTE.",      "debe": 500000, "haber": 0 },
+      { "codigo": "1.1.3.1.01", "cuenta": "DEUDORES POR VENTAS",     "debe": 0,      "haber": 500000 }
+    ]
+  }
+]
