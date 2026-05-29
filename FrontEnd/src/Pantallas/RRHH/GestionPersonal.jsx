@@ -54,7 +54,6 @@ export default function GestionPersonal({ usuario, empleado, onVolver, onLogout,
           return (edad < 18 && (h.relacion.toLowerCase() === 'hijo' || h.relacion.toLowerCase() === 'hija'))
         })
         const conyugue = familiares.filter(f => f.relacion.toLowerCase() === 'conyugue') // Conyugue
-
         setForm({
           nombre: data.personas?.nombre ?? '',
           apellido: data.personas?.apellido ?? '',
@@ -65,7 +64,7 @@ export default function GestionPersonal({ usuario, empleado, onVolver, onLogout,
           fecha_inicio: data.personas_horario_cargo?.[0]?.fecha_inicio ?? '',
           cargo: data.personas_horario_cargo?.[0]?.cargo?.nombre ?? '',
           estado: data.personas_horario_cargo?.[0]?.estados?.nombre ?? '',
-          conyugue: conyugue ?? '',
+          conyugue: conyugue[0]?.personas?.nombre + " " + conyugue[0]?.personas?.apellido ?? '',
           hijos: hijos.length ?? '',
           hijos_menores: hijos_menores.length ?? '',
         });
