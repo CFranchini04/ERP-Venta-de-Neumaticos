@@ -49,7 +49,7 @@ function ModalCuenta({ titulo, valor, onClose, onSubmit, codigoBloqueado = false
         </div>
 
         <div style={modalStyles.footer}>
-          <Button label="Cancelar" variant="gris" onClick={onClose} />
+          <Button label="Cancelar" variant="gris-claro" onClick={onClose} />
           <Button label="Guardar" variant="amarillo" onClick={() => onSubmit(form)} />
         </div>
       </div>
@@ -173,6 +173,6 @@ const modalStyles = {
   header: { background: getColor("amarillo"), padding: "12px 16px", display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "2px solid #000" },
   body: { padding: 20, display: "flex", flexDirection: "column", gap: 8 },
   label: { fontSize: 13, fontWeight: 700, marginTop: 8 },
-  input: { padding: "8px 10px", border: "1px solid #444", borderRadius: 6, fontFamily: "Lato", fontSize: 14, outline: "none" },
+  input: { padding: "8px 10px", border: "1px solid #000000", borderRadius: 6, fontFamily: "Lato", fontSize: 14, outline: "none" },
   footer: { padding: 16, display: "flex", justifyContent: "flex-end", gap: 10, borderTop: "1px solid #DDD" },
 };

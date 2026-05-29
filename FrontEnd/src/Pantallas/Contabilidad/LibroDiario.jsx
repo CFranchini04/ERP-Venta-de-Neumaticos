@@ -73,7 +73,7 @@ function ModalAsiento({ proximoNumero, cuentasImputables, onClose, onSubmit }) {
             </div>
           ))}
 
-          <div><Button label="+ Agregar línea" variant="gris" onClick={agregarLinea} size="sm" /></div>
+          <div><Button label="+ Agregar línea" variant="gris-claro" onClick={agregarLinea} size="sm" /></div>
 
           <div style={{ marginTop: 10, padding: 10, background: "#F5F5F5", borderRadius: 6, display: "flex", justifyContent: "space-between" }}>
             <span>Total Debe: <b>{fmt(totalDebe)}</b></span>
@@ -83,7 +83,7 @@ function ModalAsiento({ proximoNumero, cuentasImputables, onClose, onSubmit }) {
         </div>
 
         <div style={modalStyles.footer}>
-          <Button label="Cancelar" variant="gris" onClick={onClose} />
+          <Button label="Cancelar" variant="gris-claro" onClick={onClose} />
           <Button label="Guardar asiento" variant="amarillo" onClick={guardar} />
         </div>
       </div>
