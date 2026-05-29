@@ -3,6 +3,7 @@ import Sidebar from "../../components/Sidebar";
 import { Button } from '../../components/Buttons';
 import EditEmpleadoModal from "../../components/EditModal";
 import { useParams, useNavigate } from 'react-router-dom';
+import fetchConToken from '../../token';
 
 
 
@@ -36,20 +37,20 @@ export default function GestionPersonal({ usuario, empleado, onVolver, onLogout,
 
     const cargarEmpleado = async () => {
       try {
-        const res = await fetch(`${API_BASE}/empleados/${id}`);
+        const res = await fetchConToken(`${API_BASE}/rrhh/empleados/${id}`);
         const data = await res.json();
         console.log("Respuesta de la API:", data);
         
         setForm({
-          nombre: data.nombre ?? '',
-          apellido: data.apellido ?? '',
-          CI: data.CI ?? '',
+          nombre: data?.personas?.nombre ?? '',
+          apellido: data.personas?.apellido ?? '',
+          CI: data. ci?? '',
           ciudad: data.ciudad ?? '',
-          direccion: data.direccion ?? '',
-          correo_electronico: data.correo_electronico ?? '',
-          fecha_inicio: data.fecha_inicio ?? '',
-          cargo: data.cargo ?? '',
-          estado: data.estado ?? '',
+          direccion: data.personas?.direccion ?? '',
+          correo_electronico: data.personas?.correo_electronico ?? '',
+          fecha_inicio: data.personas_horario_cargo?.[0]?.fecha_inicio ?? '',
+          cargo: data.personas_horario_cargo?.[0]?.cargo?.nombre ?? '',
+          estado: data.personas_horario_cargo?.[0]?.estados?.nombre ?? '',
           conyugue: data.conyugue ?? '',
           hijos: data.hijos ?? '',
           hijos_menores: data.hijos_menores ?? '',
