@@ -63,6 +63,7 @@ export default function App() {
             <Route path="/rrhh/nuevo-empleado" element={<GestionPersonal />} />
             <Route path="/rrhh/gestion-de-empleado/:id" element={<GestionPersonal />} />
             <Route path="/rrhh/gestion-salarial" element={<GestionSalarial />} />
+            <Route path="/rrhh/gestion-salarial/:id" element={<GestionSalarial />} />
             <Route path="/ventas" element={<Ventas />} />
             <Route path="/ventas/presupuestos" element={<Presupuestos />} />
             <Route path="/ventas/presupuestos/nuevo" element={<NuevosPresupuestos />} />
