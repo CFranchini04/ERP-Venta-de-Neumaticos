@@ -14,6 +14,7 @@ export default function GestionSalarial({ usuario, onLogout, onNavegar }) {
   const [nominaExpanded, setNominaExpanded] = useState(false);
   const [mostrarResumen, setMostrarResumen] = useState(false);
 
+
   const [periodo, setPeriodo] = useState({
     fechaInicio: "",
     fechaFin: ""
@@ -66,14 +67,38 @@ export default function GestionSalarial({ usuario, onLogout, onNavegar }) {
   if (cargando) return <div>Cargando...</div>;
   if (!empleado) return <div>No hay empleado seleccionado</div>;
 
-  const ips = empleado.salarioBase * 0.09;
+  const salarioBase = Number(empleado.salarioBase || 0);
 
+  // IPS 9%
+  const ips = salarioBase * 0.09;
+
+  // Hora normal (30 días, 8 horas)
+  const horaNormal = salarioBase / (30 * 8);
+
+  // Hora extra 150%
+  const valorHoraExtra = horaNormal * 1.5;
+
+  // Pago horas extras
+  const pagoHorasExtras =
+    (Number(nomina.horasExtras) || 0) * valorHoraExtra;
+
+  // Valor día
+  const valorDia = salarioBase / 30;
+
+  // Descuento por ausencias
+  const descuentoAusencias =
+    (Number(nomina.ausencias) || 0) * valorDia;
+
+  // Bonos
+  const bonos = Number(nomina.bonos || 0);
+
+  // SALARIO FINAL
   const salarioFinal =
-    Number(empleado.salarioBase) +
-    Number(nomina.horasExtras || 0) +
-    Number(nomina.bonos || 0) -
-    Number(ips) -
-    Number(nomina.ausencias || 0);
+    salarioBase +
+    pagoHorasExtras +
+    bonos -
+    ips -
+    descuentoAusencias;
 
   const imprimirRecibo = () => {
     const ventana = window.open('', '_blank');
@@ -186,6 +211,7 @@ export default function GestionSalarial({ usuario, onLogout, onNavegar }) {
     ventana.print();
   };
 
+  const periodoIncompleto = !periodo.fechaInicio || !periodo.fechaFin;
 
   return (
     <div style={styles.pagina}>
@@ -386,14 +412,29 @@ export default function GestionSalarial({ usuario, onLogout, onNavegar }) {
         )}
 
         {/* ================= BOTÓN ================= */}
+        {/* ================= BOTÓN ================= */}
         <div style={styles.botonContainer}>
+
+          {periodoIncompleto && (
+            <p style={{ color: "red", margin: 0 }}>
+              Debes seleccionar un período antes de continuar
+            </p>
+          )}
+          <div style={{ flex: 1 }}></div>
           <button
-            style={styles.btnContinuar}
+            style={{
+              ...styles.btnContinuar,
+              opacity: periodoIncompleto ? 0.5 : 1,
+              cursor: periodoIncompleto ? "not-allowed" : "pointer",
+            }}
+            disabled={periodoIncompleto}
             onClick={() => setMostrarResumen(true)}
           >
             Continuar
           </button>
+
         </div>
+
 
         {/* ================= MODAL RESUMEN ================= */}
         {mostrarResumen && (
@@ -517,9 +558,9 @@ const styles = {
   },
 
   titulo: {
-    fontSize: 35,
+    fontSize: 30,
     fontWeight: 700,
-    marginTop: 10,
+    marginTop: 5,
   },
 
   headerTitulo: {
@@ -536,6 +577,7 @@ const styles = {
   },
 
   seccionHeader: {
+    marginBottom: 0,
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
@@ -544,7 +586,7 @@ const styles = {
   },
 
   subtitulo: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: 700,
     margin: 0,
     display: "flex",
@@ -562,7 +604,7 @@ const styles = {
   infoEmpleadoContainer: {
     display: "flex",
     flexDirection: "column",
-    gap: 10,
+    gap: 5,
     paddingLeft: 10,
   },
 
