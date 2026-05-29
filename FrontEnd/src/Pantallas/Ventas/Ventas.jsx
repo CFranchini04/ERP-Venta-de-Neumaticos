@@ -79,7 +79,7 @@ return (
         {[
             { label: 'Presupuestos',     icon: <IconoPedidos size={36} />,      id: 'presupuestos'    },
             { label: 'Facturas',         icon: <IconoFactura size={36} />,       id: 'facturas_ventas' },
-            { label: 'Notas de Crédito', icon: <IconoFacturaCancel size={36} />, id: 'notas_credito'   },
+            { label: 'Notas de Crédito', icon: <IconoFacturaCancel size={36} />, id: 'notas-credito'   },
             { label: 'Venta Directa',    icon: <IconoMas size={36} />,           id: 'venta_directa'   },
         ].map((item) => (
         <button
