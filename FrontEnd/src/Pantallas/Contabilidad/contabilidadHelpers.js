@@ -1,8 +1,7 @@
-
 export const API = "http://localhost:3000/api";
 
 export const fmt = (n) =>
-  (n ?? 0).toLocaleString("es-AR", { style: "currency", currency: "ARS" });
+  `Gs. ${(n ?? 0).toLocaleString("es-PY", { maximumFractionDigits: 0 })}`;
 
 export const rubroDe = (codigo) => codigo.split(".")[0];
 
@@ -19,7 +18,7 @@ export const esDeudora = (codigo) => {
   return true;
 };
 
-// === Fetchers ===
+// Fetchers
 export const fetchCuentas = () =>
   fetch(`${API}/cuentas`).then((r) => r.json());
 
@@ -61,7 +60,7 @@ export const actualizarCuentaAPI = (codigo, cambios) =>
     return r.json();
   });
 
-// === Cálculos puros (reciben asientos por parámetro) ===
+
 export const calcularSumasSaldos = (asientos, desde, hasta) => {
   const totales = {};
   for (const a of asientos) {

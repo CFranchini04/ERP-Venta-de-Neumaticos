@@ -21,7 +21,7 @@ const sortByCodigo = (a, b) => {
 const nivelDe = (codigo) => codigo.split(".").length;
 
 const formatoMoneda = (n) =>
-  (n ?? 0).toLocaleString("es-AR", { style: "currency", currency: "ARS" });
+  `Gs. ${(n ?? 0).toLocaleString("es-PY", { maximumFractionDigits: 0 })}`;
 
 function ModalCuenta({ titulo, valor, onClose, onSubmit, codigoBloqueado = false }) {
   const [form, setForm] = useState(valor || { codigo: "", cuenta: "", imputable: true });

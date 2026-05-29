@@ -4,7 +4,7 @@ import { getColor } from "../../components/Colors";
 import { fetchAsientos, fetchCuentas } from "./contabilidadHelpers";
 
 const fmt = (n) =>
-  (n ?? 0).toLocaleString("es-AR", { style: "currency", currency: "ARS" });
+  `Gs. ${(n ?? 0).toLocaleString("es-PY", { maximumFractionDigits: 0 })}`;
 
 
 // Heurística: cuentas que empiezan con 1 o 4. (Activo / Resultados negativos) son deudoras.

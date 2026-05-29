@@ -24,7 +24,7 @@ export default function BalanceGeneral({ usuario = "Empleado", onNavegar, onLogo
     let resultadoEjercicio = 0;
     for (const f of filas) {
       if (f.codigo.startsWith("4")) {
-        resultadoEjercicio += saldoNatural(f); // ingresos suman, gastos restan (signo via esDeudora)
+        resultadoEjercicio += saldoNatural(f); // ingresos suman, gastos restan 
       }
     }
     // Para resultados: cuentas acreedoras (ventas/intereses ganados) suman positivo,
@@ -107,7 +107,7 @@ export default function BalanceGeneral({ usuario = "Empleado", onNavegar, onLogo
 
         <div style={{ display: "flex", gap: 12, marginBottom: 16, alignItems: "center" }}>
           <label style={{ display: "flex", gap: 6, alignItems: "center", fontWeight: 700 }}>
-            Al: <input type="date" value={fecha} onChange={(e) => setFecha(e.target.value)} style={{ padding: "8px 10px", border: "1px solid #444", borderRadius: 6 }} />
+            Ver: <input type="date" value={fecha} onChange={(e) => setFecha(e.target.value)} style={{ padding: "8px 10px", border: "1px solid #444", borderRadius: 6 }} />
           </label>
           <span style={{ marginLeft: "auto", color: cuadra ? "green" : "crimson", fontWeight: 700 }}>
             {cuadra ? "✓ Activo = Pasivo + PN" : `✗ Diferencia: ${fmt(datos.totalActivo - (datos.totalPasivo + datos.totalPN))}`}
