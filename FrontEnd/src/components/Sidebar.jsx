@@ -49,8 +49,7 @@ export default function Sidebar({ onNavegar }) {
         venta_directa: 'https://http.cat/images/501.jpg',
       },
       contabilidad: {
-        conta_1: 'https://http.cat/images/501.jpg',
-        conta_2: 'https://http.cat/images/501.jpg',
+        plan_de_cuentas: '/contabilidad/plan-de-cuentas',
       },
       tesoreria: {
         teso_1: 'https://http.cat/images/501.jpg',
