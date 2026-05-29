@@ -7,11 +7,11 @@ import authRoutes from './routes/auth/auth.routes.js'
 //COMPRAS
 import proveedoresRoutes from './routes/compras/proveedores.routes.js'
 import ordenesCompraRoutes from './routes/compras/ordenesCompra.routes.js'
+
 import ordPagoRoutes from './routes/compras/ordenesPago.routes.js'
 import pedidosRoutes from './routes/compras/pedidos.routes.js'
 import facturasRoutes from './routes/compras/facturas.routes.js'
 import cotizacionesRoutes from './routes/compras/cotizaciones.routes.js'
-import metodosPagoRoutes from './routes/compras/metodosPago.routes.js'
 
 //RRHH
 import empleadosRoutes from './routes/rrhh/empleados.routes.js'
@@ -57,8 +57,6 @@ app.use('/api/compras/ordenes-pago', ordPagoRoutes)
 app.use('/api/compras/pedidos', pedidosRoutes)
 app.use('/api/compras/facturas', facturasRoutes)
 app.use('/api/compras/cotizaciones', cotizacionesRoutes)
-app.use('/api/compras/metodos-pago', metodosPagoRoutes)
-
 
 //RRHH
 app.use('/api/rrhh/empleados', empleadosRoutes)

@@ -9,12 +9,12 @@ const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:9128/api";
  * CargarCotizacionModal
  *
  * Props:
- *   open          {boolean}   Controla visibilidad
- *   onClose       {function}  Cerrar sin guardar
- *   onGuardado    {function}  Callback al guardar exitosamente (recibe la cotizacion creada)
- *   idPedido      {number}    ID del pedido al que se le carga la cotización
- *   productos     {array}     Lista de items del pedido: { id_producto, producto, cantidad, ... }
- *   proveedores   {array}     Lista de proveedores: { id, nombre }
+ *   open          {boolean}
+ *   onClose       {function}
+ *   onGuardado    {function}
+ *   idPedido      {number}
+ *   productos     {array}   [{ id_producto, producto, cantidad, ... }]
+ *   proveedores   {array}   [{ id, nombre }]
  */
 export default function CargarCotizacionModal({
   open,
@@ -29,7 +29,7 @@ export default function CargarCotizacionModal({
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState("");
 
-  // Reiniciar estado al abrir el modal
+  // Reiniciar al abrir
   useEffect(() => {
     if (open) {
       setProveedorSeleccionado("");
@@ -42,29 +42,45 @@ export default function CargarCotizacionModal({
           precioUnitario: "",
           esMejorOpcion: false,
           observacion: "",
+          incluido: true,   // ← nuevo: controla si este producto va en la cotización
         }))
       );
     }
   }, [open, productos]);
 
+  const toggleIncluido = (index) => {
+    setError("");
+    setDetalles((prev) => {
+      const copia = [...prev];
+      copia[index] = { ...copia[index], incluido: !copia[index].incluido, precioUnitario: "", observacion: "" };
+      return copia;
+    });
+  };
+
   const handlePrecioChange = (index, valor) => {
     setError("");
-    const copia = [...detalles];
-    // Evitar negativos
-    copia[index].precioUnitario = Number(valor) < 0 ? "0" : valor;
-    setDetalles(copia);
+    setDetalles((prev) => {
+      const copia = [...prev];
+      copia[index] = { ...copia[index], precioUnitario: Number(valor) < 0 ? "0" : valor };
+      return copia;
+    });
   };
 
   const handleObservacionChange = (index, valor) => {
-    const copia = [...detalles];
-    copia[index].observacion = valor;
-    setDetalles(copia);
+    setDetalles((prev) => {
+      const copia = [...prev];
+      copia[index] = { ...copia[index], observacion: valor };
+      return copia;
+    });
   };
 
+  const productosIncluidos = detalles.filter((d) => d.incluido);
+
   const totalEstimado = useMemo(() => {
-    return detalles.reduce((acc, item) => {
-      return acc + Number(item.cantidad || 0) * Number(item.precioUnitario || 0);
-    }, 0);
+    return productosIncluidos.reduce(
+      (acc, item) => acc + Number(item.cantidad || 0) * Number(item.precioUnitario || 0),
+      0
+    );
   }, [detalles]);
 
   if (!open) return null;
@@ -74,11 +90,15 @@ export default function CargarCotizacionModal({
       setError("Debes seleccionar un proveedor.");
       return;
     }
-    const sinPrecio = detalles.some(
+    if (productosIncluidos.length === 0) {
+      setError("Debes incluir al menos un producto en la cotización.");
+      return;
+    }
+    const sinPrecio = productosIncluidos.some(
       (item) => !item.precioUnitario || Number(item.precioUnitario) <= 0
     );
     if (sinPrecio) {
-      setError("Todos los productos deben tener un precio mayor a cero.");
+      setError("Todos los productos incluidos deben tener un precio mayor a cero.");
       return;
     }
 
@@ -96,7 +116,7 @@ export default function CargarCotizacionModal({
         observacion: "",
         id_estado: 1,
         codigo_cotizacion: codigoCotizacion,
-        detalles: detalles.map((d) => ({
+        detalles: productosIncluidos.map((d) => ({
           id_producto: d.id_producto,
           cantidad: Number(d.cantidad),
           precio_unitario: Number(d.precioUnitario),
@@ -123,6 +143,8 @@ export default function CargarCotizacionModal({
     }
   };
 
+  const contadorIncluidos = productosIncluidos.length;
+
   return (
     <div style={styles.overlay} onClick={onClose}>
       <div style={styles.modal} onClick={(e) => e.stopPropagation()}>
@@ -148,11 +170,20 @@ export default function CargarCotizacionModal({
             >
               <option value="">— Seleccionar proveedor —</option>
               {proveedores.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.nombre}
-                </option>
+                <option key={p.id} value={p.id}>{p.nombre}</option>
               ))}
             </select>
+          </div>
+
+          {/* Indicador de productos incluidos */}
+          <div style={{ display: "flex", alignItems: "center", gap: 8, fontFamily: "Lato, sans-serif", fontSize: 13, color: "#555" }}>
+            <span>
+              Productos incluidos en esta cotización:{" "}
+              <strong style={{ color: contadorIncluidos > 0 ? "#237804" : "#E30613" }}>
+                {contadorIncluidos}/{detalles.length}
+              </strong>
+            </span>
+            <span style={{ color: "#888" }}>— Desmarcá los productos que este proveedor no cotice.</span>
           </div>
 
           {/* TABLA DE PRODUCTOS */}
@@ -160,6 +191,7 @@ export default function CargarCotizacionModal({
             <table style={styles.table}>
               <thead>
                 <tr>
+                  <th style={{ ...styles.th, width: 40 }}>✓</th>
                   <th style={styles.th}>Producto</th>
                   <th style={styles.th}>Cantidad</th>
                   <th style={styles.th}>Precio Unitario (Gs.)</th>
@@ -169,31 +201,82 @@ export default function CargarCotizacionModal({
               </thead>
               <tbody>
                 {detalles.map((item, index) => {
-                  const subtotal =
-                    Number(item.cantidad || 0) * Number(item.precioUnitario || 0);
+                  const subtotal = Number(item.cantidad || 0) * Number(item.precioUnitario || 0);
+                  const excluido = !item.incluido;
                   return (
-                    <tr key={index} style={{ borderBottom: "1px solid #eee", background: index % 2 === 0 ? "#fff" : "#fafafa" }}>
-                      <td style={{ ...styles.td, textAlign: "left", fontWeight: 500 }}>
+                    <tr
+                      key={index}
+                      style={{
+                        borderBottom: "1px solid #eee",
+                        background: excluido ? "#f5f5f5" : index % 2 === 0 ? "#fff" : "#fafafa",
+                        opacity: excluido ? 0.55 : 1,
+                        transition: "opacity 0.15s, background 0.15s",
+                      }}
+                    >
+                      {/* Checkbox incluir/excluir */}
+                      <td style={{ ...styles.td, width: 40 }}>
+                        <div
+                          onClick={() => toggleIncluido(index)}
+                          style={{
+                            width: 20, height: 20, margin: "0 auto",
+                            border: `2px solid ${item.incluido ? "#1D1D1D" : "#bbb"}`,
+                            borderRadius: 4,
+                            background: item.incluido ? getColor("amarillo") : "#fff",
+                            display: "flex", alignItems: "center", justifyContent: "center",
+                            cursor: "pointer", transition: "all 0.15s",
+                          }}
+                        >
+                          {item.incluido && <span style={{ fontSize: 12, fontWeight: 900, color: "#1D1D1D" }}>✓</span>}
+                        </div>
+                      </td>
+
+                      {/* Nombre producto */}
+                      <td onClick={() => toggleIncluido(index)} style={{ ...styles.td, textAlign: "left", fontWeight: 500, color: excluido ? "#aaa" : "#1D1D1D", cursor: "pointer", userSelect: "none" }}>
                         {item.producto}
                       </td>
+
+                      {/* Cantidad */}
                       <td style={styles.td}>{item.cantidad}</td>
+
+                      {/* Precio unitario */}
                       <td style={styles.td}>
                         <input
                           type="number"
                           min="0"
-                          style={styles.input}
+                          disabled={excluido}
+                          style={{
+                            ...styles.input,
+                            background: excluido ? "#eee" : "#FAFAFA",
+                            cursor: excluido ? "not-allowed" : "text",
+                            color: excluido ? "#aaa" : "#1D1D1D",
+                          }}
                           value={item.precioUnitario}
                           onChange={(e) => handlePrecioChange(index, e.target.value)}
                           placeholder="0"
                         />
                       </td>
-                      <td style={{ ...styles.td, fontWeight: subtotal > 0 ? 600 : 400, color: subtotal > 0 ? "#1D1D1D" : "#aaa" }}>
+
+                      {/* Subtotal */}
+                      <td style={{
+                        ...styles.td,
+                        fontWeight: subtotal > 0 ? 600 : 400,
+                        color: excluido ? "#ccc" : subtotal > 0 ? "#1D1D1D" : "#aaa"
+                      }}>
                         {subtotal > 0 ? subtotal.toLocaleString("es-PY") : "—"}
                       </td>
+
+                      {/* Observación */}
                       <td style={styles.td}>
                         <input
                           type="text"
-                          style={{ ...styles.input, width: 150, fontSize: 12 }}
+                          disabled={excluido}
+                          style={{
+                            ...styles.input,
+                            width: 140, fontSize: 12,
+                            background: excluido ? "#eee" : "#FAFAFA",
+                            cursor: excluido ? "not-allowed" : "text",
+                            color: excluido ? "#aaa" : "#1D1D1D",
+                          }}
                           value={item.observacion}
                           onChange={(e) => handleObservacionChange(index, e.target.value)}
                           placeholder="Opcional..."
@@ -208,7 +291,7 @@ export default function CargarCotizacionModal({
 
           {/* TOTAL */}
           <div style={styles.totalContainer}>
-            <strong>Total estimado:</strong>
+            <strong>Total estimado ({contadorIncluidos} producto{contadorIncluidos !== 1 ? "s" : ""}):</strong>
             <span style={{ fontSize: 18, fontWeight: 700, color: "#1D1D1D" }}>
               {totalEstimado.toLocaleString("es-PY")} Gs.
             </span>
@@ -217,9 +300,7 @@ export default function CargarCotizacionModal({
         </div>
 
         {/* ERROR */}
-        {error && (
-          <div style={styles.error}>{error}</div>
-        )}
+        {error && <div style={styles.error}>{error}</div>}
 
         {/* FOOTER */}
         <div style={styles.footer}>
@@ -246,7 +327,7 @@ const styles = {
     display: "flex", justifyContent: "center", alignItems: "center", zIndex: 1000,
   },
   modal: {
-    width: "950px", maxWidth: "95vw", maxHeight: "92vh",
+    width: "980px", maxWidth: "95vw", maxHeight: "92vh",
     background: "#fff", borderRadius: 16, overflow: "hidden",
     display: "flex", flexDirection: "column",
     boxShadow: "0 12px 40px rgba(0,0,0,0.3)",
@@ -257,7 +338,7 @@ const styles = {
   },
   headerTitulo: { margin: 0, fontSize: 24, fontWeight: 700, fontFamily: "Lato, sans-serif" },
   botonCerrar: { border: "none", background: "transparent", cursor: "pointer" },
-  body: { padding: 24, display: "flex", flexDirection: "column", gap: 20, overflowY: "auto", flex: 1 },
+  body: { padding: 24, display: "flex", flexDirection: "column", gap: 16, overflowY: "auto", flex: 1 },
   campo: { display: "flex", flexDirection: "column", gap: 8 },
   label: { fontWeight: 700, fontSize: 14, fontFamily: "Lato, sans-serif", color: "#333" },
   select: { padding: "10px 12px", borderRadius: 8, border: "1.5px solid #ccc", fontSize: 14, fontFamily: "Lato, sans-serif", background: "#FAFAFA", outline: "none", cursor: "pointer" },
@@ -265,7 +346,7 @@ const styles = {
   table: { width: "100%", borderCollapse: "collapse" },
   th: { background: getColor("amarillo"), padding: "12px 14px", textAlign: "center", fontSize: 14, fontFamily: "Lato, sans-serif", fontWeight: 700 },
   td: { padding: "10px 14px", textAlign: "center", fontSize: 14, fontFamily: "Lato, sans-serif" },
-  input: { padding: "8px 10px", borderRadius: 6, border: "1.5px solid #DADADA", width: 130, outline: "none", fontSize: 14, fontFamily: "Lato, sans-serif", boxSizing: "border-box", background: "#FAFAFA" },
+  input: { padding: "8px 10px", borderRadius: 6, border: "1.5px solid #DADADA", width: 130, outline: "none", fontSize: 14, fontFamily: "Lato, sans-serif", boxSizing: "border-box" },
   totalContainer: { display: "flex", justifyContent: "flex-end", alignItems: "center", gap: 12, fontSize: 16, fontFamily: "Lato, sans-serif" },
   error: { background: "#fff0f0", border: "1px solid #E30613", borderRadius: 8, padding: "10px 24px", color: "#E30613", fontSize: 14, fontFamily: "Lato, sans-serif", margin: "0 24px" },
   footer: { padding: "16px 24px", borderTop: "1px solid #eee", display: "flex", justifyContent: "flex-end", gap: 12 },
