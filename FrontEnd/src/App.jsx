@@ -27,7 +27,7 @@ import {
   NotasCredito,
   VentaDirecta
 } from "./Pantallas/Ventas";
-import Tesoreria from "./Pantallas/Tesoreria/Tesoreria";
+import {Tesoreria, BancosSaldos, Cuenta} from "./Pantallas/Tesoreria";
 import Contabilidad from "./Pantallas/Contabilidad/Contabilidad";
 import RoleRoute from "./RoleRoute";
 
@@ -86,6 +86,8 @@ export default function App() {
             <Route path="/compras/facturas" element={<Facturas />} />
             <Route path="/compras/proveedores" element={<Proveedores />} />
             <Route path="/tesoreria" element={<Tesoreria />} />
+            <Route path="/tesoreria/bancos-saldos" element={<BancosSaldos />} />
+            <Route path="/tesoreria/cuentas/:id" element={<Cuenta />} />
             <Route path="/contabilidad" element={<Contabilidad />} />
           </Route>
 
