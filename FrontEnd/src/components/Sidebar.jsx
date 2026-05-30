@@ -43,18 +43,24 @@ export default function Sidebar({ onNavegar }) {
         nuevo_empleado: '/rrhh/nuevo-empleado',
       },
       ventas: {
-        presupuestos: 'https://http.cat/images/501.jpg',
-        facturas_ventas: 'https://http.cat/images/501.jpg',
-        notas_credito: 'https://http.cat/images/501.jpg',
-        venta_directa: 'https://http.cat/images/501.jpg',
+        presupuestos: '/ventas/presupuestos',
+        facturas_ventas: '/ventas/facturas',
+        notas_credito: '/ventas/notas-credito',
+        venta_directa: '/ventas/venta-directa',
       },
       contabilidad: {
-        conta_1: 'https://http.cat/images/501.jpg',
-        conta_2: 'https://http.cat/images/501.jpg',
+        plan_de_cuentas: '/contabilidad/plan-de-cuentas',
+        libro_diario: '/contabilidad/libro-diario',
+        libro_mayor: '/contabilidad/libro-mayor',
+        balance_general: '/contabilidad/balance-general',
+        balance_sumas_saldos: '/contabilidad/balance-sumas-saldos',
+        balance_resultados: '/contabilidad/balance-resultados',
       },
       tesoreria: {
-        teso_1: 'https://http.cat/images/501.jpg',
-        teso_2: 'https://http.cat/images/501.jpg',
+        bancos_y_saldos: '/tesoreria/bancos-saldos',
+        depositos: '/tesoreria/depositos',
+        movimientos: '/tesoreria/movimientos',
+        conciliacion: '/tesoreria/conciliacion',
       },
     };
 
@@ -98,12 +104,18 @@ export default function Sidebar({ onNavegar }) {
       { id: 'venta_directa', label: 'Venta directa' },
     ],
     contabilidad: [
-      { id: 'conta_1', label: 'Placeholder 1' },
-      { id: 'conta_2', label: 'Placeholder 2' },
+      { id: 'plan_de_cuentas',      label: 'Plan de Cuentas' },
+      { id: 'libro_diario',         label: 'Libro Diario' },
+      { id: 'libro_mayor',          label: 'Libro Mayor' },
+      { id: 'balance_general',      label: 'Balance General' },
+      { id: 'balance_sumas_saldos', label: 'Sumas y Saldos' },
+      { id: 'balance_resultados',   label: 'Balance de Resultados' },
     ],
     tesoreria: [
-      { id: 'teso_1', label: 'Placeholder 1' },
-      { id: 'teso_2', label: 'Placeholder 2' },
+      { id: 'bancos_y_saldos', label: 'Bancos y Saldos' },
+      { id: 'depositos', label: 'Depositos' },
+      { id: 'movimientos', label: 'Movimientos' },
+      { id: 'conciliacion', label: 'Conciliación' },
     ],
   };
 

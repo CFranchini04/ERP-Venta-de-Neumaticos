@@ -13,10 +13,7 @@ const obtenerPresupuesto = async (req, res) => {
   try {
     const { id } = req.params
     const presupuesto = await presupuestosService.getPresupuesto(id)
-    res.status(200).json({
-      message: 'Presupuesto obtenido',
-      presupuesto
-    })
+    res.status(200).json(presupuesto)
   } catch (error) {
     const status = error.message === 'Presupuesto no encontrado' ? 404 : 500
     res.status(status).json({ message: error.message })
@@ -27,10 +24,7 @@ const obtenerDetallePresupuesto = async (req, res) => {
   try {
     const { id } = req.params
     const detalle = await presupuestosService.getDetallePresupuesto(id)
-    res.status(200).json({
-      message: 'Detalle de presupuesto obtenido',
-      detalle
-    })
+    res.status(200).json(detalle)
   } catch (error) {
     const status = error.message === 'Presupuesto no encontrado' ? 404 : 500
     res.status(status).json({ message: error.message })

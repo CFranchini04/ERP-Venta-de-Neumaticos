@@ -3,10 +3,10 @@ import Sidebar from "../../components/Sidebar";
 import { Button } from '../../components/Buttons';
 import { IconoRRHH, IconoDinero } from '../../components/Icons';
 import List from '../../components/Lista';
-import { useNavigate} from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
+import fetchConToken from '../../token';
 
-const SUPABASE_URL = "https://ufpvebypnhcbvgyrkzrw.supabase.co";
-const SUPABASE_KEY = "sb_publishable_3zNPvTHmiYmwG-BMVDDk9g_KZ_li66L";
+const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:9128/api";
 
 
 export default function RRHH({ usuario = 'Empleado', onLogout, onNavegar }) {
@@ -15,6 +15,7 @@ export default function RRHH({ usuario = 'Empleado', onLogout, onNavegar }) {
     const [search, setSearch] = useState("");
     const [orderBy, setOrderBy] = useState("");
     const [filtroCargo, setFiltroCargo] = useState("");
+    const [loading, setLoading] = useState(true);
     const navigate = useNavigate();
     const handleNavegar = (ruta, empleado = null) => {
         if (empleado) {
@@ -23,7 +24,7 @@ export default function RRHH({ usuario = 'Empleado', onLogout, onNavegar }) {
             navigate(`/rrhh/${ruta}`);
         }
     };
-    
+
     const handleVerEmpleado = (empleado, e) => {
         if (e) e.stopPropagation();
         const idEmpleado = empleado?.id ?? empleado?.id_empleado;
@@ -36,7 +37,7 @@ export default function RRHH({ usuario = 'Empleado', onLogout, onNavegar }) {
     }
 
     const cargos = [...new Set(empleados.map(emp => emp.cargo))];
-    
+
     const columns = [
         { key: 'nombre', label: 'Nombre' },
         { key: 'apellido', label: 'Apellido' },
@@ -49,25 +50,7 @@ export default function RRHH({ usuario = 'Empleado', onLogout, onNavegar }) {
         const cargarEmpleados = async () => {
             try {
 
-                const url =
-                    `${SUPABASE_URL}/rest/v1/empleados` +
-                    `?select=` +
-                    `id_empleado,` +
-                    `ci,` +
-                    `personas(nombre,apellido),` +
-                    `personas_horario_cargo(` +
-                    `fecha_inicio,` +
-                    `cargo(nombre)` +
-                    `)` +
-                    `&order=id_empleado.asc`;
-
-                const respuesta = await fetch(url, {
-                    headers: {
-                        apikey: SUPABASE_KEY,
-                        Authorization: `Bearer ${SUPABASE_KEY}`,
-                        "Content-Type": "application/json",
-                    },
-                });
+                const respuesta = await fetchConToken(`${API_BASE}/rrhh/empleados/table`)
 
                 const data = await respuesta.json();
 
@@ -90,14 +73,13 @@ export default function RRHH({ usuario = 'Empleado', onLogout, onNavegar }) {
                     CI:
                         item.ci ?? '',
 
-                    cargo:
-                        item.personas_horario_cargo?.[0]?.cargo?.nombre ?? '',
+                    cargo: item.personas_horario_cargo?.[0]?.cargo?.nombre ?? '',
 
-                    fecha_inicio:
-                        item.personas_horario_cargo?.[0]?.fecha_inicio ?? '',
+                    fecha_inicio: item.personas_horario_cargo?.[0]?.fecha_inicio ?? '',
                 }));
 
                 setEmpleados(formateado);
+                setLoading(false);
 
             } catch (error) {
                 console.error("ERROR GENERAL:", error);
@@ -160,8 +142,8 @@ export default function RRHH({ usuario = 'Empleado', onLogout, onNavegar }) {
 
                 <section style={styles.acciones}>
                     {[
-                        { label: 'Gestión de Empleados', icon: <IconoRRHH size={36} />, id: 'gestion-personal' },
-                        { label: 'Gestión de Salarios', icon: <IconoDinero size={36} />, id: 'gestion-salarios' },
+                        { label: 'Gestión de Empleados', icon: <IconoRRHH size={36} />, id: 'gestion-de-empleado' },
+                        { label: 'Gestión de Salarios', icon: <IconoDinero size={36} />, id: 'gestion-salarial' },
 
                     ].map((item) => (
                         <button
@@ -183,6 +165,8 @@ export default function RRHH({ usuario = 'Empleado', onLogout, onNavegar }) {
 
 
                 {/* Lista de empleados y acciones para filtrar etc.*/}
+                {loading && <div>Cargando empleados...</div>}
+                {!loading && (
                 <section style={styles.listaEmpleados}>
                     <List
                         data={empleadosFiltrados}
@@ -230,8 +214,8 @@ export default function RRHH({ usuario = 'Empleado', onLogout, onNavegar }) {
                                 onClick: handleNuevo
                             }
                         ]}
-                    />
-                </section>
+                    /> 
+                </section> )}
             </main>
         </div>
     );
@@ -267,18 +251,13 @@ const styles = {
     },
     titulo: {
         color: '#000000',
-        fontSize: 42,
+        fontSize: 30,
         fontFamily: 'Lato, sans-serif',
         fontWeight: 700,
         lineHeight: 1.2,
         margin: 0,
         textAlign: 'center',
         marginTop: 15,
-    },
-    separador: {
-        width: 'min(1100px, 80%)',
-        height: 4,
-        background: '#000000',
     },
     actionContainer: {
         display: 'flex',

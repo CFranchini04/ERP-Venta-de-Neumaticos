@@ -3,6 +3,7 @@ import Sidebar from "../../components/Sidebar";
 import { Button } from '../../components/Buttons';
 import EditEmpleadoModal from "../../components/EditModal";
 import { useParams, useNavigate } from 'react-router-dom';
+import fetchConToken from '../../token';
 
 
 
@@ -36,23 +37,36 @@ export default function GestionPersonal({ usuario, empleado, onVolver, onLogout,
 
     const cargarEmpleado = async () => {
       try {
-        const res = await fetch(`${API_BASE}/empleados/${id}`);
-        const data = await res.json();
+        const res = await fetchConToken(`${API_BASE}/rrhh/empleados/${id}`);
+        const dataArr = await res.json();
+        //Ns pq lql trae los datos dentro de un array, abajo lo traigo como un object
+        const data = dataArr[0];
         console.log("Respuesta de la API:", data);
-        
+        // EXTRACCION DE DATOS 
+        const hoy = new Date();
+        const parseFecha = hoy.toISOString().split('T')[0];
+        const familiares = data.familiares //lista de familiares
+        const hijos = familiares.filter(f => f.relacion.toLowerCase() === 'hijo' || f.relacion.toLowerCase() === 'hija') //lista de hijos
+        const hijos_menores = familiares.filter(h => {    // lista de hijos menores
+          var cumple = new Date(h.personas.fecha_nacimiento)
+          var edad = hoy.getFullYear() - cumple.getFullYear()
+          if (hoy.getMonth() <= cumple.getMonth()) edad--
+          return (edad < 18 && (h.relacion.toLowerCase() === 'hijo' || h.relacion.toLowerCase() === 'hija'))
+        })
+        const conyugue = familiares.filter(f => f.relacion.toLowerCase() === 'conyugue') // Conyugue
         setForm({
-          nombre: data.nombre ?? '',
-          apellido: data.apellido ?? '',
-          CI: data.CI ?? '',
-          ciudad: data.ciudad ?? '',
-          direccion: data.direccion ?? '',
-          correo_electronico: data.correo_electronico ?? '',
-          fecha_inicio: data.fecha_inicio ?? '',
-          cargo: data.cargo ?? '',
-          estado: data.estado ?? '',
-          conyugue: data.conyugue ?? '',
-          hijos: data.hijos ?? '',
-          hijos_menores: data.hijos_menores ?? '',
+          nombre: data.personas?.nombre ?? '',
+          apellido: data.personas?.apellido ?? '',
+          CI: data.ci ?? '',
+          ciudad: data?.ciudad ?? '', //Este dato no hay en la db todavia
+          direccion: data.personas?.direccion ?? '',
+          correo_electronico: data.personas?.correo ?? '',
+          fecha_inicio: data.personas_horario_cargo?.[0]?.fecha_inicio ?? '',
+          cargo: data.personas_horario_cargo?.[0]?.cargo?.nombre ?? '',
+          estado: data.personas_horario_cargo?.[0]?.estados?.nombre ?? '',
+          conyugue: conyugue[0]?.personas?.nombre + " " + conyugue[0]?.personas?.apellido ?? '',
+          hijos: hijos.length ?? '',
+          hijos_menores: hijos_menores.length ?? '',
         });
       } catch (error) {
         console.error("Error cargando empleado:", error);
@@ -149,6 +163,7 @@ export default function GestionPersonal({ usuario, empleado, onVolver, onLogout,
               </div>
 
               {!isCreating && (
+                <div style={{ transform: "scale(1.1)", display: "inline-block", alignSelf:"center", marginTop: 20 }}>
                 <Button
                   label="Editar"
                   variant="amarillo"
@@ -157,6 +172,7 @@ export default function GestionPersonal({ usuario, empleado, onVolver, onLogout,
                     setEditOpen(true);
                   }}
                 />
+                </div>
               )}
             </div>
 
@@ -197,6 +213,7 @@ export default function GestionPersonal({ usuario, empleado, onVolver, onLogout,
                 </div>
 
                 {!isCreating && (
+                  <div style={{ transform: "scale(1.1)", display: "inline-block", alignSelf:"center" }}>
                   <Button
                     label="Editar"
                     variant="amarillo"
@@ -205,6 +222,7 @@ export default function GestionPersonal({ usuario, empleado, onVolver, onLogout,
                       setEditOpen(true);
                     }}
                   />
+                  </div>
                 )}
               </div>
 
@@ -242,6 +260,7 @@ export default function GestionPersonal({ usuario, empleado, onVolver, onLogout,
                 </div>
 
                 {!isCreating && (
+                  <div style={{ transform: "scale(1.1)", display: "inline-block", alignSelf:"center" }}>
                   <Button
                     label="Editar"
                     variant="amarillo"
@@ -250,14 +269,11 @@ export default function GestionPersonal({ usuario, empleado, onVolver, onLogout,
                       setEditOpen(true);
                     }}
                   />
+                  </div>
                 )}
               </div>
 
             </div>
-          </div>
-
-          <div style={{ marginTop: 30, display: "flex", gap: 10 }}>
-            <Button label="Volver" onClick={onVolver} variant="amarillo" />
 
             {isCreating && (
               <Button
@@ -267,6 +283,7 @@ export default function GestionPersonal({ usuario, empleado, onVolver, onLogout,
                   //Modificar luego para que anhada en la bd
                   console.log("CREAR:", form);
                 }}
+                size="md"
               />
             )}
           </div>
@@ -318,7 +335,7 @@ const styles = {
 
   grid: {
     display: "grid",
-    gridTemplateColumns: "1.5fr 1fr",
+    gridTemplateColumns: "1fr 1.5fr",
     gap: 20,
   },
 

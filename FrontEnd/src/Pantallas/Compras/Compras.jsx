@@ -186,7 +186,7 @@ export default function Compras({ usuario = 'Empleado', onNavegar, onLogout }) {
           id: codigoPedido,
           codigo: codigoPedido.replace('PED', 'COT'), // PED-0001 → COT-0001
           estado: cotizacion.estados?.nombre,
-          fecha: cotizacion.fecha_respuesta,
+          fecha: cotizacion.pedidos_compras?.fecha_creacion,
           accion: <IconoLupa />
         }
       }

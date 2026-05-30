@@ -3,7 +3,15 @@ import supabase from '../../config/supabase.js'
 const getAllEmpleados = async () => {
     const { data, error } = await supabase
         .from('empleados')
-        .select('*, personas(*), familiares(count)')
+        .select('*, personas(*), personas_horario_cargo(*,cargo(*), estados(*)),familiares(*, personas(*))')
+    if (error) throw new Error(error.message)
+    return data
+}
+
+const getTableEmpleado = async () => {
+    const { data, error } = await supabase.
+        from('empleados')
+        .select('id_empleado,ci, personas(nombre,apellido), personas_horario_cargo(fecha_inicio ,cargo(nombre))')
     if (error) throw new Error(error.message)
     return data
 }
@@ -11,7 +19,7 @@ const getAllEmpleados = async () => {
 const getEmpleado = async (id) => {
     const { data, error } = await supabase
         .from('empleados')
-        .select('*, personas(*), familiares(count)')
+        .select('*, personas(*), personas_horario_cargo(*,cargo(*), estados(nombre)),familiares(relacion, personas(nombre, apellido, fecha_nacimiento))')
         .eq('id_empleado', id)
     if (error) throw new Error(error.message)
     return data
@@ -20,7 +28,7 @@ const getEmpleado = async (id) => {
 const getEmpleadoByNombre = async (nombre) => {
     const { data, error } = await supabase
         .from('empleados')
-        .select('*, personas(*), familiares(count)')
+        .select('*, personas(*), personas_horario_cargo(*,cargo(*), estados(nombre)),familiares(relacion, personas(nombre, apellido, fecha_nacimiento))')
         .ilike('personas.nombre', `%${nombre}%`)
     if (error) throw new Error(error.message)
     return data
@@ -29,7 +37,7 @@ const getEmpleadoByNombre = async (nombre) => {
 const getEmpleadoByCi = async (ci) => {
     const { data, error } = await supabase
         .from('empleados')
-        .select('*, personas(*), familiares(count)')
+        .select('*, personas(*), personas_horario_cargo(*,cargo(*), estados(nombre)),familiares(relacion, personas(nombre, apellido, fecha_nacimiento))')
         .eq('ci', ci)
     if (error) throw new Error(error.message)
     return data
@@ -38,7 +46,7 @@ const getEmpleadoByCi = async (ci) => {
 const getEmpleadoByRuc = async (ruc) => {
     const { data, error } = await supabase
         .from('empleados')
-        .select('*, personas(*), familiares(count)')
+        .select('*, personas(*), personas_horario_cargo(*,cargo(*), estados(nombre)),familiares(relacion, personas(nombre, apellido, fecha_nacimiento))')
         .eq('personas.ruc', ruc)
     if (error) throw new Error(error.message)
     return data
@@ -123,4 +131,4 @@ const deleteEmpleado = async (id) => {
     return { message: 'Empleado eliminado correctamente' }
 }
 
-export default { getAllEmpleados, getEmpleado, getEmpleadoByNombre, getEmpleadoByCi, getEmpleadoByRuc, postEmpleado, updateEmpleado, deleteEmpleado }
+export default { getAllEmpleados, getTableEmpleado, getEmpleado, getEmpleadoByNombre, getEmpleadoByCi, getEmpleadoByRuc, postEmpleado, updateEmpleado, deleteEmpleado }

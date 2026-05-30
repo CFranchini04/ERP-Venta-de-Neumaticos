@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import Sidebar from "../../components/Sidebar";
 import List from '../../components/Lista';
+import { useNavigate } from 'react-router-dom';
+
 import {
     IconoPedidos,
     IconoFactura,
@@ -20,9 +22,19 @@ const columns = [
 ];
 
 export default function Tesoreria({ usuario = 'Empleado', onLogout, onNavegar }) {
+    const navigate = useNavigate();
+
     const [orderBy, setOrderBy] = useState("");
     const [busqueda, setBusqueda] = useState('');
     const [facturas, setFacturas] = useState([]);
+
+    function handleNavegar(moduloId) {
+        if (moduloId === 'bancos-saldos') {
+            navigate('/tesoreria/bancos-saldos');
+            return;
+        }
+        if (onNavegar) onNavegar(moduloId);
+    }
 
     useEffect(() => {
         const cargarFacturas = async () => {
@@ -58,10 +70,6 @@ export default function Tesoreria({ usuario = 'Empleado', onLogout, onNavegar })
         )
     );
 
-    function handleNavegar(moduloId) {
-        if (onNavegar) onNavegar(moduloId);
-    }
-
     return (
         <div style={styles.pagina}>
             <Sidebar usuario={usuario} onNavegar={handleNavegar} onLogout={onLogout} />
@@ -75,7 +83,7 @@ export default function Tesoreria({ usuario = 'Empleado', onLogout, onNavegar })
 
                 <section style={styles.acciones}>
                     {[
-                        { label: 'Bancos y Saldos', icon: <IconoTesoreria size={36} />, id: 'presupuestos' },
+                        { label: 'Bancos y Saldos', icon: <IconoTesoreria size={36} />, id: 'bancos-saldos' },
                         { label: 'Depositos', icon: <IconoFactura size={36} />, id: 'facturas_ventas' },
                         { label: 'Movimientos', icon: <IconoMovimiento size={36} />, id: 'notas_credito' },
                         { label: 'Conciliación', icon: <IconoPedidos size={36} />, id: 'venta_directa' },
@@ -155,7 +163,7 @@ const styles = {
         margin: 0,
         textAlign: 'center',
         marginTop: 15,
-        
+
     },
     subtitulo: {
         color: '#000000',

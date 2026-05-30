@@ -31,13 +31,15 @@ export default function NuevosPresupuestos({ usuario, onNavegar, onLogout }) {
           console.error("Error productos:", resProductos.status, resProductos.statusText);
         }
 
-        const resClientes = await fetchConToken(`${API_BASE}/ventas/presupuestos/clientes/all`);
-        if (resClientes.ok) {
-          const dataClientes = await resClientes.json();
-          setClientesDisponibles(Array.isArray(dataClientes) ? dataClientes : []);
-        } else {
-          console.error("Error clientes:", resClientes.status, resClientes.statusText);
-        }
+const resClientes = await fetchConToken(`${API_BASE}/ventas/presupuestos/clientes/all`);
+if (resClientes.ok) {
+  const dataClientes = await resClientes.json();
+  console.log("STATUS:", resClientes.status);
+  console.log("CLIENTES:", dataClientes);
+  setClientesDisponibles(Array.isArray(dataClientes) ? dataClientes : []);
+} else {
+  console.error("Error clientes:", resClientes.status, resClientes.statusText);
+}
       } catch (err) {
         console.error("Error cargando datos:", err);
       }
@@ -72,74 +74,74 @@ export default function NuevosPresupuestos({ usuario, onNavegar, onLogout }) {
     setProductos((prev) => prev.filter((p) => p._uid !== uid));
   };
 
-   const subtotal = productos.reduce((acc, p) => acc + p.subtotal, 0);
-   const iva = subtotal * 0.1;
-   const total = subtotal + iva;
+  const subtotal = productos.reduce((acc, p) => acc + p.subtotal, 0);
+  const iva = subtotal * 0.1;
+  const total = subtotal + iva;
 
-   const hoy = new Date();
-   const fechaHoy = hoy.toISOString().split("T")[0];
-   const fechaValida = new Date(hoy.setDate(hoy.getDate() + 10)).toISOString().split("T")[0];
+  const hoy = new Date();
+  const fechaHoy = hoy.toISOString().split("T")[0];
+  const fechaValida = new Date(hoy.setDate(hoy.getDate() + 10)).toISOString().split("T")[0];
 
-   const clienteSeleccionado = clientesDisponibles.find(c => c.id_cliente === parseInt(idCliente));
+  const clienteSeleccionado = clientesDisponibles.find(c => c.id_cliente === parseInt(idCliente));
 
-   const handleGuardar = async () => {
-     if (!idCliente) {
-       setError("Selecciona un cliente");
-       return;
-     }
-     if (productos.length === 0) {
-       setError("Agrega al menos un producto");
-       return;
-     }
+  const handleGuardar = async () => {
+    if (!idCliente) {
+      setError("Selecciona un cliente");
+      return;
+    }
+    if (productos.length === 0) {
+      setError("Agrega al menos un producto");
+      return;
+    }
 
-     setLoading(true);
-     setError("");
+    setLoading(true);
+    setError("");
 
-     try {
-       const fechaHoy = new Date().toISOString().split("T")[0];
-       
-       const resPresupuesto = await fetchConToken(`${API_BASE}/ventas/presupuestos`, {
-         method: "POST",
-         headers: { "Content-Type": "application/json" },
-         body: JSON.stringify({
-           id_cliente: parseInt(idCliente),
-           fecha_creacion: fechaHoy
-         })
-       });
+    try {
+      const fechaHoy = new Date().toISOString().split("T")[0];
 
-       if (!resPresupuesto.ok) {
-         const errorData = await resPresupuesto.json();
-         throw new Error(errorData.message || "Error al crear presupuesto");
-       }
+      const resPresupuesto = await fetchConToken(`${API_BASE}/ventas/presupuestos`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id_cliente: parseInt(idCliente),
+          fecha_creacion: fechaHoy
+        })
+      });
 
-       const dataPresupuesto = await resPresupuesto.json();
-       const idPresupuesto = dataPresupuesto.id_presupuesto;
+      if (!resPresupuesto.ok) {
+        const errorData = await resPresupuesto.json();
+        throw new Error(errorData.message || "Error al crear presupuesto");
+      }
 
-       const detallesPayload = productos.map(p => ({
-         id_presupuesto: idPresupuesto,
-         id_producto: p.id_producto,
-         cantidad: p.cantidad,
-         precio_unitario: p.precio_unitario
-       }));
+      const dataPresupuesto = await resPresupuesto.json();
+      const idPresupuesto = dataPresupuesto.id_presupuesto;
 
-       const resDetalles = await fetchConToken(`${API_BASE}/ventas/presupuestos/detalle`, {
-         method: "POST",
-         headers: { "Content-Type": "application/json" },
-         body: JSON.stringify(detallesPayload)
-       });
+      const detallesPayload = productos.map(p => ({
+        id_presupuesto: idPresupuesto,
+        id_producto: p.id_producto,
+        cantidad: p.cantidad,
+        precio_unitario: p.precio_unitario
+      }));
 
-       if (!resDetalles.ok) {
-         const errorData = await resDetalles.json();
-         throw new Error(errorData.message || "Error al agregar detalles");
-       }
+      const resDetalles = await fetchConToken(`${API_BASE}/ventas/presupuestos/detalle`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(detallesPayload)
+      });
 
-       navigate(`/ventas/presupuestos/${idPresupuesto}`);
-     } catch (err) {
-       setError(err.message || "Error al guardar presupuesto");
-     } finally {
-       setLoading(false);
-     }
-   };
+      if (!resDetalles.ok) {
+        const errorData = await resDetalles.json();
+        throw new Error(errorData.message || "Error al agregar detalles");
+      }
+
+      navigate(`/ventas/presupuestos/${idPresupuesto}`);
+    } catch (err) {
+      setError(err.message || "Error al guardar presupuesto");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div style={styles.pagina}>
@@ -151,37 +153,37 @@ export default function NuevosPresupuestos({ usuario, onNavegar, onLogout }) {
           <div style={styles.separador} />
         </header>
 
-         <div style={styles.contenedorForm}>
-           <div style={styles.doColumnas}>
-             <div style={styles.columnaIzq}>
-               <div style={styles.card}>
-                 <h3 style={styles.cardTitulo}>Seleccionar Cliente</h3>
+        <div style={styles.contenedorForm}>
+          <div style={styles.doColumnas}>
+            <div style={styles.columnaIzq}>
+              <div style={styles.card}>
+                <h3 style={styles.cardTitulo}>Seleccionar Cliente</h3>
 
-                 <div style={styles.grupoInput}>
-                   <label style={styles.label}>Cliente *</label>
-                   <select
-                     value={idCliente}
-                     onChange={(e) => setIdCliente(e.target.value)}
-                     style={styles.selectProducto}
-                   >
-                     <option value="">-- Seleccionar Cliente --</option>
-                     {clientesDisponibles.map((c) => (
-                       <option key={c.id_cliente} value={c.id_cliente}>
-                         {c.id_persona ? `${c.id_persona} - ${c.nombre || ""}` : `ID ${c.id_cliente}`}
-                       </option>
-                     ))}
-                   </select>
-                 </div>
+                <div style={styles.grupoInput}>
+                  <label style={styles.label}>Cliente *</label>
+                  <select
+                    value={idCliente}
+                    onChange={(e) => setIdCliente(e.target.value)}
+                    style={styles.selectProducto}
+                  >
+                    <option value="">-- Seleccionar Cliente --</option>
+                    {clientesDisponibles.map((c) => (
+                      <option key={c.id_cliente} value={c.id_cliente}>
+                        {`${c.nombre || ""} ${c.apellido || ""}`.trim() || `ID ${c.id_cliente}`}
+                      </option>
+                    ))}
+                  </select>
+                </div>
 
-                 {clienteSeleccionado && (
-                   <div style={styles.cardInfo}>
-                     <strong>Información del Cliente</strong>
-                     <p style={{ margin: "8px 0 0 0", fontSize: 12 }}>
-                       {`${clienteSeleccionado.nombre || ""} - CI/RUC: ${clienteSeleccionado.ci || "N/A"}`}
-                     </p>
-                   </div>
-                 )}
-               </div>
+                {clienteSeleccionado && (
+                  <div style={styles.cardInfo}>
+                    <strong>Información del Cliente</strong>
+                    <p style={{ margin: "8px 0 0 0", fontSize: 12 }}>
+                      {`${clienteSeleccionado.nombre || ""} ${clienteSeleccionado.apellido || ""}`.trim()} — CI/RUC: {clienteSeleccionado.ci || "N/A"}
+                    </p>
+                  </div>
+                )}
+              </div>
 
               <div style={styles.card}>
                 <h3 style={styles.cardTitulo}>Productos y Servicios</h3>

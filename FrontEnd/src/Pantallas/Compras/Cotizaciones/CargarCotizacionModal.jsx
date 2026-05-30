@@ -1,138 +1,160 @@
 import React, { useMemo, useState, useEffect } from "react";
 import { IconoCerrar } from "../../../components/Icons";
 import { getColor } from "../../../components/Colors";
+import fetchConToken from "../../../token";
 
+const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:9128/api";
+
+/**
+ * CargarCotizacionModal
+ *
+ * Props:
+ *   open          {boolean}
+ *   onClose       {function}
+ *   onGuardado    {function}
+ *   idPedido      {number}
+ *   productos     {array}   [{ id_producto, producto, cantidad, ... }]
+ *   proveedores   {array}   [{ id, nombre }]
+ */
 export default function CargarCotizacionModal({
   open,
   onClose,
+  onGuardado,
+  idPedido,
   productos = [],
   proveedores = [],
-  onGuardar
 }) {
-
   const [proveedorSeleccionado, setProveedorSeleccionado] = useState("");
   const [detalles, setDetalles] = useState([]);
-    useEffect(() => {
-
-        if (open) {
-
-            setDetalles(
-            productos.map((p) => ({
-                ...p,
-                precioUnitario: "",
-            }))
-            );
-
-            setProveedorSeleccionado("");
-            setError("");
-
-        }
-
-    }, [open, productos]);
-
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState("");
 
+  // Reiniciar al abrir
+  useEffect(() => {
+    if (open) {
+      setProveedorSeleccionado("");
+      setError("");
+      setDetalles(
+        productos.map((p) => ({
+          id_producto: p.id_producto,
+          producto: p.producto,
+          cantidad: p.cantidad,
+          precioUnitario: "",
+          esMejorOpcion: false,
+          observacion: "",
+          incluido: true,   // ← nuevo: controla si este producto va en la cotización
+        }))
+      );
+    }
+  }, [open, productos]);
 
-
-  const handlePrecioChange = (index, valor) => {
-    // limpiar error al escribir
+  const toggleIncluido = (index) => {
     setError("");
-    const copia = [...detalles];
-    copia[index].precioUnitario = valor;
-    setDetalles(copia);
+    setDetalles((prev) => {
+      const copia = [...prev];
+      copia[index] = { ...copia[index], incluido: !copia[index].incluido, precioUnitario: "", observacion: "" };
+      return copia;
+    });
   };
 
-  const totalEstimado = useMemo(() => {
-    return detalles.reduce((acc, item) => {
-      const subtotal =
-        Number(item.cantidad || 0) *
-        Number(item.precioUnitario || 0);
+  const handlePrecioChange = (index, valor) => {
+    setError("");
+    setDetalles((prev) => {
+      const copia = [...prev];
+      copia[index] = { ...copia[index], precioUnitario: Number(valor) < 0 ? "0" : valor };
+      return copia;
+    });
+  };
 
-      return acc + subtotal;
-    }, 0);
+  const handleObservacionChange = (index, valor) => {
+    setDetalles((prev) => {
+      const copia = [...prev];
+      copia[index] = { ...copia[index], observacion: valor };
+      return copia;
+    });
+  };
+
+  const productosIncluidos = detalles.filter((d) => d.incluido);
+
+  const totalEstimado = useMemo(() => {
+    return productosIncluidos.reduce(
+      (acc, item) => acc + Number(item.cantidad || 0) * Number(item.precioUnitario || 0),
+      0
+    );
   }, [detalles]);
 
-    if (!open) return null;
+  if (!open) return null;
 
   const handleGuardar = async () => {
     if (!proveedorSeleccionado) {
-        setError("Debes seleccionar un proveedor.");
-        return;
+      setError("Debes seleccionar un proveedor.");
+      return;
     }
-
-    const sinPrecio = detalles.some(
-        (item) =>
-        !item.precioUnitario ||
-        Number(item.precioUnitario) <= 0
+    if (productosIncluidos.length === 0) {
+      setError("Debes incluir al menos un producto en la cotización.");
+      return;
+    }
+    const sinPrecio = productosIncluidos.some(
+      (item) => !item.precioUnitario || Number(item.precioUnitario) <= 0
     );
-
-
     if (sinPrecio) {
-        setError("Todos los productos deben tener precio.");
-        return;
+      setError("Todos los productos incluidos deben tener un precio mayor a cero.");
+      return;
     }
 
     setError("");
     setGuardando(true);
 
     try {
+      const codigoCotizacion = `COT_${Date.now()}`;
+      const hoy = new Date().toISOString().split("T")[0];
 
-        const payload = {
-        proveedor: proveedorSeleccionado,
-        detalles: detalles.map((d) => ({
-            id_producto: d.id,
-            cantidad: d.cantidad,
-            precio_unitario: Number(d.precioUnitario),
-            subtotal:
-            Number(d.cantidad) *
-            Number(d.precioUnitario),
+      const payload = {
+        id_pedido: idPedido,
+        id_proveedor: Number(proveedorSeleccionado),
+        fecha_respuesta: hoy,
+        observacion: "",
+        id_estado: 1,
+        codigo_cotizacion: codigoCotizacion,
+        detalles: productosIncluidos.map((d) => ({
+          id_producto: d.id_producto,
+          cantidad: Number(d.cantidad),
+          precio_unitario: Number(d.precioUnitario),
+          es_mejor_opcion: d.esMejorOpcion ?? false,
+          observacion: d.observacion ?? "",
         })),
-        total: totalEstimado,
-        };
+      };
 
-        if (onGuardar) {
-        await onGuardar(payload);
-        }
+      const res = await fetchConToken(`${API_BASE}/compras/cotizaciones`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
 
-        onClose();
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Error al guardar la cotización");
 
+      if (onGuardado) onGuardado(data);
+      onClose();
     } catch (err) {
-
-        setError(
-        err.message ||
-        "Error al guardar cotización"
-        );
-
+      setError(err.message || "Error al guardar cotización");
     } finally {
-
-        setGuardando(false);
-
+      setGuardando(false);
     }
-    };
+  };
+
+  const contadorIncluidos = productosIncluidos.length;
 
   return (
     <div style={styles.overlay} onClick={onClose}>
-
-      <div
-        style={styles.modal}
-        onClick={(e) => e.stopPropagation()}
-      >
+      <div style={styles.modal} onClick={(e) => e.stopPropagation()}>
 
         {/* HEADER */}
         <div style={styles.header}>
-
-          <h2 style={styles.headerTitulo}>
-            Cargar Cotización
-          </h2>
-
-          <button
-            style={styles.botonCerrar}
-            onClick={onClose}
-          >
+          <h2 style={styles.headerTitulo}>Cargar Cotización de Proveedor</h2>
+          <button style={styles.botonCerrar} onClick={onClose}>
             <IconoCerrar />
           </button>
-
         </div>
 
         {/* BODY */}
@@ -140,309 +162,194 @@ export default function CargarCotizacionModal({
 
           {/* SELECT PROVEEDOR */}
           <div style={styles.campo}>
-
-            <label style={styles.label}>
-              Proveedor
-            </label>
-
+            <label style={styles.label}>Proveedor *</label>
             <select
               style={styles.select}
               value={proveedorSeleccionado}
-              onChange={(e) =>
-                setProveedorSeleccionado(e.target.value)
-              }
+              onChange={(e) => { setProveedorSeleccionado(e.target.value); setError(""); }}
             >
-              <option value="">
-                Seleccionar proveedor
-              </option>
-
+              <option value="">— Seleccionar proveedor —</option>
               {proveedores.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.nombre}
-                </option>
+                <option key={p.id} value={p.id}>{p.nombre}</option>
               ))}
-
             </select>
-
           </div>
 
-          {/* TABLA */}
+          {/* Indicador de productos incluidos */}
+          <div style={{ display: "flex", alignItems: "center", gap: 8, fontFamily: "Lato, sans-serif", fontSize: 13, color: "#555" }}>
+            <span>
+              Productos incluidos en esta cotización:{" "}
+              <strong style={{ color: contadorIncluidos > 0 ? "#237804" : "#E30613" }}>
+                {contadorIncluidos}/{detalles.length}
+              </strong>
+            </span>
+            <span style={{ color: "#888" }}>— Desmarcá los productos que este proveedor no cotice.</span>
+          </div>
+
+          {/* TABLA DE PRODUCTOS */}
           <div style={styles.tablaContainer}>
-
             <table style={styles.table}>
-
               <thead>
-
                 <tr>
-
-                  <th style={styles.th}>Código</th>
+                  <th style={{ ...styles.th, width: 40 }}>✓</th>
                   <th style={styles.th}>Producto</th>
                   <th style={styles.th}>Cantidad</th>
-                  <th style={styles.th}>Precio Unitario</th>
+                  <th style={styles.th}>Precio Unitario (Gs.)</th>
                   <th style={styles.th}>Subtotal</th>
-
+                  <th style={styles.th}>Observación</th>
                 </tr>
-
               </thead>
-
               <tbody>
-
                 {detalles.map((item, index) => {
-
-                  const subtotal =
-                    Number(item.cantidad || 0) *
-                    Number(item.precioUnitario || 0);
-
+                  const subtotal = Number(item.cantidad || 0) * Number(item.precioUnitario || 0);
+                  const excluido = !item.incluido;
                   return (
-
-                    <tr key={index} style={styles.tr}>
-
-                      <td style={styles.td}>
-                        {item.id}
+                    <tr
+                      key={index}
+                      style={{
+                        borderBottom: "1px solid #eee",
+                        background: excluido ? "#f5f5f5" : index % 2 === 0 ? "#fff" : "#fafafa",
+                        opacity: excluido ? 0.55 : 1,
+                        transition: "opacity 0.15s, background 0.15s",
+                      }}
+                    >
+                      {/* Checkbox incluir/excluir */}
+                      <td style={{ ...styles.td, width: 40 }}>
+                        <div
+                          onClick={() => toggleIncluido(index)}
+                          style={{
+                            width: 20, height: 20, margin: "0 auto",
+                            border: `2px solid ${item.incluido ? "#1D1D1D" : "#bbb"}`,
+                            borderRadius: 4,
+                            background: item.incluido ? getColor("amarillo") : "#fff",
+                            display: "flex", alignItems: "center", justifyContent: "center",
+                            cursor: "pointer", transition: "all 0.15s",
+                          }}
+                        >
+                          {item.incluido && <span style={{ fontSize: 12, fontWeight: 900, color: "#1D1D1D" }}>✓</span>}
+                        </div>
                       </td>
 
-                      <td style={styles.td}>
+                      {/* Nombre producto */}
+                      <td onClick={() => toggleIncluido(index)} style={{ ...styles.td, textAlign: "left", fontWeight: 500, color: excluido ? "#aaa" : "#1D1D1D", cursor: "pointer", userSelect: "none" }}>
                         {item.producto}
                       </td>
 
-                      <td style={styles.td}>
-                        {item.cantidad}
-                      </td>
+                      {/* Cantidad */}
+                      <td style={styles.td}>{item.cantidad}</td>
 
+                      {/* Precio unitario */}
                       <td style={styles.td}>
-
                         <input
-                            type="number"
-                            min="0"
-                            style={styles.input}
-                            value={item.precioUnitario}
-                            onChange={(e) => {
-
-                                let valor = e.target.value;
-
-                                // evitar negativos
-                                if (Number(valor) < 0) {
-                                valor = 0;
-                                }
-
-                                handlePrecioChange(index, valor);
-
-                            }}
+                          type="number"
+                          min="0"
+                          disabled={excluido}
+                          style={{
+                            ...styles.input,
+                            background: excluido ? "#eee" : "#FAFAFA",
+                            cursor: excluido ? "not-allowed" : "text",
+                            color: excluido ? "#aaa" : "#1D1D1D",
+                          }}
+                          value={item.precioUnitario}
+                          onChange={(e) => handlePrecioChange(index, e.target.value)}
+                          placeholder="0"
                         />
-
                       </td>
 
+                      {/* Subtotal */}
+                      <td style={{
+                        ...styles.td,
+                        fontWeight: subtotal > 0 ? 600 : 400,
+                        color: excluido ? "#ccc" : subtotal > 0 ? "#1D1D1D" : "#aaa"
+                      }}>
+                        {subtotal > 0 ? subtotal.toLocaleString("es-PY") : "—"}
+                      </td>
+
+                      {/* Observación */}
                       <td style={styles.td}>
-                        {subtotal.toLocaleString("es-PY")}
+                        <input
+                          type="text"
+                          disabled={excluido}
+                          style={{
+                            ...styles.input,
+                            width: 140, fontSize: 12,
+                            background: excluido ? "#eee" : "#FAFAFA",
+                            cursor: excluido ? "not-allowed" : "text",
+                            color: excluido ? "#aaa" : "#1D1D1D",
+                          }}
+                          value={item.observacion}
+                          onChange={(e) => handleObservacionChange(index, e.target.value)}
+                          placeholder="Opcional..."
+                        />
                       </td>
-
                     </tr>
-
                   );
                 })}
-
               </tbody>
-
             </table>
-
           </div>
 
           {/* TOTAL */}
           <div style={styles.totalContainer}>
-
-            <strong>
-              Total estimado:
-            </strong>
-
-            <span>
-              {totalEstimado.toLocaleString("es-PY")}
+            <strong>Total estimado ({contadorIncluidos} producto{contadorIncluidos !== 1 ? "s" : ""}):</strong>
+            <span style={{ fontSize: 18, fontWeight: 700, color: "#1D1D1D" }}>
+              {totalEstimado.toLocaleString("es-PY")} Gs.
             </span>
-
           </div>
 
         </div>
 
-        {error && (
-            <div style={styles.error}>
-                {error}
-            </div>
-            )}
-
+        {/* ERROR */}
+        {error && <div style={styles.error}>{error}</div>}
 
         {/* FOOTER */}
         <div style={styles.footer}>
-
-          <button
-            style={styles.botonCancelar}
-            onClick={onClose}
-          >
+          <button style={styles.botonCancelar} onClick={onClose} disabled={guardando}>
             Cancelar
           </button>
-
           <button
-            style={{
-                ...styles.botonGuardar,
-                opacity: guardando ? 0.6 : 1,
-                cursor: guardando ? "not-allowed" : "pointer",
-            }}
+            style={{ ...styles.botonGuardar, opacity: guardando ? 0.6 : 1, cursor: guardando ? "not-allowed" : "pointer" }}
             onClick={handleGuardar}
             disabled={guardando}
-        >
-            {guardando ? "Guardando..." : "Guardar"}
-        </button>
-
+          >
+            {guardando ? "Guardando..." : "Guardar Cotización"}
+          </button>
         </div>
 
       </div>
-
     </div>
   );
 }
 
 const styles = {
-
   overlay: {
-    position: "fixed",
-    inset: 0,
-    background: "rgba(0,0,0,0.45)",
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    zIndex: 1000,
+    position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)",
+    display: "flex", justifyContent: "center", alignItems: "center", zIndex: 1000,
   },
-
   modal: {
-    width: "1000px",
-    maxWidth: "95vw",
-    maxHeight: "92vh",
-    background: "#fff",
-    borderRadius: 16,
-    overflow: "hidden",
-    display: "flex",
-    flexDirection: "column",
+    width: "980px", maxWidth: "95vw", maxHeight: "92vh",
+    background: "#fff", borderRadius: 16, overflow: "hidden",
+    display: "flex", flexDirection: "column",
     boxShadow: "0 12px 40px rgba(0,0,0,0.3)",
   },
-
   header: {
-    background: getColor("amarillo"),
-    padding: "18px 24px",
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
+    background: getColor("amarillo"), padding: "18px 24px",
+    display: "flex", justifyContent: "space-between", alignItems: "center",
   },
-
-  headerTitulo: {
-    margin: 0,
-    fontSize: 24,
-    fontWeight: 700,
-    fontFamily: "Lato, sans-serif",
-  },
-
-  botonCerrar: {
-    border: "none",
-    background: "transparent",
-    cursor: "pointer",
-  },
-
-  error: {
-    background: "#fff0f0",
-    border: "1px solid #E30613",
-    borderRadius: 8,
-    padding: "10px 14px",
-    color: "#E30613",
-    fontSize: 14,
-    fontFamily: "Lato, sans-serif",
-    },
-
-  body: {
-    padding: 24,
-    display: "flex",
-    flexDirection: "column",
-    gap: 20,
-    overflowY: "auto",
-  },
-
-  campo: {
-    display: "flex",
-    flexDirection: "column",
-    gap: 8,
-  },
-
-  label: {
-    fontWeight: 700,
-    fontSize: 14,
-  },
-
-  select: {
-    padding: 12,
-    borderRadius: 8,
-    border: "1px solid #ccc",
-  },
-
-  tablaContainer: {
-    border: "1px solid #ccc",
-    borderRadius: 12,
-    overflow: "hidden",
-  },
-
-  table: {
-    width: "100%",
-    borderCollapse: "collapse",
-  },
-
-  th: {
-    background: getColor("amarillo"),
-    padding: 14,
-    textAlign: "center",
-    fontSize: 14,
-  },
-
-  tr: {
-    borderBottom: "1px solid #ddd",
-  },
-
-  td: {
-    padding: 12,
-    textAlign: "center",
-    fontSize: 14,
-  },
-
-  input: {
-    padding: 8,
-    borderRadius: 6,
-    border: "1px solid #ccc",
-    width: 140,
-  },
-
-  totalContainer: {
-    display: "flex",
-    justifyContent: "flex-end",
-    gap: 10,
-    fontSize: 18,
-  },
-
-  footer: {
-    padding: 20,
-    borderTop: "1px solid #eee",
-    display: "flex",
-    justifyContent: "flex-end",
-    gap: 12,
-  },
-
-  botonCancelar: {
-    padding: "10px 24px",
-    borderRadius: 999,
-    border: "1px solid #999",
-    background: "#fff",
-    cursor: "pointer",
-  },
-
-  botonGuardar: {
-    padding: "10px 24px",
-    borderRadius: 999,
-    border: "none",
-    background: getColor("amarillo"),
-    fontWeight: "bold",
-    cursor: "pointer",
-  },
+  headerTitulo: { margin: 0, fontSize: 24, fontWeight: 700, fontFamily: "Lato, sans-serif" },
+  botonCerrar: { border: "none", background: "transparent", cursor: "pointer" },
+  body: { padding: 24, display: "flex", flexDirection: "column", gap: 16, overflowY: "auto", flex: 1 },
+  campo: { display: "flex", flexDirection: "column", gap: 8 },
+  label: { fontWeight: 700, fontSize: 14, fontFamily: "Lato, sans-serif", color: "#333" },
+  select: { padding: "10px 12px", borderRadius: 8, border: "1.5px solid #ccc", fontSize: 14, fontFamily: "Lato, sans-serif", background: "#FAFAFA", outline: "none", cursor: "pointer" },
+  tablaContainer: { border: "1px solid #ddd", borderRadius: 12, overflow: "hidden" },
+  table: { width: "100%", borderCollapse: "collapse" },
+  th: { background: getColor("amarillo"), padding: "12px 14px", textAlign: "center", fontSize: 14, fontFamily: "Lato, sans-serif", fontWeight: 700 },
+  td: { padding: "10px 14px", textAlign: "center", fontSize: 14, fontFamily: "Lato, sans-serif" },
+  input: { padding: "8px 10px", borderRadius: 6, border: "1.5px solid #DADADA", width: 130, outline: "none", fontSize: 14, fontFamily: "Lato, sans-serif", boxSizing: "border-box" },
+  totalContainer: { display: "flex", justifyContent: "flex-end", alignItems: "center", gap: 12, fontSize: 16, fontFamily: "Lato, sans-serif" },
+  error: { background: "#fff0f0", border: "1px solid #E30613", borderRadius: 8, padding: "10px 24px", color: "#E30613", fontSize: 14, fontFamily: "Lato, sans-serif", margin: "0 24px" },
+  footer: { padding: "16px 24px", borderTop: "1px solid #eee", display: "flex", justifyContent: "flex-end", gap: 12 },
+  botonCancelar: { padding: "10px 24px", borderRadius: 999, border: "1px solid #999", background: "#fff", cursor: "pointer", fontFamily: "Lato, sans-serif" },
+  botonGuardar: { padding: "10px 28px", borderRadius: 999, border: "none", background: getColor("amarillo"), fontWeight: "bold", cursor: "pointer", fontFamily: "Lato, sans-serif", fontSize: 15 },
 };

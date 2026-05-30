@@ -11,6 +11,7 @@ const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:9128/api";
 export default function Presupuestos({ usuario, onNavegar, onLogout }) {
   const navigate = useNavigate();
   const [presupuestos, setPresupuestos] = useState([]);
+  const [facturasMap, setFacturasMap] = useState({});
   const [busqueda, setBusqueda] = useState("");
   const [filtroEstado, setFiltroEstado] = useState("");
   const [orden, setOrden] = useState("");
@@ -51,11 +52,27 @@ export default function Presupuestos({ usuario, onNavegar, onLogout }) {
           throw new Error(data.message || "No se pudieron cargar los presupuestos");
         }
 
-        setPresupuestos((Array.isArray(data) ? data : data.presupuestos || []).map((p) => ({
-           ...p,
-           estado: p.estados?.nombre || p.estado || "",
-           cliente: p.cliente || ""
-        })));
+        const presupuestosData = Array.isArray(data) ? data : data.presupuestos || [];
+        console.log("Presupuestos recibidos:", presupuestosData);
+        setPresupuestos(presupuestosData);
+
+        // Cargar facturas para verificar qué presupuestos tienen factura
+        try {
+          const facturasResponse = await fetchConToken(`${API_BASE}/ventas/facturas`);
+          if (facturasResponse.ok) {
+            const facturasData = await facturasResponse.json();
+            const facturas = Array.isArray(facturasData) ? facturasData : facturasData.facturas || [];
+            const mapa = {};
+            facturas.forEach((f) => {
+              if (f.id_presupuesto) {
+                mapa[f.id_presupuesto] = f;
+              }
+            });
+            setFacturasMap(mapa);
+          }
+        } catch (err) {
+          console.error("Error cargando facturas:", err);
+        }
       } catch (err) {
         console.error("Error cargando presupuestos:", err);
         setPresupuestos([]);
@@ -93,6 +110,15 @@ export default function Presupuestos({ usuario, onNavegar, onLogout }) {
     return "#000000";
   };
 
+  const isPresupuestoVigente = (presupuesto) => {
+    if (!presupuesto.valido_hasta) return false;
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+    const validoHasta = new Date(presupuesto.valido_hasta);
+    validoHasta.setHours(0, 0, 0, 0);
+    return hoy <= validoHasta;
+  };
+
    const columns = [
      { key: "codigo_presupuesto", label: "Número", width: "12%" },
      { key: "cliente", label: "Cliente", width: "18%" },
@@ -113,40 +139,61 @@ export default function Presupuestos({ usuario, onNavegar, onLogout }) {
        key: "acciones",
        label: "Acciones",
        width: "12%",
-       render: (presupuesto) => (
-         <div style={{ display: "flex", gap: 10, alignItems: "center", justifyContent: "center" }}>
-           <button
-             onClick={(e) => handleVerPresupuesto(presupuesto, e)}
-             style={{
-               background: "none",
-               border: "none",
-               cursor: "pointer",
-               display: "flex",
-               justifyContent: "center",
-               padding: 0
-             }}
-           >
-             <IconoLupa />
-           </button>
-           {presupuesto.estado === "Pendiente" && (
+       render: (presupuesto) => {
+         const tieneFactura = facturasMap[presupuesto.id_presupuesto];
+         
+         return (
+           <div style={{ display: "flex", gap: 10, alignItems: "center", justifyContent: "center" }}>
              <button
-               onClick={() => navigate(`/ventas/presupuestos/${presupuesto.id_presupuesto}/factura`)}
+               onClick={(e) => handleVerPresupuesto(presupuesto, e)}
                style={{
-                 padding: "6px 12px",
-                 background: getColor("amarillo"),
+                 background: "none",
                  border: "none",
-                 borderRadius: 4,
                  cursor: "pointer",
-                 fontSize: 12,
-                 fontWeight: "700",
-                 color: "#000000"
+                 display: "flex",
+                 justifyContent: "center",
+                 padding: 0
                }}
              >
-               Crear Factura
+               <IconoLupa />
              </button>
-           )}
-         </div>
-       )
+             
+             {presupuesto.estado === "Confirmado" && tieneFactura ? (
+               <button
+                 onClick={() => navigate(`/ventas/facturas/${tieneFactura.id_factura}`)}
+                 style={{
+                   padding: "6px 12px",
+                   background: getColor("amarillo"),
+                   border: "none",
+                   borderRadius: 4,
+                   cursor: "pointer",
+                   fontSize: 12,
+                   fontWeight: "700",
+                   color: "#000000"
+                 }}
+               >
+                 Ver Factura
+               </button>
+             ) : presupuesto.estado === "Pendiente" ? (
+               <button
+                 onClick={() => navigate(`/ventas/presupuestos/${presupuesto.id_presupuesto}/nueva-factura`)}
+                 style={{
+                   padding: "6px 12px",
+                   background: getColor("amarillo"),
+                   border: "none",
+                   borderRadius: 4,
+                   cursor: "pointer",
+                   fontSize: 12,
+                   fontWeight: "700",
+                   color: "#000000"
+                 }}
+               >
+                 Crear Factura
+               </button>
+             ) : null}
+           </div>
+         );
+       }
      }
   ];
 
