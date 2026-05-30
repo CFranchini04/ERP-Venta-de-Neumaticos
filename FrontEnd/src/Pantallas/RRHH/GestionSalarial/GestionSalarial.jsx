@@ -3,8 +3,82 @@ import { useParams } from 'react-router-dom';
 import Sidebar from '../../../components/Sidebar';
 import fetchConToken from '../../../token';
 import { getColor } from '../../../components/Colors';
-import { IconoDropdown } from '../../../components/Icons';
+import { IconoDropdown, IconoMas, IconoCerrar } from '../../../components/Icons';
 
+
+// ─── Componente de columna (bonificaciones o deducciones) ─────────────────────
+function ColumnaItems({ titulo, tipo, items, onChange }) {
+  const color = tipo === 'bonificacion' ? getColor('verde') : getColor('rojo');
+  const bgColor = tipo === 'bonificacion' ? '#f0fdf4' : '#fef2f2';
+  const borderColor = tipo === 'bonificacion' ? '#bbf7d0' : '#fecaca';
+
+  const agregar = () => {
+    onChange([...items, { id: Date.now(), nombre: '', monto: '' }]);
+  };
+
+  const actualizar = (id, campo, valor) => {
+    onChange(items.map(i => i.id === id ? { ...i, [campo]: valor } : i));
+  };
+
+  const eliminar = (id) => {
+    onChange(items.filter(i => i.id !== id));
+  };
+
+  const total = items.reduce((acc, i) => acc + (Number(i.monto) || 0), 0);
+
+  return (
+    <div style={{ ...styles.columna, background: bgColor, border: `1.5px solid ${borderColor}` }}>
+
+      <div style={styles.columnaHeader}>
+        <span style={{ ...styles.columnaTitulo, color }}>
+          {tipo === 'bonificacion' ? '▲' : '▼'} {titulo}
+        </span>
+        <span style={{ ...styles.columnaTotal, color }}>
+          Gs. {total.toLocaleString()}
+        </span>
+      </div>
+
+      <div style={styles.itemsLista}>
+        {items.length === 0 && (
+          <p style={styles.sinItems}>Sin {titulo.toLowerCase()} aún</p>
+        )}
+
+        {items.map(item => (
+          <div key={item.id} style={styles.itemRow}>
+            <input
+              type="text"
+              placeholder="Descripción"
+              value={item.nombre}
+              onChange={e => actualizar(item.id, 'nombre', e.target.value)}
+              style={{ ...styles.inputItem, flex: 2 }}
+            />
+            <input
+              type="number"
+              placeholder="Monto Gs."
+              value={item.monto}
+              onChange={e => actualizar(item.id, 'monto', e.target.value)}
+              style={{ ...styles.inputItem, flex: 1 }}
+            />
+            <button
+              style={{ ...styles.btnEliminar, color }}
+              onClick={() => eliminar(item.id)}
+              title="Eliminar"
+            >
+              <IconoCerrar />
+            </button>
+          </div>
+        ))}
+      </div>
+
+      <button style={{ ...styles.btnAgregar, color, borderColor }} onClick={agregar}>
+        <IconoMas /> Agregar {titulo.toLowerCase().replace(/s$/, '')}
+      </button>
+
+    </div>
+  );
+}
+
+// ─── Componente principal ─────────────────────────────────────────────────────
 export default function GestionSalarial({ usuario, onLogout, onNavegar }) {
   const { id } = useParams();
 
@@ -14,198 +88,208 @@ export default function GestionSalarial({ usuario, onLogout, onNavegar }) {
   const [nominaExpanded, setNominaExpanded] = useState(false);
   const [mostrarResumen, setMostrarResumen] = useState(false);
 
+  const [periodo, setPeriodo] = useState({ fechaInicio: '', fechaFin: '' });
 
-  const [periodo, setPeriodo] = useState({
-    fechaInicio: "",
-    fechaFin: ""
-  });
+  // Ítems fijos siempre presentes
+  const [horasExtras, setHorasExtras] = useState('');
+  const [ausencias, setAusencias] = useState('');
 
-  const [nomina, setNomina] = useState({
-    salarioBase: 0,
-    horasExtras: 0,
-    bonos: 0,
-    ausencias: 0,
-  });
+  // Listas dinámicas personalizadas
+  const [bonificaciones, setBonificaciones] = useState([]);
+  const [deducciones, setDeducciones] = useState([]);
 
-  const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:9128/api";
+  const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:9128/api';
 
-  const handlePeriodoChange = (nuevoPeriodo) => {
-    setPeriodo(nuevoPeriodo);
-
-    if (nuevoPeriodo.fechaInicio && nuevoPeriodo.fechaFin) {
-      setNominaExpanded(true);
-    }
+  const handlePeriodoChange = (nuevo) => {
+    setPeriodo(nuevo);
+    if (nuevo.fechaInicio && nuevo.fechaFin) setNominaExpanded(true);
   };
 
   useEffect(() => {
-    if (!id) {
-      setCargando(false);
-      return;
-    }
-
-    const cargarEmpleado = async () => {
+    if (!id) { setCargando(false); return; }
+    const cargar = async () => {
       try {
         const res = await fetchConToken(`${API_BASE}/rrhh/empleados/${id}`);
         const data = await res.json();
-
         setEmpleado({
           nombre: data?.personas?.nombre ?? '',
           apellido: data?.personas?.apellido ?? '',
           cargo: data?.personas_horario_cargo?.[0]?.cargo?.nombre ?? '',
           salarioBase: data?.salario_base ?? 0,
         });
-      } catch (error) {
-        console.error(error);
+      } catch (e) {
+        console.error(e);
       } finally {
         setCargando(false);
       }
     };
-
-    cargarEmpleado();
+    cargar();
   }, [id]);
 
   if (cargando) return <div>Cargando...</div>;
   if (!empleado) return <div>No hay empleado seleccionado</div>;
 
+
   const salarioBase = Number(empleado.salarioBase || 0);
 
-  // IPS 9%
-  const ips = salarioBase * 0.09;
-
-  // Hora normal (30 días, 8 horas)
   const horaNormal = salarioBase / (30 * 8);
-
-  // Hora extra 150%
   const valorHoraExtra = horaNormal * 1.5;
+  const pagoHorasExtras = (Number(horasExtras) || 0) * valorHoraExtra;
 
-  // Pago horas extras
-  const pagoHorasExtras =
-    (Number(nomina.horasExtras) || 0) * valorHoraExtra;
-
-  // Valor día
   const valorDia = salarioBase / 30;
+  const descuentoAusencias = (Number(ausencias) || 0) * valorDia;
 
-  // Descuento por ausencias
-  const descuentoAusencias =
-    (Number(nomina.ausencias) || 0) * valorDia;
-
-  // Bonos
-  const bonos = Number(nomina.bonos || 0);
-
-  // SALARIO FINAL
-  const salarioFinal =
+  const totalBonificaciones = bonificaciones.reduce(
+    (a, i) => a + (Number(i.monto) || 0),
+    0
+  );
+  const totalIngresosSinIps =
     salarioBase +
     pagoHorasExtras +
-    bonos -
-    ips -
-    descuentoAusencias;
+    totalBonificaciones;
+
+  const ips = totalIngresosSinIps * 0.09;
+
+
+  const totalDeducciones = deducciones.reduce((a, i) => a + (Number(i.monto) || 0), 0);
+
+  const totalIngresos = salarioBase + pagoHorasExtras + totalBonificaciones;
+  const totalDescuentos = ips + descuentoAusencias + totalDeducciones;
+  const salarioFinal = totalIngresos - totalDescuentos;
+
 
   const imprimirRecibo = () => {
     const ventana = window.open('', '_blank');
+    const bonifiHtml = [
+      `<div class="fila"><span>Horas Extras (${horasExtras || 0}h):</span><strong>Gs. ${pagoHorasExtras.toFixed(0)}</strong></div>`,
+      ...bonificaciones.map(b => `<div class="fila"><span>${b.nombre || 'Bonificación'}:</span><strong>Gs. ${Number(b.monto || 0).toLocaleString()}</strong></div>`)
+    ].join('');
+    const deducHtml = [
+      `<div class="fila"><span>IPS (9%):</span><strong>- Gs. ${ips.toFixed(0)}</strong></div>`,
+      `<div class="fila"><span>Ausencias (${ausencias || 0} días):</span><strong>- Gs. ${descuentoAusencias.toFixed(0)}</strong></div>`,
+      ...deducciones.map(d => `<div class="fila"><span>${d.nombre || 'Deducción'}:</span><strong>- Gs. ${Number(d.monto || 0).toLocaleString()}</strong></div>`)
+    ].join('');
 
     ventana.document.write(`
-    <html>
-      <head>
-        <title>Recibo de Pago</title>
+<html>
+  <head>
+    <title>Recibo de Pago</title>
 
-        <style>
-          body {
-            font-family: Arial, sans-serif;
-            padding: 40px;
-            color: #222;
-          }
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        padding: 40px;
+        color: #222;
+      }
 
-          h1 {
-            text-align: center;
-            margin-bottom: 40px;
-          }
+      h1 {
+        text-align: center;
+        margin-bottom: 30px;
+      }
 
-          .fila {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 14px;
-            font-size: 16px;
-          }
+      .cols {
+        display: flex;
+        gap: 30px;
+        margin: 20px 0;
+      }
 
-          .linea {
-            border-top: 1px solid #ccc;
-            margin: 20px 0;
-          }
+      .col {
+        flex: 1;
+        padding: 16px;
+        border-radius: 8px;
+      }
 
-          .total {
-            font-size: 22px;
-            font-weight: bold;
-          }
+      .col-b {
+        background: #f0fdf4;
+        border: 1px solid #bbf7d0;
+      }
 
-          .footer {
-            margin-top: 50px;
-            text-align: center;
-            color: #666;
-            font-size: 14px;
-          }
-        </style>
-      </head>
+      .col-d {
+        background: #fef2f2;
+        border: 1px solid #fecaca;
+      }
 
-      <body>
+      .col h3 {
+        margin: 0 0 12px;
+        font-size: 15px;
+      }
 
-        <h1>Recibo de Pago</h1>
+      .fila {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 10px;
+        font-size: 14px;
+      }
 
-        <div class="fila">
-          <span>Empleado:</span>
-          <strong>${empleado.nombre} ${empleado.apellido}</strong>
-        </div>
+      .linea {
+        border-top: 1px solid #ccc;
+        margin: 16px 0;
+      }
 
-        <div class="fila">
-          <span>Cargo:</span>
-          <strong>${empleado.cargo}</strong>
-        </div>
+      .total {
+        font-size: 22px;
+        font-weight: bold;
+      }
 
-        <div class="fila">
-          <span>Período:</span>
-          <strong>${periodo.fechaInicio} - ${periodo.fechaFin}</strong>
-        </div>
+      .footer {
+        margin-top: 40px;
+        text-align: center;
+        color: #666;
+        font-size: 13px;
+      }
+    </style>
+  </head>
 
-        <div class="linea"></div>
+  <body>
+    <h1>Recibo de Pago</h1>
 
-        <div class="fila">
-          <span>Salario Base:</span>
-          <strong>Gs. ${empleado.salarioBase}</strong>
-        </div>
+    <div class="fila">
+      <span>Empleado:</span>
+      <strong>${empleado.nombre} ${empleado.apellido}</strong>
+    </div>
 
-        <div class="fila">
-          <span>Horas Extras:</span>
-          <strong>Gs. ${nomina.horasExtras || 0}</strong>
-        </div>
+    <div class="fila">
+      <span>Cargo:</span>
+      <strong>${empleado.cargo}</strong>
+    </div>
 
-        <div class="fila">
-          <span>Bonos:</span>
-          <strong>Gs. ${nomina.bonos || 0}</strong>
-        </div>
+    <div class="fila">
+      <span>Período:</span>
+      <strong>${periodo.fechaInicio} → ${periodo.fechaFin}</strong>
+    </div>
 
-        <div class="fila">
-          <span>IPS (9%):</span>
-          <strong>- Gs. ${ips.toFixed(0)}</strong>
-        </div>
+    <div class="fila">
+      <span>Salario Base:</span>
+      <strong>Gs. ${salarioBase.toLocaleString()}</strong>
+    </div>
 
-        <div class="fila">
-          <span>Ausencias:</span>
-          <strong>- Gs. ${nomina.ausencias || 0}</strong>
-        </div>
+    <div class="linea"></div>
 
-        <div class="linea"></div>
+    <div class="cols">
+      <div class="col col-b">
+        <h3>▲ Bonificaciones</h3>
+        ${bonifiHtml}
+      </div>
 
-        <div class="fila total">
-          <span>Total Neto:</span>
-          <strong>Gs. ${salarioFinal.toFixed(0)}</strong>
-        </div>
+      <div class="col col-d">
+        <h3>▼ Deducciones</h3>
+        ${deducHtml}
+      </div>
+    </div>
 
-        <div class="footer">
-          Recibo generado automáticamente por el sistema de gestión salarial.
-        </div>
+    <div class="linea"></div>
 
-      </body>
-    </html>
-  `);
+    <div class="fila total">
+      <span>Total Neto:</span>
+      <strong>Gs. ${salarioFinal.toFixed(0)}</strong>
+    </div>
+
+    <div class="footer">
+      Recibo generado automáticamente por el sistema de gestión salarial.
+    </div>
+  </body>
+</html>
+`);
 
     ventana.document.close();
     ventana.print();
@@ -215,7 +299,6 @@ export default function GestionSalarial({ usuario, onLogout, onNavegar }) {
 
   return (
     <div style={styles.pagina}>
-
       <Sidebar usuario={usuario} onLogout={onLogout} onNavegar={onNavegar} />
 
       <main style={styles.contenido}>
@@ -224,596 +307,609 @@ export default function GestionSalarial({ usuario, onLogout, onNavegar }) {
           <h1 style={styles.titulo}>Gestión Salarial</h1>
         </div>
 
-        {/* ================= EMPLEADO ================= */}
+        {/* ── EMPLEADO ── */}
         <div style={styles.seccion}>
-
           <h2 style={styles.subtitulo}>Empleado</h2>
-
           <div style={styles.infoEmpleadoContainer}>
             <div style={styles.infoEmpleado}>
               <span style={styles.labelInfo}>Nombre:</span>
-              <span style={styles.valorInfo}>
-                {empleado.nombre} {empleado.apellido}
-              </span>
+              <span style={styles.valorInfo}>{empleado.nombre} {empleado.apellido}</span>
             </div>
-
             <div style={styles.infoEmpleado}>
               <span style={styles.labelInfo}>Cargo:</span>
               <span style={styles.valorInfo}>{empleado.cargo}</span>
             </div>
           </div>
-
         </div>
 
-        {/* ================= PERÍODO ================= */}
+        {/* ── PERÍODO ── */}
         <div style={styles.seccion}>
-
-          <div
-            style={styles.seccionHeader}
-            onClick={() => setPeriodoExpanded(v => !v)}
-          >
+          <div style={styles.seccionHeader} onClick={() => setPeriodoExpanded(v => !v)}>
             <h2 style={styles.subtitulo}>
               Seleccionar período
-
               {(periodo.fechaInicio || periodo.fechaFin) && (
-                <span style={styles.badge}>
-                  {periodo.fechaInicio} - {periodo.fechaFin}
-                </span>
+                <span style={styles.badge}>{periodo.fechaInicio} - {periodo.fechaFin}</span>
               )}
             </h2>
-
             <IconoDropdown active={periodoExpanded} />
           </div>
 
           {periodoExpanded && (
             <div style={styles.periodoGeneral}>
-
               <div style={styles.periodoContainer}>
-
                 <div style={styles.periodoCard}>
                   <span style={styles.dataLabel}>Fecha de Inicio</span>
-
-                  <input
-                    type="date"
-                    value={periodo.fechaInicio}
-                    onChange={(e) =>
-                      handlePeriodoChange({
-                        ...periodo,
-                        fechaInicio: e.target.value
-                      })
-                    }
-                    style={styles.inputFecha}
-                  />
+                  <input type="date" value={periodo.fechaInicio}
+                    onChange={e => handlePeriodoChange({ ...periodo, fechaInicio: e.target.value })}
+                    style={styles.inputFecha} />
                 </div>
-
                 <div style={styles.periodoCard}>
                   <span style={styles.dataLabel}>Fecha de Fin</span>
-
-                  <input
-                    type="date"
-                    value={periodo.fechaFin}
-                    onChange={(e) =>
-                      handlePeriodoChange({
-                        ...periodo,
-                        fechaFin: e.target.value
-                      })
-                    }
-                    style={styles.inputFecha}
-                  />
+                  <input type="date" value={periodo.fechaFin}
+                    onChange={e => handlePeriodoChange({ ...periodo, fechaFin: e.target.value })}
+                    style={styles.inputFecha} />
                 </div>
-
               </div>
-
             </div>
           )}
-
         </div>
 
-        {/* ================= NÓMINA ================= */}
+        {/* ── NÓMINA DINÁMICA ── */}
         {nominaExpanded && (
           <div style={styles.seccion}>
+            <h2 style={styles.subtitulo}>Cálculo de nómina</h2>
 
-            <div style={styles.seccionHeader}>
-              <h2 style={styles.subtitulo}>
-                Cálculo de nómina
-              </h2>
+            {/* Salario base + fijos */}
+            <div style={styles.filaBase}>
+              <div style={styles.baseCard}>
+                <span style={styles.dataLabel}>Salario Base</span>
+                <span style={styles.montoBase}>Gs. {salarioBase.toLocaleString()}</span>
+              </div>
+              <div style={styles.baseCard}>
+                <span style={styles.dataLabel}>Horas extras trabajadas</span>
+                <input type="number" placeholder="0" value={horasExtras}
+                  onChange={e => setHorasExtras(e.target.value)}
+                  style={styles.inputNumero} />
+                {horasExtras > 0 && (
+                  <span style={styles.calculado}>= Gs. {pagoHorasExtras.toFixed(0)} (×1.5)</span>
+                )}
+              </div>
+              <div style={styles.baseCard}>
+                <span style={styles.dataLabel}>Días de ausencia</span>
+                <input type="number" placeholder="0" value={ausencias}
+                  onChange={e => setAusencias(e.target.value)}
+                  style={styles.inputNumero} />
+                {ausencias > 0 && (
+                  <span style={{ ...styles.calculado, color: '#dc2626' }}>
+                    - Gs. {descuentoAusencias.toFixed(0)}
+                  </span>
+                )}
+              </div>
             </div>
 
-            <div style={styles.nominaContainer}>
+            {/* IPS fijo info */}
+            <div style={styles.ipsInfo}>
+              <span>IPS (9%) calculado automáticamente:</span>
+              <strong>- Gs. {ips.toFixed(0)}</strong>
+            </div>
 
-              {/* SALARIO BASE */}
-              <div style={styles.nominaCard}>
-                <span style={styles.dataLabel}>Salario Base</span>
+            {/* Dos columnas dinámicas */}
+            <div style={styles.dosColumnas}>
+              <ColumnaItems
+                titulo="Bonificaciones"
+                tipo="bonificacion"
+                items={bonificaciones}
+                onChange={setBonificaciones}
+              />
+              <ColumnaItems
+                titulo="Deducciones"
+                tipo="deduccion"
+                items={deducciones}
+                onChange={setDeducciones}
+              />
+            </div>
 
-                <input
-                  type="number"
-                  value={empleado.salarioBase}
-                  disabled
-                  style={styles.inputNumeroDisabled}
-                />
+            {/* Resumen rápido */}
+            <div style={styles.resumenRapido}>
+              <div style={styles.resumenItem}>
+                <span style={styles.resumenLabel}>Total ingresos</span>
+                <span style={{ ...styles.resumenMonto, color: '#16a34a' }}>
+                  + Gs. {totalIngresos.toLocaleString()}
+                </span>
               </div>
-
-              {/* INGRESOS */}
-              <h3 style={styles.subtituloSec}>Ingresos adicionales</h3>
-
-              <div style={styles.nominaRow}>
-
-                <div style={styles.nominaCard}>
-                  <span style={styles.dataLabel}>Horas extras</span>
-
-                  <input
-                    type="number"
-                    value={nomina.horasExtras}
-                    onChange={(e) =>
-                      setNomina({
-                        ...nomina,
-                        horasExtras: e.target.value
-                      })
-                    }
-                    style={styles.inputNumero}
-                  />
-                </div>
-
-                <div style={styles.nominaCard}>
-                  <span style={styles.dataLabel}>Bonos por desempeño</span>
-
-                  <input
-                    type="number"
-                    value={nomina.bonos}
-                    onChange={(e) =>
-                      setNomina({
-                        ...nomina,
-                        bonos: e.target.value
-                      })
-                    }
-                    style={styles.inputNumero}
-                  />
-                </div>
-
+              <div style={styles.resumenSep} />
+              <div style={styles.resumenItem}>
+                <span style={styles.resumenLabel}>Total descuentos</span>
+                <span style={{ ...styles.resumenMonto, color: '#dc2626' }}>
+                  - Gs. {totalDescuentos.toLocaleString()}
+                </span>
               </div>
-
-              {/* DEDUCCIONES */}
-              <h3 style={styles.subtituloSec}>Deducciones</h3>
-
-              <div style={styles.nominaRow}>
-
-                <div style={styles.nominaCard}>
-                  <span style={styles.dataLabel}>IPS (9%)</span>
-
-                  <input
-                    type="text"
-                    value={`${ips.toFixed(0)} Gs. (9%)`}
-                    disabled
-                    style={styles.inputNumeroDisabled}
-                  />
-                </div>
-
-                <div style={styles.nominaCard}>
-                  <span style={styles.dataLabel}>Ausencias</span>
-
-                  <input
-                    type="number"
-                    value={nomina.ausencias}
-                    onChange={(e) =>
-                      setNomina({
-                        ...nomina,
-                        ausencias: e.target.value
-                      })
-                    }
-                    style={styles.inputNumero}
-                  />
-                </div>
-
+              <div style={styles.resumenSep} />
+              <div style={styles.resumenItem}>
+                <span style={{ ...styles.resumenLabel, fontWeight: 700, fontSize: 16 }}>Salario Neto</span>
+                <span style={{ ...styles.resumenMonto, fontSize: 20, fontWeight: 700 }}>
+                  Gs. {Math.round(salarioFinal).toLocaleString('es-PY')}
+                </span>
               </div>
-
             </div>
 
           </div>
         )}
 
-        {/* ================= BOTÓN ================= */}
-        {/* ================= BOTÓN ================= */}
+        {/* ── BOTÓN ── */}
         <div style={styles.botonContainer}>
-
           {periodoIncompleto && (
-            <p style={{ color: "red", margin: 0 }}>
-              Debes seleccionar un período antes de continuar
-            </p>
+            <p style={{ color: 'red', margin: 0 }}>Debes seleccionar un período antes de continuar</p>
           )}
-          <div style={{ flex: 1 }}></div>
+          <div style={{ flex: 1 }} />
           <button
-            style={{
-              ...styles.btnContinuar,
-              opacity: periodoIncompleto ? 0.5 : 1,
-              cursor: periodoIncompleto ? "not-allowed" : "pointer",
-            }}
+            style={{ ...styles.btnContinuar, opacity: periodoIncompleto ? 0.5 : 1, cursor: periodoIncompleto ? 'not-allowed' : 'pointer' }}
             disabled={periodoIncompleto}
             onClick={() => setMostrarResumen(true)}
           >
             Continuar
           </button>
-
         </div>
 
-
-        {/* ================= MODAL RESUMEN ================= */}
+        {/* ── MODAL RESUMEN ── */}
         {mostrarResumen && (
           <div style={styles.overlay}>
-
             <div style={styles.modal}>
-
-              <h2 style={styles.modalTitulo}>
-                Resumen de Nómina
-              </h2>
+              <h2 style={styles.modalTitulo}>Resumen de Nómina</h2>
 
               <div style={styles.modalContenido}>
+                <div style={styles.modalFila}><span>Empleado</span><strong>{empleado.nombre} {empleado.apellido}</strong></div>
+                <div style={styles.modalFila}><span>Cargo</span><strong>{empleado.cargo}</strong></div>
+                <div style={styles.modalFila}><span>Período</span><strong>{periodo.fechaInicio} → {periodo.fechaFin}</strong></div>
 
+                <div style={styles.linea} />
+
+                <div style={styles.modalFila}><span>Salario Base</span><strong>Gs. {salarioBase.toLocaleString()}</strong></div>
+
+                {/* Bonificaciones en modal */}
+                <div style={styles.modalSubtitulo}>▲ Bonificaciones</div>
                 <div style={styles.modalFila}>
-                  <span>Empleado</span>
-                  <strong>
-                    {empleado.nombre} {empleado.apellido}
-                  </strong>
+                  <span>Horas extras ({horasExtras || 0}h)</span>
+                  <strong style={{ color: '#16a34a' }}>+ Gs. {pagoHorasExtras.toFixed(0)}</strong>
                 </div>
+                {bonificaciones.map(b => (
+                  <div key={b.id} style={styles.modalFila}>
+                    <span>{b.nombre || 'Bonificación'}</span>
+                    <strong style={{ color: '#16a34a' }}>+ Gs. {Number(b.monto || 0).toLocaleString()}</strong>
+                  </div>
+                ))}
 
-                <div style={styles.modalFila}>
-                  <span>Cargo</span>
-                  <strong>{empleado.cargo}</strong>
-                </div>
-
-                <div style={styles.modalFila}>
-                  <span>Período</span>
-
-                  <strong>
-                    {periodo.fechaInicio} - {periodo.fechaFin}
-                  </strong>
-                </div>
-
-                <div style={styles.linea}></div>
-
-                <div style={styles.modalFila}>
-                  <span>Salario Base</span>
-                  <strong>Gs. {empleado.salarioBase}</strong>
-                </div>
-
-                <div style={styles.modalFila}>
-                  <span>Horas Extras</span>
-                  <strong>Gs. {nomina.horasExtras || 0}</strong>
-                </div>
-
-                <div style={styles.modalFila}>
-                  <span>Bonos</span>
-                  <strong>Gs. {nomina.bonos || 0}</strong>
-                </div>
-
+                {/* Deducciones en modal */}
+                <div style={styles.modalSubtitulo}>▼ Deducciones</div>
                 <div style={styles.modalFila}>
                   <span>IPS (9%)</span>
-                  <strong>- Gs. {ips.toFixed(0)}</strong>
+                  <strong style={{ color: '#dc2626' }}>- Gs. {ips.toFixed(0)}</strong>
                 </div>
-
                 <div style={styles.modalFila}>
-                  <span>Ausencias</span>
-                  <strong>- Gs. {nomina.ausencias || 0}</strong>
+                  <span>Ausencias ({ausencias || 0} días)</span>
+                  <strong style={{ color: '#dc2626' }}>- Gs. {descuentoAusencias.toFixed(0)}</strong>
                 </div>
+                {deducciones.map(d => (
+                  <div key={d.id} style={styles.modalFila}>
+                    <span>{d.nombre || 'Deducción'}</span>
+                    <strong style={{ color: '#dc2626' }}>- Gs. {Number(d.monto || 0).toLocaleString('es-PY')}</strong>
+                  </div>
+                ))}
 
-                <div style={styles.linea}></div>
+                <div style={styles.linea} />
 
                 <div style={styles.modalFilaTotal}>
                   <span>Total Neto</span>
-                  <strong>
-                    Gs. {salarioFinal.toFixed(0)}
-                  </strong>
+                  <strong>Gs. {Math.round(salarioFinal).toLocaleString('es-PY')}</strong>
                 </div>
-
               </div>
 
-              <p style={styles.mensajeRevision}>
-                Revise cuidadosamente los datos antes de continuar
-              </p>
+              <p style={styles.mensajeRevision}>Revise cuidadosamente los datos antes de continuar</p>
 
               <div style={styles.modalBotones}>
-
-                <button
-                  style={styles.btnEditar}
+                <button style={styles.btnEditar}
                   onClick={() => setMostrarResumen(false)}
                 >
                   Seguir editando
                 </button>
 
-                <button
-                  style={styles.btnPagar}
-                  onClick={imprimirRecibo}
-                >
-                  Pagar
+                <button style={styles.btnPagar}
+                  onClick={imprimirRecibo}>
+                  Imprimir recibo
                 </button>
-
               </div>
 
             </div>
-
           </div>
         )}
 
       </main>
-
     </div>
   );
 }
 
 const styles = {
-  pagina: {
-    display: "flex",
-    width: "100vw",
-    height: "100vh",
-    background: "#F9F9F9",
-    fontFamily: "Lato, sans-serif",
+  pagina:
+  {
+    display: 'flex',
+    width: '100vw', height: '100vh',
+    background: '#F9F9F9',
+    fontFamily: 'Lato, sans-serif'
   },
-
-  contenido: {
+  contenido:
+  {
     flex: 1,
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "flex-start",
-    padding: "20px 40px",
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'flex-start',
+    padding: '20px 40px',
     gap: 25,
+    overflowY: 'auto'
   },
-
-  titulo: {
+  titulo:
+  {
     fontSize: 30,
     fontWeight: 700,
-    marginTop: 5,
+    marginTop: 5
   },
-
-  headerTitulo: {
-    width: "100%",
-    display: "flex",
-    justifyContent: "center",
+  headerTitulo:
+  {
+    width: '100%',
+    display: 'flex',
+    justifyContent: 'center'
   },
-
-  seccion: {
-    width: "100%",
-    display: "flex",
-    flexDirection: "column",
-    gap: 12,
+  seccion:
+  {
+    width: '100%',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 12
   },
-
-  seccionHeader: {
-    marginBottom: 0,
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    cursor: "pointer",
-    userSelect: "none",
+  seccionHeader:
+  {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    cursor: 'pointer',
+    userSelect: 'none'
   },
-
-  subtitulo: {
+  subtitulo:
+  {
     fontSize: 18,
     fontWeight: 700,
-    margin: 0,
-    display: "flex",
-    alignItems: "center",
-    gap: 10,
+    margin: 0, display:
+      'flex', alignItems:
+      'center',
+    gap: 10
   },
-
   badge: {
     fontSize: 14,
-    background: getColor("amarillo"),
-    padding: "2px 10px",
-    borderRadius: 6,
+    background: getColor('amarillo-claro'),
+    padding: '2px 10px',
+    borderRadius: 6
   },
-
   infoEmpleadoContainer: {
-    display: "flex",
-    flexDirection: "column",
+    display: 'flex',
+    flexDirection: 'column',
     gap: 5,
-    paddingLeft: 10,
+    paddingLeft: 10
   },
-
   infoEmpleado: {
-    display: "flex",
-    gap: 8,
-    fontSize: 18,
+    display: 'flex',
+    gap: 8, fontSize: 18
   },
-
   labelInfo: {
     fontWeight: 700,
-    color: "#555",
+    color: getColor('gris')
   },
-
   valorInfo: {
-    color: "#1D1D1D",
+    color: getColor('gris')
   },
-
   periodoGeneral: {
-    width: "100%",
+    width: '100%',
     maxWidth: 750,
-    alignSelf: "center",
-    background: "#F5F5F5",
-    border: "1px solid #E5E5E5",
+    alignSelf: 'center',
+    background: '#F5F5F5',
+    border: '1px solid #E5E5E5',
     borderRadius: 12,
-    padding: 24,
+    padding: 24
   },
-
   periodoContainer: {
-    display: "flex",
+    display: 'flex',
     gap: 20,
-    justifyContent: "center",
+    justifyContent: 'center'
   },
-
   periodoCard: {
     flex: 1,
-    background: "#fff",
-    border: "1px solid #E5E5E5",
+    background: '#fff',
+    border: '1px solid #E5E5E5',
     borderRadius: 10,
     padding: 16,
-    display: "flex",
-    flexDirection: "column",
-    gap: 8,
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 8
   },
-
   dataLabel: {
     fontSize: 13,
     fontWeight: 700,
-    color: "#777",
+    color: getColor('gris')
   },
-
   inputFecha: {
     padding: 10,
     borderRadius: 8,
-    border: "1px solid #ccc",
+    border: '1px solid #ccc'
+  },
+
+  // Fila de base
+  filaBase: {
+    display: 'flex',
+    gap: 16,
+    width: '100%'
+  },
+  baseCard: {
+    flex: 1,
+    background: getColor('blanco'),
+    border: '1px solid #E5E5E5',
+    borderRadius: 10,
+    padding: 14, display: 'flex',
+    flexDirection: 'column',
+    gap: 6
+  },
+  montoBase: {
+    fontSize: 18,
+    fontWeight: 700,
+    color: '#1D1D1D'
+  },
+  inputNumero: {
+    padding: 9,
+    borderRadius: 8,
+    border: '1px solid #ccc',
+    fontSize: 14
+  },
+  calculado: {
+    fontSize: 12,
+    color: getColor('verde'),
+    fontWeight: 600
+  },
+
+  ipsInfo: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    background: '#fef9ec',
+    border: '1px solid #fde68a',
+    borderRadius: 8,
+    padding: '10px 16px',
+    fontSize: 14,
+    color: '#92400e'
+  },
+
+  // Dos columnas
+  dosColumnas: {
+    display: 'flex',
+    gap: 20,
+    width: '100%'
+  },
+  columna: {
+    flex: 1,
+    borderRadius: 14,
+    padding: 18,
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 12
+  },
+  columnaHeader: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center'
+  },
+  columnaTitulo: {
+    fontWeight: 700,
+    fontSize: 15
+  },
+  columnaTotal: {
+    fontWeight: 700,
+    fontSize: 15
+  },
+  itemsLista: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 8
+  },
+  sinItems: {
+    fontSize: 13,
+    color: '#999',
+    textAlign: 'center',
+    margin: '6px 0'
+  },
+  itemRow: {
+    display: 'flex',
+    gap: 8,
+    alignItems: 'center'
+  },
+  inputItem: {
+    padding: '8px 10px',
+    borderRadius: 7,
+    border: '1px solid #ddd',
+    fontSize: 13,
+    background: '#fff',
+    minWidth: 0
+  },
+
+  btnEliminar: {
+    background: 'none',
+    border: 'none',
+    cursor: 'pointer',
+    padding: 4,
+    opacity: 0.7,
+    flexShrink: 0
+  },
+
+  btnAgregar: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 6,
+    background: 'none',
+    border: '1.5px dashed',
+    borderRadius: 8,
+    padding: '8px 12px',
+    fontSize: 13,
+    fontWeight: 600,
+    cursor: 'pointer'
+  },
+
+  // Resumen rápido
+  resumenRapido: {
+    background: '#fff',
+    border: '1px solid #E5E5E5',
+    borderRadius: 12,
+    padding: '16px 24px',
+    display: 'flex',
+    alignItems: 'center',
+    gap: 0
+  },
+
+  resumenItem: {
+    flex: 1,
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 4,
+    alignItems: 'center'
+  },
+
+  resumenSep: {
+    width: 1,
+    height: 40,
+    background: '#E5E5E5',
+    margin: '0 8px'
+  },
+
+  resumenLabel: {
+    fontSize: 12,
+    color: '#777',
+    fontWeight: 600
+  },
+
+  resumenMonto: {
+    fontSize: 16,
+    fontWeight: 700,
+    color: '#1D1D1D'
   },
 
   botonContainer: {
-    width: "100%",
-    display: "flex",
-    justifyContent: "flex-end",
+    width: '100%',
+    display: 'flex',
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+    gap: 12
   },
 
   btnContinuar: {
-    background: getColor("amarillo"),
-    border: "none",
-    padding: "12px 24px",
+    background: getColor('amarillo'),
+    border: 'none',
+    padding: '12px 24px',
     borderRadius: 8,
     fontWeight: 700,
-    cursor: "pointer",
+    cursor: 'pointer'
   },
 
-  nominaContainer: {
-    width: "100%",
-    maxWidth: 750,
-    margin: "0 auto",
-    background: "#F5F5F5",
-    border: "1px solid #E5E5E5",
-    borderRadius: 12,
-    padding: 24,
-    display: "flex",
-    flexDirection: "column",
-    gap: 16,
-  },
-
-  nominaRow: {
-    display: "flex",
-    gap: 20,
-  },
-
-  nominaCard: {
-    flex: 1,
-    background: "#fff",
-    border: "1px solid #E5E5E5",
-    borderRadius: 10,
-    padding: 16,
-    display: "flex",
-    flexDirection: "column",
-    gap: 8,
-  },
-
-  inputNumero: {
-    padding: 10,
-    borderRadius: 8,
-    border: "1px solid #ccc",
-    fontSize: 14,
-  },
-
-  inputNumeroDisabled: {
-    padding: 10,
-    borderRadius: 8,
-    border: "1px solid #ccc",
-    fontSize: 14,
-    background: "#eee",
-    cursor: "not-allowed",
-  },
-
-  subtituloSec: {
-    fontSize: 16,
-    fontWeight: 700,
-    marginTop: 10,
-    color: "#444",
-  },
-
+  // Modal
   overlay: {
-    position: "fixed",
+    position: 'fixed',
     top: 0,
     left: 0,
-    width: "100%",
-    height: "100%",
-    background: "rgba(0,0,0,0.4)",
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    zIndex: 999,
+    width: '100%',
+    height: '100%',
+    background: 'rgba(0,0,0,0.4)',
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 999
   },
 
   modal: {
-    width: "100%",
+    width: '100%',
     maxWidth: 520,
-    background: "#fff",
+    background: '#fff',
     borderRadius: 18,
     padding: 28,
-    display: "flex",
-    flexDirection: "column",
-    gap: 20,
-    boxShadow: "0 10px 35px rgba(0,0,0,0.15)",
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 16,
+    boxShadow: '0 10px 35px rgba(0,0,0,0.15)',
+    maxHeight: '85vh',
+    overflowY: 'auto'
   },
 
   modalTitulo: {
     margin: 0,
-    fontSize: 26,
+    fontSize: 24,
     fontWeight: 700,
-    textAlign: "center",
+    textAlign: 'center'
   },
 
   modalContenido: {
-    display: "flex",
-    flexDirection: "column",
-    gap: 14,
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 10
   },
 
   modalFila: {
-    display: "flex",
-    justifyContent: "space-between",
-    fontSize: 15,
+    display: 'flex',
+    justifyContent: 'space-between',
+    fontSize: 14
   },
 
   modalFilaTotal: {
-    display: "flex",
-    justifyContent: "space-between",
+    display: 'flex',
+    justifyContent: 'space-between',
     fontSize: 18,
+    fontWeight: 700
+  },
+
+  modalSubtitulo: {
+    fontSize: 12,
     fontWeight: 700,
+    color: '#888',
+    marginTop: 4,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5
   },
 
   linea: {
-    width: "100%",
+    width: '100%',
     height: 1,
-    background: "#E5E5E5",
+    background: '#E5E5E5'
   },
 
   mensajeRevision: {
     margin: 0,
-    textAlign: "center",
-    color: "#777",
-    fontSize: 14,
+    textAlign: 'center',
+    color: '#777',
+    fontSize: 13
   },
 
   modalBotones: {
-    display: "flex",
-    justifyContent: "flex-end",
-    gap: 12,
+    display: 'flex',
+    justifyContent: 'flex-end',
+    gap: 12
   },
 
   btnEditar: {
-    background: "#E0E0E0",
-    border: "none",
-    padding: "12px 18px",
+    background: '#E0E0E0',
+    border: 'none',
+    padding: '12px 18px',
     borderRadius: 8,
     fontWeight: 700,
-    cursor: "pointer",
+    cursor: 'pointer'
   },
 
   btnPagar: {
-    background: getColor("amarillo"),
-    border: "none",
-    padding: "12px 22px",
+    background: getColor('amarillo'),
+    border: 'none',
+    padding: '12px 22px',
     borderRadius: 8,
     fontWeight: 700,
-    cursor: "pointer",
+    cursor: 'pointer'
   },
 };
