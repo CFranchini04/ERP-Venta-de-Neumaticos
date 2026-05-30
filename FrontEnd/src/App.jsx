@@ -24,6 +24,9 @@ import {
   Presupuestos,
   NuevosPresupuestos,
   DetallePresupuesto,
+  Facturas as FacturasVentas,
+  DetalleFactura,
+  NuevaFactura,
   NotasCredito,
   VentaDirecta
 } from "./Pantallas/Ventas";
@@ -77,6 +80,9 @@ export default function App() {
             <Route path="/ventas/presupuestos" element={<Presupuestos />} />
             <Route path="/ventas/presupuestos/nuevo" element={<NuevosPresupuestos />} />
             <Route path="/ventas/presupuestos/:id" element={<DetallePresupuesto />} />
+            <Route path="/ventas/presupuestos/:id/nueva-factura" element={<NuevaFactura />} />
+            <Route path="/ventas/facturas" element={<FacturasVentas />} />
+            <Route path="/ventas/facturas/:id" element={<DetalleFactura />} />
             <Route path="/ventas/notas-credito" element={<NotasCredito />} />
             <Route path="/ventas/venta-directa" element={<VentaDirecta />} />
             <Route path="/compras" element={<Compras />} />

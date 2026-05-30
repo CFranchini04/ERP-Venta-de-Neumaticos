@@ -57,8 +57,10 @@ export default function Sidebar({ onNavegar }) {
         balance_resultados: '/contabilidad/balance-resultados',
       },
       tesoreria: {
-        teso_1: 'https://http.cat/images/501.jpg',
-        teso_2: 'https://http.cat/images/501.jpg',
+        bancos_y_saldos: '/tesoreria/bancos-saldos',
+        depositos: '/tesoreria/depositos',
+        movimientos: '/tesoreria/movimientos',
+        conciliacion: '/tesoreria/conciliacion',
       },
     };
 
@@ -110,8 +112,10 @@ export default function Sidebar({ onNavegar }) {
       { id: 'balance_resultados',   label: 'Balance de Resultados' },
     ],
     tesoreria: [
-      { id: 'teso_1', label: 'Placeholder 1' },
-      { id: 'teso_2', label: 'Placeholder 2' },
+      { id: 'bancos_y_saldos', label: 'Bancos y Saldos' },
+      { id: 'depositos', label: 'Depositos' },
+      { id: 'movimientos', label: 'Movimientos' },
+      { id: 'conciliacion', label: 'Conciliación' },
     ],
   };
 
