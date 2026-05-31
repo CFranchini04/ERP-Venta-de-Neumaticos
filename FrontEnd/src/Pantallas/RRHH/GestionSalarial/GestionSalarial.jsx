@@ -4,9 +4,8 @@ import Sidebar from '../../../components/Sidebar';
 import fetchConToken from '../../../token';
 import { getColor } from '../../../components/Colors';
 import { IconoDropdown, IconoMas, IconoCerrar } from '../../../components/Icons';
+import { formatearGs } from '../../../components/formato';
 
-
-// ─── Componente de columna (bonificaciones o deducciones) ─────────────────────
 function ColumnaItems({ titulo, tipo, items, onChange }) {
   const color = tipo === 'bonificacion' ? getColor('verde') : getColor('rojo');
   const bgColor = tipo === 'bonificacion' ? '#f0fdf4' : '#fef2f2';
@@ -28,13 +27,13 @@ function ColumnaItems({ titulo, tipo, items, onChange }) {
 
   return (
     <div style={{ ...styles.columna, background: bgColor, border: `1.5px solid ${borderColor}` }}>
-
       <div style={styles.columnaHeader}>
         <span style={{ ...styles.columnaTitulo, color }}>
           {tipo === 'bonificacion' ? '▲' : '▼'} {titulo}
         </span>
+
         <span style={{ ...styles.columnaTotal, color }}>
-          Gs. {total.toLocaleString()}
+          {formatearGs(total)}
         </span>
       </div>
 
@@ -52,6 +51,7 @@ function ColumnaItems({ titulo, tipo, items, onChange }) {
               onChange={e => actualizar(item.id, 'nombre', e.target.value)}
               style={{ ...styles.inputItem, flex: 2 }}
             />
+
             <input
               type="number"
               placeholder="Monto Gs."
@@ -59,6 +59,7 @@ function ColumnaItems({ titulo, tipo, items, onChange }) {
               onChange={e => actualizar(item.id, 'monto', e.target.value)}
               style={{ ...styles.inputItem, flex: 1 }}
             />
+
             <button
               style={{ ...styles.btnEliminar, color }}
               onClick={() => eliminar(item.id)}
@@ -73,12 +74,10 @@ function ColumnaItems({ titulo, tipo, items, onChange }) {
       <button style={{ ...styles.btnAgregar, color, borderColor }} onClick={agregar}>
         <IconoMas /> Agregar {titulo.toLowerCase().replace(/s$/, '')}
       </button>
-
     </div>
   );
 }
 
-// ─── Componente principal ─────────────────────────────────────────────────────
 export default function GestionSalarial({ usuario, onLogout, onNavegar }) {
   const { id } = useParams();
 
@@ -89,12 +88,8 @@ export default function GestionSalarial({ usuario, onLogout, onNavegar }) {
   const [mostrarResumen, setMostrarResumen] = useState(false);
 
   const [periodo, setPeriodo] = useState({ fechaInicio: '', fechaFin: '' });
-
-  // Ítems fijos siempre presentes
   const [horasExtras, setHorasExtras] = useState('');
   const [ausencias, setAusencias] = useState('');
-
-  // Listas dinámicas personalizadas
   const [bonificaciones, setBonificaciones] = useState([]);
   const [deducciones, setDeducciones] = useState([]);
 
@@ -106,11 +101,16 @@ export default function GestionSalarial({ usuario, onLogout, onNavegar }) {
   };
 
   useEffect(() => {
-    if (!id) { setCargando(false); return; }
+    if (!id) {
+      setCargando(false);
+      return;
+    }
+
     const cargar = async () => {
       try {
         const res = await fetchConToken(`${API_BASE}/rrhh/empleados/${id}`);
         const data = await res.json();
+
         setEmpleado({
           nombre: data?.personas?.nombre ?? '',
           apellido: data?.personas?.apellido ?? '',
@@ -123,12 +123,12 @@ export default function GestionSalarial({ usuario, onLogout, onNavegar }) {
         setCargando(false);
       }
     };
+
     cargar();
   }, [id]);
 
   if (cargando) return <div>Cargando...</div>;
   if (!empleado) return <div>No hay empleado seleccionado</div>;
-
 
   const salarioBase = Number(empleado.salarioBase || 0);
 
@@ -143,6 +143,7 @@ export default function GestionSalarial({ usuario, onLogout, onNavegar }) {
     (a, i) => a + (Number(i.monto) || 0),
     0
   );
+
   const totalIngresosSinIps =
     salarioBase +
     pagoHorasExtras +
@@ -150,93 +151,49 @@ export default function GestionSalarial({ usuario, onLogout, onNavegar }) {
 
   const ips = totalIngresosSinIps * 0.09;
 
-
-  const totalDeducciones = deducciones.reduce((a, i) => a + (Number(i.monto) || 0), 0);
+  const totalDeducciones = deducciones.reduce(
+    (a, i) => a + (Number(i.monto) || 0),
+    0
+  );
 
   const totalIngresos = salarioBase + pagoHorasExtras + totalBonificaciones;
   const totalDescuentos = ips + descuentoAusencias + totalDeducciones;
   const salarioFinal = totalIngresos - totalDescuentos;
 
-
   const imprimirRecibo = () => {
     const ventana = window.open('', '_blank');
+
     const bonifiHtml = [
-      `<div class="fila"><span>Horas Extras (${horasExtras || 0}h):</span><strong>Gs. ${pagoHorasExtras.toFixed(0)}</strong></div>`,
-      ...bonificaciones.map(b => `<div class="fila"><span>${b.nombre || 'Bonificación'}:</span><strong>Gs. ${Number(b.monto || 0).toLocaleString()}</strong></div>`)
+      `<div class="fila"><span>Horas Extras (${horasExtras || 0}h):</span><strong>${formatearGs(pagoHorasExtras)}</strong></div>`,
+      ...bonificaciones.map(b =>
+        `<div class="fila"><span>${b.nombre || 'Bonificación'}:</span><strong>${formatearGs(b.monto)}</strong></div>`
+      )
     ].join('');
+
     const deducHtml = [
-      `<div class="fila"><span>IPS (9%):</span><strong>- Gs. ${ips.toFixed(0)}</strong></div>`,
-      `<div class="fila"><span>Ausencias (${ausencias || 0} días):</span><strong>- Gs. ${descuentoAusencias.toFixed(0)}</strong></div>`,
-      ...deducciones.map(d => `<div class="fila"><span>${d.nombre || 'Deducción'}:</span><strong>- Gs. ${Number(d.monto || 0).toLocaleString()}</strong></div>`)
+      `<div class="fila"><span>IPS (9%):</span><strong>- ${formatearGs(ips)}</strong></div>`,
+      `<div class="fila"><span>Ausencias (${ausencias || 0} días):</span><strong>- ${formatearGs(descuentoAusencias)}</strong></div>`,
+      ...deducciones.map(d =>
+        `<div class="fila"><span>${d.nombre || 'Deducción'}:</span><strong>- ${formatearGs(d.monto)}</strong></div>`
+      )
     ].join('');
 
     ventana.document.write(`
 <html>
   <head>
     <title>Recibo de Pago</title>
-
     <style>
-      body {
-        font-family: Arial, sans-serif;
-        padding: 40px;
-        color: #222;
-      }
-
-      h1 {
-        text-align: center;
-        margin-bottom: 30px;
-      }
-
-      .cols {
-        display: flex;
-        gap: 30px;
-        margin: 20px 0;
-      }
-
-      .col {
-        flex: 1;
-        padding: 16px;
-        border-radius: 8px;
-      }
-
-      .col-b {
-        background: #f0fdf4;
-        border: 1px solid #bbf7d0;
-      }
-
-      .col-d {
-        background: #fef2f2;
-        border: 1px solid #fecaca;
-      }
-
-      .col h3 {
-        margin: 0 0 12px;
-        font-size: 15px;
-      }
-
-      .fila {
-        display: flex;
-        justify-content: space-between;
-        margin-bottom: 10px;
-        font-size: 14px;
-      }
-
-      .linea {
-        border-top: 1px solid #ccc;
-        margin: 16px 0;
-      }
-
-      .total {
-        font-size: 22px;
-        font-weight: bold;
-      }
-
-      .footer {
-        margin-top: 40px;
-        text-align: center;
-        color: #666;
-        font-size: 13px;
-      }
+      body { font-family: Arial, sans-serif; padding: 40px; color: #222; }
+      h1 { text-align: center; margin-bottom: 30px; }
+      .cols { display: flex; gap: 30px; margin: 20px 0; }
+      .col { flex: 1; padding: 16px; border-radius: 8px; }
+      .col-b { background: #f0fdf4; border: 1px solid #bbf7d0; }
+      .col-d { background: #fef2f2; border: 1px solid #fecaca; }
+      .col h3 { margin: 0 0 12px; font-size: 15px; }
+      .fila { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 14px; }
+      .linea { border-top: 1px solid #ccc; margin: 16px 0; }
+      .total { font-size: 22px; font-weight: bold; }
+      .footer { margin-top: 40px; text-align: center; color: #666; font-size: 13px; }
     </style>
   </head>
 
@@ -260,7 +217,7 @@ export default function GestionSalarial({ usuario, onLogout, onNavegar }) {
 
     <div class="fila">
       <span>Salario Base:</span>
-      <strong>Gs. ${salarioBase.toLocaleString()}</strong>
+      <strong>${formatearGs(salarioBase)}</strong>
     </div>
 
     <div class="linea"></div>
@@ -281,7 +238,7 @@ export default function GestionSalarial({ usuario, onLogout, onNavegar }) {
 
     <div class="fila total">
       <span>Total Neto:</span>
-      <strong>Gs. ${salarioFinal.toFixed(0)}</strong>
+      <strong>${formatearGs(salarioFinal)}</strong>
     </div>
 
     <div class="footer">
@@ -302,19 +259,19 @@ export default function GestionSalarial({ usuario, onLogout, onNavegar }) {
       <Sidebar usuario={usuario} onLogout={onLogout} onNavegar={onNavegar} />
 
       <main style={styles.contenido}>
-
         <div style={styles.headerTitulo}>
           <h1 style={styles.titulo}>Gestión Salarial</h1>
         </div>
 
-        {/* ── EMPLEADO ── */}
         <div style={styles.seccion}>
           <h2 style={styles.subtitulo}>Empleado</h2>
+
           <div style={styles.infoEmpleadoContainer}>
             <div style={styles.infoEmpleado}>
               <span style={styles.labelInfo}>Nombre:</span>
               <span style={styles.valorInfo}>{empleado.nombre} {empleado.apellido}</span>
             </div>
+
             <div style={styles.infoEmpleado}>
               <span style={styles.labelInfo}>Cargo:</span>
               <span style={styles.valorInfo}>{empleado.cargo}</span>
@@ -322,15 +279,17 @@ export default function GestionSalarial({ usuario, onLogout, onNavegar }) {
           </div>
         </div>
 
-        {/* ── PERÍODO ── */}
         <div style={styles.seccion}>
           <div style={styles.seccionHeader} onClick={() => setPeriodoExpanded(v => !v)}>
             <h2 style={styles.subtitulo}>
               Seleccionar período
               {(periodo.fechaInicio || periodo.fechaFin) && (
-                <span style={styles.badge}>{periodo.fechaInicio} - {periodo.fechaFin}</span>
+                <span style={styles.badge}>
+                  {periodo.fechaInicio} - {periodo.fechaFin}
+                </span>
               )}
             </h2>
+
             <IconoDropdown active={periodoExpanded} />
           </div>
 
@@ -339,61 +298,78 @@ export default function GestionSalarial({ usuario, onLogout, onNavegar }) {
               <div style={styles.periodoContainer}>
                 <div style={styles.periodoCard}>
                   <span style={styles.dataLabel}>Fecha de Inicio</span>
-                  <input type="date" value={periodo.fechaInicio}
+                  <input
+                    type="date"
+                    value={periodo.fechaInicio}
                     onChange={e => handlePeriodoChange({ ...periodo, fechaInicio: e.target.value })}
-                    style={styles.inputFecha} />
+                    style={styles.inputFecha}
+                  />
                 </div>
+
                 <div style={styles.periodoCard}>
                   <span style={styles.dataLabel}>Fecha de Fin</span>
-                  <input type="date" value={periodo.fechaFin}
+                  <input
+                    type="date"
+                    value={periodo.fechaFin}
                     onChange={e => handlePeriodoChange({ ...periodo, fechaFin: e.target.value })}
-                    style={styles.inputFecha} />
+                    style={styles.inputFecha}
+                  />
                 </div>
               </div>
             </div>
           )}
         </div>
 
-        {/* ── NÓMINA DINÁMICA ── */}
         {nominaExpanded && (
           <div style={styles.seccion}>
             <h2 style={styles.subtitulo}>Cálculo de nómina</h2>
 
-            {/* Salario base + fijos */}
             <div style={styles.filaBase}>
               <div style={styles.baseCard}>
                 <span style={styles.dataLabel}>Salario Base</span>
-                <span style={styles.montoBase}>Gs. {salarioBase.toLocaleString()}</span>
+                <span style={styles.montoBase}>{formatearGs(salarioBase)}</span>
               </div>
+
               <div style={styles.baseCard}>
                 <span style={styles.dataLabel}>Horas extras trabajadas</span>
-                <input type="number" placeholder="0" value={horasExtras}
+                <input
+                  type="number"
+                  placeholder="0"
+                  value={horasExtras}
                   onChange={e => setHorasExtras(e.target.value)}
-                  style={styles.inputNumero} />
+                  style={styles.inputNumero}
+                />
+
                 {horasExtras > 0 && (
-                  <span style={styles.calculado}>= Gs. {pagoHorasExtras.toFixed(0)} (×1.5)</span>
+                  <span style={styles.calculado}>
+                    = {formatearGs(pagoHorasExtras)} (×1.5)
+                  </span>
                 )}
               </div>
+
               <div style={styles.baseCard}>
                 <span style={styles.dataLabel}>Días de ausencia</span>
-                <input type="number" placeholder="0" value={ausencias}
+                <input
+                  type="number"
+                  placeholder="0"
+                  value={ausencias}
                   onChange={e => setAusencias(e.target.value)}
-                  style={styles.inputNumero} />
+                  style={styles.inputNumero}
+                />
+
                 {ausencias > 0 && (
                   <span style={{ ...styles.calculado, color: '#dc2626' }}>
-                    - Gs. {descuentoAusencias.toFixed(0)}
+                    - {formatearGs(descuentoAusencias)}
                   </span>
                 )}
               </div>
             </div>
 
-            {/* IPS fijo info */}
             <div style={styles.ipsInfo}>
               <span>IPS (9%) calculado automáticamente:</span>
-              <strong>- Gs. {ips.toFixed(0)}</strong>
+              <strong>- {formatearGs(ips)}</strong>
             </div>
 
-            {/* Dos columnas dinámicas */}
             <div style={styles.dosColumnas}>
               <ColumnaItems
                 titulo="Bonificaciones"
@@ -401,6 +377,7 @@ export default function GestionSalarial({ usuario, onLogout, onNavegar }) {
                 items={bonificaciones}
                 onChange={setBonificaciones}
               />
+
               <ColumnaItems
                 titulo="Deducciones"
                 tipo="deduccion"
@@ -409,41 +386,52 @@ export default function GestionSalarial({ usuario, onLogout, onNavegar }) {
               />
             </div>
 
-            {/* Resumen rápido */}
             <div style={styles.resumenRapido}>
               <div style={styles.resumenItem}>
                 <span style={styles.resumenLabel}>Total ingresos</span>
                 <span style={{ ...styles.resumenMonto, color: '#16a34a' }}>
-                  + Gs. {totalIngresos.toLocaleString()}
+                  + {formatearGs(totalIngresos)}
                 </span>
               </div>
+
               <div style={styles.resumenSep} />
+
               <div style={styles.resumenItem}>
                 <span style={styles.resumenLabel}>Total descuentos</span>
                 <span style={{ ...styles.resumenMonto, color: '#dc2626' }}>
-                  - Gs. {totalDescuentos.toLocaleString()}
+                  - {formatearGs(totalDescuentos)}
                 </span>
               </div>
+
               <div style={styles.resumenSep} />
+
               <div style={styles.resumenItem}>
-                <span style={{ ...styles.resumenLabel, fontWeight: 700, fontSize: 16 }}>Salario Neto</span>
+                <span style={{ ...styles.resumenLabel, fontWeight: 700, fontSize: 16 }}>
+                  Salario Neto
+                </span>
                 <span style={{ ...styles.resumenMonto, fontSize: 20, fontWeight: 700 }}>
-                  Gs. {Math.round(salarioFinal).toLocaleString('es-PY')}
+                  {formatearGs(salarioFinal)}
                 </span>
               </div>
             </div>
-
           </div>
         )}
 
-        {/* ── BOTÓN ── */}
         <div style={styles.botonContainer}>
           {periodoIncompleto && (
-            <p style={{ color: 'red', margin: 0 }}>Debes seleccionar un período antes de continuar</p>
+            <p style={{ color: 'red', margin: 0 }}>
+              Debes seleccionar un período antes de continuar
+            </p>
           )}
+
           <div style={{ flex: 1 }} />
+
           <button
-            style={{ ...styles.btnContinuar, opacity: periodoIncompleto ? 0.5 : 1, cursor: periodoIncompleto ? 'not-allowed' : 'pointer' }}
+            style={{
+              ...styles.btnContinuar,
+              opacity: periodoIncompleto ? 0.5 : 1,
+              cursor: periodoIncompleto ? 'not-allowed' : 'pointer'
+            }}
             disabled={periodoIncompleto}
             onClick={() => setMostrarResumen(true)}
           >
@@ -451,48 +439,74 @@ export default function GestionSalarial({ usuario, onLogout, onNavegar }) {
           </button>
         </div>
 
-        {/* ── MODAL RESUMEN ── */}
         {mostrarResumen && (
           <div style={styles.overlay}>
             <div style={styles.modal}>
               <h2 style={styles.modalTitulo}>Resumen de Nómina</h2>
 
               <div style={styles.modalContenido}>
-                <div style={styles.modalFila}><span>Empleado</span><strong>{empleado.nombre} {empleado.apellido}</strong></div>
-                <div style={styles.modalFila}><span>Cargo</span><strong>{empleado.cargo}</strong></div>
-                <div style={styles.modalFila}><span>Período</span><strong>{periodo.fechaInicio} → {periodo.fechaFin}</strong></div>
+                <div style={styles.modalFila}>
+                  <span>Empleado</span>
+                  <strong>{empleado.nombre} {empleado.apellido}</strong>
+                </div>
+
+                <div style={styles.modalFila}>
+                  <span>Cargo</span>
+                  <strong>{empleado.cargo}</strong>
+                </div>
+
+                <div style={styles.modalFila}>
+                  <span>Período</span>
+                  <strong>{periodo.fechaInicio} → {periodo.fechaFin}</strong>
+                </div>
 
                 <div style={styles.linea} />
 
-                <div style={styles.modalFila}><span>Salario Base</span><strong>Gs. {salarioBase.toLocaleString()}</strong></div>
+                <div style={styles.modalFila}>
+                  <span>Salario Base</span>
+                  <strong>{formatearGs(salarioBase)}</strong>
+                </div>
 
-                {/* Bonificaciones en modal */}
                 <div style={styles.modalSubtitulo}>▲ Bonificaciones</div>
+
                 <div style={styles.modalFila}>
                   <span>Horas extras ({horasExtras || 0}h)</span>
-                  <strong style={{ color: '#16a34a' }}>+ Gs. {pagoHorasExtras.toFixed(0)}</strong>
+                  <strong style={{ color: '#16a34a' }}>
+                    + {formatearGs(pagoHorasExtras)}
+                  </strong>
                 </div>
+
                 {bonificaciones.map(b => (
                   <div key={b.id} style={styles.modalFila}>
                     <span>{b.nombre || 'Bonificación'}</span>
-                    <strong style={{ color: '#16a34a' }}>+ Gs. {Number(b.monto || 0).toLocaleString()}</strong>
+                    <strong style={{ color: '#16a34a' }}>
+                      + {formatearGs(b.monto)}
+                    </strong>
                   </div>
                 ))}
 
-                {/* Deducciones en modal */}
                 <div style={styles.modalSubtitulo}>▼ Deducciones</div>
+
                 <div style={styles.modalFila}>
                   <span>IPS (9%)</span>
-                  <strong style={{ color: '#dc2626' }}>- Gs. {ips.toFixed(0)}</strong>
+                  <strong style={{ color: '#dc2626' }}>
+                    - {formatearGs(ips)}
+                  </strong>
                 </div>
+
                 <div style={styles.modalFila}>
                   <span>Ausencias ({ausencias || 0} días)</span>
-                  <strong style={{ color: '#dc2626' }}>- Gs. {descuentoAusencias.toFixed(0)}</strong>
+                  <strong style={{ color: '#dc2626' }}>
+                    - {formatearGs(descuentoAusencias)}
+                  </strong>
                 </div>
+
                 {deducciones.map(d => (
                   <div key={d.id} style={styles.modalFila}>
                     <span>{d.nombre || 'Deducción'}</span>
-                    <strong style={{ color: '#dc2626' }}>- Gs. {Number(d.monto || 0).toLocaleString('es-PY')}</strong>
+                    <strong style={{ color: '#dc2626' }}>
+                      - {formatearGs(d.monto)}
+                    </strong>
                   </div>
                 ))}
 
@@ -500,44 +514,44 @@ export default function GestionSalarial({ usuario, onLogout, onNavegar }) {
 
                 <div style={styles.modalFilaTotal}>
                   <span>Total Neto</span>
-                  <strong>Gs. {Math.round(salarioFinal).toLocaleString('es-PY')}</strong>
+                  <strong>{formatearGs(salarioFinal)}</strong>
                 </div>
               </div>
 
-              <p style={styles.mensajeRevision}>Revise cuidadosamente los datos antes de continuar</p>
+              <p style={styles.mensajeRevision}>
+                Revise cuidadosamente los datos antes de continuar
+              </p>
 
               <div style={styles.modalBotones}>
-                <button style={styles.btnEditar}
+                <button
+                  style={styles.btnEditar}
                   onClick={() => setMostrarResumen(false)}
                 >
                   Seguir editando
                 </button>
 
-                <button style={styles.btnPagar}
-                  onClick={imprimirRecibo}>
+                <button style={styles.btnPagar} onClick={imprimirRecibo}>
                   Imprimir recibo
                 </button>
               </div>
-
             </div>
           </div>
         )}
-
       </main>
     </div>
   );
 }
 
 const styles = {
-  pagina:
-  {
+  pagina: {
     display: 'flex',
-    width: '100vw', height: '100vh',
+    width: '100vw',
+    height: '100vh',
     background: '#F9F9F9',
     fontFamily: 'Lato, sans-serif'
   },
-  contenido:
-  {
+
+  contenido: {
     flex: 1,
     display: 'flex',
     flexDirection: 'column',
@@ -546,65 +560,72 @@ const styles = {
     gap: 25,
     overflowY: 'auto'
   },
-  titulo:
-  {
+
+  titulo: {
     fontSize: 30,
     fontWeight: 700,
     marginTop: 5
   },
-  headerTitulo:
-  {
+
+  headerTitulo: {
     width: '100%',
     display: 'flex',
     justifyContent: 'center'
   },
-  seccion:
-  {
+
+  seccion: {
     width: '100%',
     display: 'flex',
     flexDirection: 'column',
     gap: 12
   },
-  seccionHeader:
-  {
+
+  seccionHeader: {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
     cursor: 'pointer',
     userSelect: 'none'
   },
-  subtitulo:
-  {
+
+  subtitulo: {
     fontSize: 18,
     fontWeight: 700,
-    margin: 0, display:
-      'flex', alignItems:
-      'center',
+    margin: 0,
+    display: 'flex',
+    alignItems: 'center',
     gap: 10
   },
+
   badge: {
     fontSize: 14,
     background: getColor('amarillo-claro'),
     padding: '2px 10px',
     borderRadius: 6
   },
+
   infoEmpleadoContainer: {
     display: 'flex',
     flexDirection: 'column',
     gap: 5,
     paddingLeft: 10
   },
+
   infoEmpleado: {
     display: 'flex',
-    gap: 8, fontSize: 18
+    gap: 8,
+    fontSize: 18
   },
+
   labelInfo: {
     fontWeight: 700,
     color: getColor('gris')
   },
+
   valorInfo: {
     color: getColor('gris')
   },
+
   periodoGeneral: {
     width: '100%',
     maxWidth: 750,
@@ -614,11 +635,13 @@ const styles = {
     borderRadius: 12,
     padding: 24
   },
+
   periodoContainer: {
     display: 'flex',
     gap: 20,
     justifyContent: 'center'
   },
+
   periodoCard: {
     flex: 1,
     background: '#fff',
@@ -629,43 +652,49 @@ const styles = {
     flexDirection: 'column',
     gap: 8
   },
+
   dataLabel: {
     fontSize: 13,
     fontWeight: 700,
     color: getColor('gris')
   },
+
   inputFecha: {
     padding: 10,
     borderRadius: 8,
     border: '1px solid #ccc'
   },
 
-  // Fila de base
   filaBase: {
     display: 'flex',
     gap: 16,
     width: '100%'
   },
+
   baseCard: {
     flex: 1,
     background: getColor('blanco'),
     border: '1px solid #E5E5E5',
     borderRadius: 10,
-    padding: 14, display: 'flex',
+    padding: 14,
+    display: 'flex',
     flexDirection: 'column',
     gap: 6
   },
+
   montoBase: {
     fontSize: 18,
     fontWeight: 700,
     color: '#1D1D1D'
   },
+
   inputNumero: {
     padding: 9,
     borderRadius: 8,
     border: '1px solid #ccc',
     fontSize: 14
   },
+
   calculado: {
     fontSize: 12,
     color: getColor('verde'),
@@ -684,12 +713,12 @@ const styles = {
     color: '#92400e'
   },
 
-  // Dos columnas
   dosColumnas: {
     display: 'flex',
     gap: 20,
     width: '100%'
   },
+
   columna: {
     flex: 1,
     borderRadius: 14,
@@ -698,35 +727,42 @@ const styles = {
     flexDirection: 'column',
     gap: 12
   },
+
   columnaHeader: {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center'
   },
+
   columnaTitulo: {
     fontWeight: 700,
     fontSize: 15
   },
+
   columnaTotal: {
     fontWeight: 700,
     fontSize: 15
   },
+
   itemsLista: {
     display: 'flex',
     flexDirection: 'column',
     gap: 8
   },
+
   sinItems: {
     fontSize: 13,
     color: '#999',
     textAlign: 'center',
     margin: '6px 0'
   },
+
   itemRow: {
     display: 'flex',
     gap: 8,
     alignItems: 'center'
   },
+
   inputItem: {
     padding: '8px 10px',
     borderRadius: 7,
@@ -758,7 +794,6 @@ const styles = {
     cursor: 'pointer'
   },
 
-  // Resumen rápido
   resumenRapido: {
     background: '#fff',
     border: '1px solid #E5E5E5',
@@ -813,7 +848,6 @@ const styles = {
     cursor: 'pointer'
   },
 
-  // Modal
   overlay: {
     position: 'fixed',
     top: 0,
