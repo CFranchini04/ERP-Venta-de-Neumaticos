@@ -6,6 +6,8 @@ import List from '../../components/Lista';
 import { useNavigate } from 'react-router-dom';
 import fetchConToken from '../../token';
 
+
+
 const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:9128/api";
 
 
@@ -17,6 +19,8 @@ export default function RRHH({ usuario = 'Empleado', onLogout, onNavegar }) {
     const [filtroCargo, setFiltroCargo] = useState("");
     const [loading, setLoading] = useState(true);
     const navigate = useNavigate();
+
+
     const handleNavegar = (ruta, empleado = null) => {
         if (empleado) {
             navigate(`/rrhh/${ruta}/${empleado.id}`);
@@ -88,10 +92,6 @@ export default function RRHH({ usuario = 'Empleado', onLogout, onNavegar }) {
 
         cargarEmpleados();
     }, []);
-
-    function handleNuevo() {
-        handleNavegar('crear-empleado');
-    }
 
     const empleadosFiltrados = empleados
         .filter((emp) => {
@@ -167,55 +167,56 @@ export default function RRHH({ usuario = 'Empleado', onLogout, onNavegar }) {
                 {/* Lista de empleados y acciones para filtrar etc.*/}
                 {loading && <div>Cargando empleados...</div>}
                 {!loading && (
-                <section style={styles.listaEmpleados}>
-                    <List
-                        data={empleadosFiltrados}
-                        columns={columns}
-                        selectable
-                        onRowClick={(emp) => setEmpleadoSeleccionado(emp)}
-                        controls={[
-                            {
-                                type: "search",
-                                placeholder: "Buscar empleado...",
-                                value: search,
-                                onChange: (e) => setSearch(e.target.value)
-                            },
+                    <section style={styles.listaEmpleados}>
+                        <List
+                            data={empleadosFiltrados}
+                            columns={columns}
+                            selectable
+                            onRowClick={(emp) => setEmpleadoSeleccionado(emp)}
+                            controls={[
+                                {
+                                    type: "search",
+                                    placeholder: "Buscar empleado...",
+                                    value: search,
+                                    onChange: (e) => setSearch(e.target.value)
+                                },
 
-                            {
-                                type: "select",
-                                label: "Ordenar por:",
-                                placeholder: "Seleccionar",
-                                value: orderBy,
-                                onChange: (e) => setOrderBy(e.target.value),
+                                {
+                                    type: "select",
+                                    label: "Ordenar por:",
+                                    placeholder: "Seleccionar",
+                                    value: orderBy,
+                                    onChange: (e) => setOrderBy(e.target.value),
 
-                                options: [
-                                    { key: "nombre", label: "Nombre" },
-                                    { key: "apellido", label: "Apellido" },
-                                    { key: "cargo", label: "Cargo" }
-                                ]
-                            },
+                                    options: [
+                                        { key: "nombre", label: "Nombre" },
+                                        { key: "apellido", label: "Apellido" },
+                                        { key: "cargo", label: "Cargo" }
+                                    ]
+                                },
 
-                            {
-                                type: "select",
-                                label: "Filtrar por:",
-                                placeholder: "Cargo",
-                                value: filtroCargo,
-                                onChange: (e) => setFiltroCargo(e.target.value),
+                                {
+                                    type: "select",
+                                    label: "Filtrar por:",
+                                    placeholder: "Cargo",
+                                    value: filtroCargo,
+                                    onChange: (e) => setFiltroCargo(e.target.value),
 
-                                options: cargos.map(c => ({
-                                    key: c,
-                                    label: c
-                                }))
-                            },
+                                    options: cargos.map(c => ({
+                                        key: c,
+                                        label: c
+                                    }))
+                                },
 
-                            {
-                                type: "button",
-                                label: "Nuevo",
-                                onClick: handleNuevo
-                            }
-                        ]}
-                    /> 
-                </section> )}
+                                {
+                                    type: "button",
+                                    label: "Nuevo",
+                                    onClick: handleNuevo
+                                }
+                            ]}
+                        />
+                    </section>)}
+
             </main>
         </div>
     );
@@ -251,18 +252,13 @@ const styles = {
     },
     titulo: {
         color: '#000000',
-        fontSize: 42,
+        fontSize: 30,
         fontFamily: 'Lato, sans-serif',
         fontWeight: 700,
         lineHeight: 1.2,
         margin: 0,
         textAlign: 'center',
         marginTop: 15,
-    },
-    separador: {
-        width: 'min(1100px, 80%)',
-        height: 4,
-        background: '#000000',
     },
     actionContainer: {
         display: 'flex',

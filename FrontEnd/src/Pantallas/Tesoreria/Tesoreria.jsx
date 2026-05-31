@@ -33,6 +33,17 @@ export default function Tesoreria({ usuario = 'Empleado', onLogout, onNavegar })
             navigate('/tesoreria/bancos-saldos');
             return;
         }
+
+        if (moduloId === 'deposito') {
+            navigate('/tesoreria/deposito');
+            return;
+        }
+
+        if(moduloId === 'movimiento'){
+            navigate('/tesoreria/movimiento');
+            return;
+        }
+
         if (onNavegar) onNavegar(moduloId);
     }
 
@@ -84,8 +95,8 @@ export default function Tesoreria({ usuario = 'Empleado', onLogout, onNavegar })
                 <section style={styles.acciones}>
                     {[
                         { label: 'Bancos y Saldos', icon: <IconoTesoreria size={36} />, id: 'bancos-saldos' },
-                        { label: 'Depositos', icon: <IconoFactura size={36} />, id: 'facturas_ventas' },
-                        { label: 'Movimientos', icon: <IconoMovimiento size={36} />, id: 'notas_credito' },
+                        { label: 'Depositos', icon: <IconoFactura size={36} />, id: 'deposito' },
+                        { label: 'Movimientos', icon: <IconoMovimiento size={36} />, id: 'movimiento' },
                         { label: 'Conciliación', icon: <IconoPedidos size={36} />, id: 'venta_directa' },
                     ].map((item) => (
                         <button

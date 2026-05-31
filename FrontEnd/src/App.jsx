@@ -24,10 +24,20 @@ import {
   Presupuestos,
   NuevosPresupuestos,
   DetallePresupuesto,
+  Facturas as FacturasVentas,
+  DetalleFactura,
+  NuevaFactura,
   NotasCredito,
   VentaDirecta
 } from "./Pantallas/Ventas";
-import {Tesoreria, BancosSaldos, Cuenta} from "./Pantallas/Tesoreria";
+import {
+  Tesoreria,
+  BancosSaldos,
+  Cuenta,
+  Deposito,
+  Movimiento
+} from "./Pantallas/Tesoreria";
+
 import Contabilidad from './Pantallas/Contabilidad/Contabilidad';
 import PlanDeCuentas from "./Pantallas/Contabilidad/PlanDeCuentas";
 import LibroDiario from "./Pantallas/Contabilidad/LibroDiario";
@@ -77,6 +87,9 @@ export default function App() {
             <Route path="/ventas/presupuestos" element={<Presupuestos />} />
             <Route path="/ventas/presupuestos/nuevo" element={<NuevosPresupuestos />} />
             <Route path="/ventas/presupuestos/:id" element={<DetallePresupuesto />} />
+            <Route path="/ventas/presupuestos/:id/nueva-factura" element={<NuevaFactura />} />
+            <Route path="/ventas/facturas" element={<FacturasVentas />} />
+            <Route path="/ventas/facturas/:id" element={<DetalleFactura />} />
             <Route path="/ventas/notas-credito" element={<NotasCredito />} />
             <Route path="/ventas/venta-directa" element={<VentaDirecta />} />
             <Route path="/compras" element={<Compras />} />
@@ -94,6 +107,8 @@ export default function App() {
             <Route path="/tesoreria" element={<Tesoreria />} />
             <Route path="/tesoreria/bancos-saldos" element={<BancosSaldos />} />
             <Route path="/tesoreria/cuentas/:id" element={<Cuenta />} />
+            <Route path="/tesoreria/deposito" element={<Deposito />} />
+            <Route path="/tesoreria/movimiento" element={<Movimiento />} />
             <Route path="/contabilidad" element={<Contabilidad />} />
             <Route path="/contabilidad/plan-de-cuentas" element={<PlanDeCuentas />} />
             <Route path="/contabilidad/libro-diario" element={<LibroDiario />} />

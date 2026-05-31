@@ -78,7 +78,7 @@ return (
         <section style={styles.acciones}>
         {[
             { label: 'Presupuestos',     icon: <IconoPedidos size={36} />,      id: 'presupuestos'    },
-            { label: 'Facturas',         icon: <IconoFactura size={36} />,       id: 'facturas-ventas' },
+            { label: 'Facturas',         icon: <IconoFactura size={36} />,       id: 'facturas' },
             { label: 'Notas de Crédito', icon: <IconoFacturaCancel size={36} />, id: 'notas-credito'   },
             { label: 'Venta Directa',    icon: <IconoMas size={36} />,           id: 'venta-directa'   },
         ].map((item) => (

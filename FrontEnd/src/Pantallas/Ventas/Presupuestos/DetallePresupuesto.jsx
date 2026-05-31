@@ -11,6 +11,7 @@ export default function DetallePresupuesto({ usuario, onNavegar, onLogout }) {
   const navigate = useNavigate();
   const { id } = useParams();
   const [presupuesto, setPresupuesto] = useState(null);
+  const [factura, setFactura] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -46,10 +47,25 @@ export default function DetallePresupuesto({ usuario, onNavegar, onLogout }) {
          const resDetalles = await fetchConToken(`${API_BASE}/ventas/presupuestos/${id}/detalle`);
          if (resDetalles.ok) {
            const detallesData = await resDetalles.json();
-           presupuestoData.detalles = detallesData.detalle || [];
+           presupuestoData.detalles = Array.isArray(detallesData) ? detallesData : [];
          }
 
          setPresupuesto(presupuestoData);
+
+         // Verificar si existe factura asociada a este presupuesto
+         try {
+           const facturasResponse = await fetchConToken(`${API_BASE}/ventas/facturas`);
+           if (facturasResponse.ok) {
+             const facturasData = await facturasResponse.json();
+             const facturas = Array.isArray(facturasData) ? facturasData : facturasData.facturas || [];
+             const facturaAsociada = facturas.find(f => f.id_presupuesto === parseInt(id));
+             if (facturaAsociada) {
+               setFactura(facturaAsociada);
+             }
+           }
+         } catch (err) {
+           console.error("Error cargando facturas:", err);
+         }
        } catch (err) {
          console.error("Error cargando presupuesto:", err);
          setError(err.message);
@@ -146,10 +162,11 @@ export default function DetallePresupuesto({ usuario, onNavegar, onLogout }) {
 
                  <div style={styles.tablaProductos}>
                    <div style={styles.tablaHeaderProducto}>
-                     <div style={{ width: "45%" }}>Producto</div>
+                     <div style={{ width: "10%" }}>ID</div>
+                     <div style={{ width: "35%" }}>Producto</div>
                      <div style={{ width: "15%", textAlign: "center" }}>Cantidad</div>
-                     <div style={{ width: "20%", textAlign: "right" }}>Precio Unitario</div>
-                     <div style={{ width: "20%", textAlign: "right" }}>Subtotal</div>
+                     <div style={{ width: "15%", textAlign: "right" }}>Precio Unitario</div>
+                     <div style={{ width: "25%", textAlign: "right" }}>Subtotal</div>
                    </div>
 
                     {presupuesto.detalles && presupuesto.detalles.length > 0 ? (
@@ -161,12 +178,13 @@ export default function DetallePresupuesto({ usuario, onNavegar, onLogout }) {
                             background: idx % 2 === 0 ? "#F9F9F9" : "#FFFFFF"
                           }}
                         >
-                          <div style={{ width: "45%" }}>{item.producto || "-"}</div>
+                          <div style={{ width: "10%" }}>{item.id_producto || "-"}</div>
+                          <div style={{ width: "35%" }}>{item.producto || "-"}</div>
                           <div style={{ width: "15%", textAlign: "center" }}>{item.cantidad}</div>
-                          <div style={{ width: "20%", textAlign: "right" }}>
+                          <div style={{ width: "15%", textAlign: "right" }}>
                             {Number(item.precio_unitario || 0).toLocaleString("es-PY")} Gs.
                           </div>
-                          <div style={{ width: "20%", textAlign: "right", fontWeight: "600" }}>
+                          <div style={{ width: "25%", textAlign: "right", fontWeight: "600" }}>
                             {Number(item.subtotal || 0).toLocaleString("es-PY")} Gs.
                           </div>
                         </div>
@@ -243,13 +261,22 @@ export default function DetallePresupuesto({ usuario, onNavegar, onLogout }) {
                    Descargar Presupuesto
                  </button>
 
-                 {presupuesto.estado === "Pendiente" && (
+                 {factura ? (
                    <button
-                     onClick={() => navigate(`/ventas/facturas/nueva?presupuesto=${id}`)}
+                     onClick={() => navigate(`/ventas/facturas/${factura.id_factura}`)}
                      style={styles.botonCrearFactura}
                    >
-                     Crear Factura
+                     Ver Factura
                    </button>
+                 ) : (
+                   presupuesto.estado === "Pendiente" && (
+                     <button
+                       onClick={() => navigate(`/ventas/facturas/nueva?presupuesto=${id}`)}
+                       style={styles.botonCrearFactura}
+                     >
+                       Crear Factura
+                     </button>
+                   )
                  )}
               </div>
             </div>

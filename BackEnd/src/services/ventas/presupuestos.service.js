@@ -2,7 +2,7 @@ import supabase from '../../config/supabase.js'
 
 const formatMoney = (value) => {
   const num = Number(value ?? 0)
-  return Number.isFinite(num) ? num.toFixed(2) : '0.00'
+  return Number.isFinite(num) ? num : 0
 }
 
 const normalize = (value) => (value ?? '').toString().trim()
@@ -44,6 +44,21 @@ const getClienteInfo = async (idCliente) => {
   }
 }
 
+const getUltimoTimbradoCliente = async (idCliente) => {
+  if (idCliente === null || idCliente === undefined) return null
+  
+  const { data, error } = await supabase
+    .from('facturas_ventas')
+    .select('timbrado')
+    .eq('id_cliente', idCliente)
+    .order('timbrado', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+  
+  if (error) throw new Error(error.message)
+  return data?.timbrado || null
+}
+
 const getProductoInfo = async (idProducto) => {
   if (idProducto === null || idProducto === undefined) {
     return { nombre: 'Sin producto', categoria: '-', marca: '-' }
@@ -81,21 +96,58 @@ const getAllPresupuestos = async () => {
 
   if (error) throw new Error(error.message)
 
+  // Obtener mapeo de presupuestos que tienen factura
+  const { data: facturas } = await supabase
+    .from('facturas_ventas')
+    .select('id_presupuesto')
+  
+  const presupuestosConFactura = new Set(facturas?.map(f => f.id_presupuesto) || [])
+
   return Promise.all((presupuestos || []).map(async (presupuesto) => {
     const cliente = await getClienteInfo(presupuesto.id_cliente)
-    const estado = await getEstadoNombre(presupuesto.id_estado)
     const fecha = new Date(presupuesto.fecha)
     const validoHasta = new Date(fecha)
     validoHasta.setDate(validoHasta.getDate() + 10)
+    
+    // Calcular total del presupuesto
+    const { data: detalles } = await supabase
+      .from('presupuestos_detalle')
+      .select('cantidad,precio_unitario')
+      .eq('id_presupuesto', presupuesto.id_presupuesto)
+
+    let total = 0
+    if (detalles) {
+      total = detalles.reduce((sum, d) => sum + (d.cantidad * d.precio_unitario), 0)
+    }
+    
+    // DETERMINAR ESTADO DINÁMICAMENTE
+    let estadoFinal = 'Pendiente'
+    
+    // Si tiene factura → Confirmado
+    if (presupuestosConFactura.has(presupuesto.id_presupuesto)) {
+      estadoFinal = 'Confirmado'
+    } 
+    // Si está vencido y sin factura → Anulado
+    else {
+      const hoy = new Date()
+      hoy.setHours(0, 0, 0, 0)
+      validoHasta.setHours(0, 0, 0, 0)
+      
+      if (hoy > validoHasta) {
+        estadoFinal = 'Anulado'
+      }
+    }
 
     return {
       id_presupuesto: presupuesto.id_presupuesto,
-      codigo: `PRE - ${String(presupuesto.id_presupuesto).padStart(6, '0')}`,
+      codigo_presupuesto: `PRE-${String(presupuesto.id_presupuesto).padStart(6, '0')}`,
       cliente: `${cliente.nombre} ${cliente.apellido}`.trim(),
-      fecha: presupuesto.fecha ?? '',
+      fecha_creacion: presupuesto.fecha ?? '',
       valido_hasta: validoHasta.toISOString().split('T')[0],
-      estado,
-      id_estado: presupuesto.id_estado
+      total: formatMoney(total),
+      estado: estadoFinal,
+      id_estado: presupuesto.id_estado,
+      tieneFactura: presupuestosConFactura.has(presupuesto.id_presupuesto)
     }
   }))
 }
@@ -115,18 +167,21 @@ const getPresupuesto = async (id) => {
 
   const cliente = await getClienteInfo(presupuesto.id_cliente)
   const estado = await getEstadoNombre(presupuesto.id_estado)
+  const timbrado = await getUltimoTimbradoCliente(presupuesto.id_cliente)
   const fecha = new Date(presupuesto.fecha)
   const validoHasta = new Date(fecha)
   validoHasta.setDate(validoHasta.getDate() + 10)
 
   return {
     id_presupuesto: presupuesto.id_presupuesto,
+    id_cliente: presupuesto.id_cliente,
     codigo: `PRE - ${String(presupuesto.id_presupuesto).padStart(6, '0')}`,
     cliente,
     fecha: presupuesto.fecha ?? '',
     valido_hasta: validoHasta.toISOString().split('T')[0],
     estado,
-    id_estado: presupuesto.id_estado
+    id_estado: presupuesto.id_estado,
+    timbrado: timbrado
   }
 }
 
@@ -147,6 +202,7 @@ const getDetallePresupuesto = async (id) => {
 
     return {
       id_presupuesto_detalle: detalle.id_presupuesto_detalle,
+      id_producto: detalle.id_producto,
       producto: producto.nombre,
       categoria: producto.categoria,
       marca: producto.marca,
@@ -222,9 +278,15 @@ const getAllPresupuestosTabla = async () => {
 
   if (error) throw new Error(error.message)
 
+  // Obtener mapeo de presupuestos que tienen factura
+  const { data: facturas } = await supabase
+    .from('facturas_ventas')
+    .select('id_presupuesto')
+  
+  const presupuestosConFactura = new Set(facturas?.map(f => f.id_presupuesto) || [])
+
   const resultado = await Promise.all((presupuestos || []).map(async (presupuesto) => {
     const cliente = await getClienteInfo(presupuesto.id_cliente)
-    const estado = await getEstadoNombre(presupuesto.id_estado)
     const fecha = new Date(presupuesto.fecha)
     const validoHasta = new Date(fecha)
     validoHasta.setDate(validoHasta.getDate() + 10)
@@ -239,14 +301,34 @@ const getAllPresupuestosTabla = async () => {
       total = detalles.reduce((sum, d) => sum + (d.cantidad * d.precio_unitario), 0)
     }
 
+    // DETERMINAR ESTADO DINÁMICAMENTE
+    let estadoFinal = 'Pendiente'
+    
+    // Si tiene factura → Confirmado
+    if (presupuestosConFactura.has(presupuesto.id_presupuesto)) {
+      estadoFinal = 'Confirmado'
+    } 
+    // Si está vencido y sin factura → Anulado
+    else {
+      const hoy = new Date()
+      hoy.setHours(0, 0, 0, 0)
+      validoHasta.setHours(0, 0, 0, 0)
+      
+      if (hoy > validoHasta) {
+        estadoFinal = 'Anulado'
+      }
+    }
+
     return {
-      codigo_presupuesto: `PRE - ${String(presupuesto.id_presupuesto).padStart(6, '0')}`,
+      id_presupuesto: presupuesto.id_presupuesto,
+      codigo_presupuesto: `PRE-${String(presupuesto.id_presupuesto).padStart(6, '0')}`,
       cliente: `${cliente.nombre} ${cliente.apellido}`.trim(),
       fecha_creacion: presupuesto.fecha ?? '',
       valido_hasta: validoHasta.toISOString().split('T')[0],
       total: formatMoney(total),
-      estados: { nombre: estado },
-      id_presupuesto: presupuesto.id_presupuesto
+      estado: estadoFinal,
+      id_estado: presupuesto.id_estado,
+      tieneFactura: presupuestosConFactura.has(presupuesto.id_presupuesto)
     }
   }))
 

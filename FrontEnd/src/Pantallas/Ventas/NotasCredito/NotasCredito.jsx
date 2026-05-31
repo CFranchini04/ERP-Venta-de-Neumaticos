@@ -92,30 +92,12 @@ export default function NotasCredito({ usuario, onNavegar, onLogout }) {
       return 0;
     });
 
-  const getEstadoColor = (estado) => {
-    if (estado === "Anulado") return "#E74C3C";
-    if (estado === "Confirmado") return "#27AE60";
-    if (estado === "Pendiente") return "#F39C12";
-    if (estado === "Borrador") return "#95A5A6";
-    return "#000000";
-  };
-
   const columns = [
-    { key: "nro_nota_credito", label: "Número", width: "12%" },
-    { key: "nro_factura", label: "Factura", width: "12%" },
-    { key: "cliente", label: "Cliente", width: "20%" },
+    { key: "nro_nota_credito", label: "Número", width: "15%" },
+    { key: "nro_factura", label: "Factura", width: "15%" },
+    { key: "cliente", label: "Cliente", width: "28%" },
     { key: "fecha_emision", label: "Fecha", width: "14%" },
     { key: "monto_total", label: "Total", width: "16%" },
-    {
-      key: "estado",
-      label: "Estado",
-      width: "14%",
-      render: (nota) => (
-        <span style={{ color: getEstadoColor(nota.estado), fontWeight: "600" }}>
-          {nota.estado}
-        </span>
-      ),
-    },
     {
       key: "acciones",
       label: "Acciones",
@@ -190,7 +172,7 @@ export default function NotasCredito({ usuario, onNavegar, onLogout }) {
                 </div>
 
                 <button
-                  onClick={() => console.log("Ir a Facturas")}
+                  onClick={() => navigate("/ventas/facturas")}
                   style={styles.botonFacturas}
                 >
                   Ir a Facturas
