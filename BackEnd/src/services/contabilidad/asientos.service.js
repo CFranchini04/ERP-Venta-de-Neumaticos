@@ -1,8 +1,6 @@
 // Servicio de Asientos del Libro Diario (in-memory).
-// Reemplazar el array `asientos` por la persistencia real (DB) cuando esté lista.
 import asientosIniciales from './Pantallas/Contabilidad/asientosMock.json' with { type: 'json' };
-// Si tu Node no soporta `with { type: 'json' }`, usá CommonJS:
-// const asientosIniciales = require('../../data/contabilidad/asientosMock.json');
+
 
 let asientos = asientosIniciales.map(a => ({ ...a, lineas: a.lineas.map(l => ({ ...l })) }));
 let proximoId = asientos.reduce((m, a) => Math.max(m, a.id || 0), 0) + 1;

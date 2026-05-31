@@ -1,6 +1,5 @@
-// Servicio de Plan de Cuentas (in-memory).
-// Reemplazar el array `cuentas` por la persistencia real (DB) cuando esté lista.
-import planInicial from './Pantallas/Contabilidad/planDeCuentas.json';
+import planInicial from '../../data/contabilidad/planDeCuentas.json' assert { type: 'json' };
+
 
 let cuentas = (planInicial).map(c => ({ ...c }));
 

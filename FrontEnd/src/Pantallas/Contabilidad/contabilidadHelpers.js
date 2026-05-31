@@ -1,4 +1,9 @@
-export const API = "http://localhost:3000/api";
+export const API = "http://localhost:3000/api/contabilidad";
+
+const authHeaders = () => ({
+  "Content-Type": "application/json",
+  Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
+});
 
 export const fmt = (n) =>
   `Gs. ${(n ?? 0).toLocaleString("es-PY", { maximumFractionDigits: 0 })}`;
@@ -18,22 +23,22 @@ export const esDeudora = (codigo) => {
   return true;
 };
 
-// Fetchers
+// === Fetchers ===
 export const fetchCuentas = () =>
-  fetch(`${API}/cuentas`).then((r) => r.json());
+  fetch(`${API}/cuentas`, { headers: authHeaders() }).then((r) => r.json());
 
 export const fetchAsientos = (desde, hasta) => {
   const qs = new URLSearchParams();
   if (desde) qs.set("desde", desde);
   if (hasta) qs.set("hasta", hasta);
   const url = `${API}/asientos${qs.toString() ? `?${qs}` : ""}`;
-  return fetch(url).then((r) => r.json());
+  return fetch(url, { headers: authHeaders() }).then((r) => r.json());
 };
 
 export const crearAsientoAPI = (asiento) =>
   fetch(`${API}/asientos`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: authHeaders(),
     body: JSON.stringify(asiento),
   }).then(async (r) => {
     if (!r.ok) throw new Error((await r.json()).error || "Error al crear asiento");
@@ -43,7 +48,7 @@ export const crearAsientoAPI = (asiento) =>
 export const crearCuentaAPI = (cuenta) =>
   fetch(`${API}/cuentas`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: authHeaders(),
     body: JSON.stringify(cuenta),
   }).then(async (r) => {
     if (!r.ok) throw new Error((await r.json()).error || "Error al crear cuenta");
@@ -53,14 +58,14 @@ export const crearCuentaAPI = (cuenta) =>
 export const actualizarCuentaAPI = (codigo, cambios) =>
   fetch(`${API}/cuentas/${encodeURIComponent(codigo)}`, {
     method: "PUT",
-    headers: { "Content-Type": "application/json" },
+    headers: authHeaders(),
     body: JSON.stringify(cambios),
   }).then(async (r) => {
     if (!r.ok) throw new Error((await r.json()).error || "Error al actualizar cuenta");
     return r.json();
   });
 
-
+// === Cálculos puros ===
 export const calcularSumasSaldos = (asientos, desde, hasta) => {
   const totales = {};
   for (const a of asientos) {

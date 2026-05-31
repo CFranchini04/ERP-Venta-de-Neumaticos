@@ -25,6 +25,11 @@ import facturasVentasRoutes from './routes/ventas/facturas.routes.js'
 import presupuestosRoutes from './routes/ventas/presupuestos.routes.js'
 import notasCreditoVentasRoutes from './routes/ventas/notasCredito.routes.js'
 
+//CONTABILIDAD
+import cuentasRoutes from './routes/contabilidad/cuentas.routes.js'
+import asientosRoutes from './routes/contabilidad/asientos.routes.js'
+
+
 //MIDDLEWARES
 import verificarToken from './middlewares/auth.middleware.js'
 import soloRol from './middlewares/roles.middleware.js'
@@ -69,6 +74,10 @@ app.use('/api/tesoreria/movimientos', movimientosRoutes)
 app.use('/api/ventas/facturas', facturasVentasRoutes)
 app.use('/api/ventas/presupuestos', presupuestosRoutes)
 app.use('/api/ventas/notas-credito', notasCreditoVentasRoutes)
+
+//CONTABILIDAD
+app.use('/api/contabilidad/cuentas', cuentasRoutes)
+app.use('/api/contabilidad/asientos', asientosRoutes)
 
 
 export default app
