@@ -30,7 +30,14 @@ import {
   NotasCredito,
   VentaDirecta
 } from "./Pantallas/Ventas";
-import {Tesoreria, BancosSaldos, Cuenta, Deposito} from "./Pantallas/Tesoreria";
+import {
+  Tesoreria,
+  BancosSaldos,
+  Cuenta,
+  Deposito,
+  Movimiento
+} from "./Pantallas/Tesoreria";
+
 import Contabilidad from './Pantallas/Contabilidad/Contabilidad';
 import PlanDeCuentas from "./Pantallas/Contabilidad/PlanDeCuentas";
 import LibroDiario from "./Pantallas/Contabilidad/LibroDiario";
@@ -101,6 +108,7 @@ export default function App() {
             <Route path="/tesoreria/bancos-saldos" element={<BancosSaldos />} />
             <Route path="/tesoreria/cuentas/:id" element={<Cuenta />} />
             <Route path="/tesoreria/deposito" element={<Deposito />} />
+            <Route path="/tesoreria/movimiento" element={<Movimiento />} />
             <Route path="/contabilidad" element={<Contabilidad />} />
             <Route path="/contabilidad/plan-de-cuentas" element={<PlanDeCuentas />} />
             <Route path="/contabilidad/libro-diario" element={<LibroDiario />} />
