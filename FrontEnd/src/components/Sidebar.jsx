@@ -58,7 +58,7 @@ export default function Sidebar({ onNavegar }) {
       },
       tesoreria: {
         bancos_y_saldos: '/tesoreria/bancos-saldos',
-        depositos: '/tesoreria/depositos',
+        depositos: '/tesoreria/deposito',
         movimientos: '/tesoreria/movimientos',
         conciliacion: '/tesoreria/conciliacion',
       },
