@@ -59,9 +59,10 @@ export default function Ventas({ usuario = 'Empleado', onLogout, onNavegar }) {
     )
     );
 
-function handleNavegar(moduloId) {
-    navigate(`/ventas/${moduloId}`);
-    if (onNavegar) onNavegar(moduloId);
+function handleNavegar(ruta) {
+    const rutaFinal = ruta.startsWith('/') ? ruta : `/ventas/${ruta}`;
+    navigate(rutaFinal);
+    if (onNavegar) onNavegar(rutaFinal);
 }
 
 return (
