@@ -172,7 +172,7 @@ export default function NotasCredito({ usuario, onNavegar, onLogout }) {
                 </div>
 
                 <button
-                  onClick={() => console.log("Ir a Facturas")}
+                  onClick={() => navigate("/ventas/facturas")}
                   style={styles.botonFacturas}
                 >
                   Ir a Facturas
