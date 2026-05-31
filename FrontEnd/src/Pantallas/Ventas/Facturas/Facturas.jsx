@@ -90,7 +90,7 @@ export default function Facturas({ usuario, onNavegar, onLogout }) {
 
   const getEstadoColor = (estado) => {
     if (estado === "Anulada") return "#E74C3C";
-    if (estado === "Emitida") return "#27AE60";
+    if (estado === "Confirmado") return "#27AE60";
     if (estado === "Pendiente") return "#F39C12";
     if (estado === "Pagada") return "#3498DB";
     return "#000000";
