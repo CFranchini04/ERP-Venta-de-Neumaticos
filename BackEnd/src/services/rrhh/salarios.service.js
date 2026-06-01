@@ -205,19 +205,91 @@ const deletePago = async (id) => {
 // ─── PHC ────────────────────────────────────────────────────────
 
 const getSalarioEmpleado = async (id_empleado) => {
+    const confirmado = 2
     const { data, error } = await supabase
         .from('personas_horario_cargo')
         .select(`
       salario,
-      fecha_inicio,
-      fecha_fin,
       estados(nombre),
       cargo(nombre),
       horarios(*)
     `)
         .eq('id_empleado', id_empleado)
+        .eq('id_estado', confirmado)
+        .single();
     if (error) throw new Error(error.message)
     return data
 }
 
-export default { getAllProcesos, getProceso, postProceso, updateEstadoProceso, getAllPagos, getPago, getPagosByEmpleado, getPagosByProceso, getTablePagos, postPago, updatePago, updateEstadoPago, deletePago, getSalarioEmpleado }
+// Novedades
+const getAllNovedades = async () => {
+    const { data, error } = await supabase
+        .from('novedades')
+        .select('*, estados(nombre)')
+    if (error) throw new Error(error.message)
+    return data
+}
+const searchNovedades = async (search = '', tipo_novedad = '') => {
+    let query = supabase
+        .from('novedades')
+        .select('*, estados(nombre)')
+
+    if (search && search.trim()) {
+        query = query.ilike('nombre', `%${search.trim()}%`)
+    }
+
+    if (tipo_novedad && tipo_novedad.trim()) {
+        query = query.eq('tipo_novedad', tipo_novedad.trim())
+    }
+
+    const { data, error } = await query.limit(10).order('nombre', { ascending: true })
+    if (error) throw new Error(error.message)
+    return data
+}
+
+const getNovedad = async (id) => {
+    const { data, error } = await supabase
+        .from('novedades')
+        .select('*, estados(nombre)')
+        .eq('id_novedad', id)
+        .single()
+    if (error) throw new Error(error.message)
+    return data
+}
+
+const postNovedad = async (nombre, tipo_novedad, formula, clase, es_fijo, id_estado) => {
+    const { data, error } = await supabase
+        .from('novedades')
+        .insert({ nombre, tipo_novedad, formula, clase, es_fijo, id_estado })
+        .select()
+        .single()
+    if (error) throw new Error(error.message)
+    return data
+}
+
+const updateNovedad = async (id, datos) => {
+    const actualizar = Object.fromEntries(
+        Object.entries(datos).filter(([_, v]) => v !== undefined && v !== '')
+    )
+    const { data, error } = await supabase
+        .from('novedades')
+        .update(actualizar)
+        .eq('id_novedad', id)
+        .select()
+        .single()
+    if (error) throw new Error(error.message)
+    return data
+}
+
+const updateEstadoNovedad = async (id, id_estado) => {
+    const { data, error } = await supabase
+        .from('novedades')
+        .update({ id_estado })
+        .eq('id_novedad', id)
+        .select()
+        .single()
+    if (error) throw new Error(error.message)
+    return data
+}
+
+export default { getAllProcesos, getProceso, postProceso, updateEstadoProceso, getAllPagos, getPago, getPagosByEmpleado, getPagosByProceso, getTablePagos, postPago, updatePago, updateEstadoPago, deletePago, getSalarioEmpleado, getAllNovedades, searchNovedades , getNovedad, postNovedad, updateNovedad, updateEstadoNovedad }

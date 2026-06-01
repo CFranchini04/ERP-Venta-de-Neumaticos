@@ -28,13 +28,14 @@ function Field({ label, name, value, onChange, editando }) {
   );
 }
 
-export default function GestionPersonal({ usuario, onLogout, onNavegar }) {
+export default function GestionPersonal({ usuario, onLogout, onNavegar, onGuardado }) {
   const { id } = useParams();
 
   const modoCrear = !id;
 
   const [editando, setEditando] = useState(modoCrear);
   const [cargando, setCargando] = useState(!modoCrear);
+  const [error, setError] = useState("");
 
   const [form, setForm] = useState({
     nombre: "",
@@ -59,8 +60,7 @@ export default function GestionPersonal({ usuario, onLogout, onNavegar }) {
     const cargarEmpleado = async () => {
       try {
         const res = await fetchConToken(`${API_BASE}/rrhh/empleados/${id}`);
-        const dataArr = await res.json();
-        const data = dataArr[0];
+        const data = await res.json();
 
         const familiares = data.familiares || [];
 
@@ -107,96 +107,124 @@ export default function GestionPersonal({ usuario, onLogout, onNavegar }) {
     setForm(prev => ({ ...prev, [key]: value }));
   };
 
-  if (cargando) return <div>Cargando...</div>;
+  const editEmpleado = async () => {
+    try {
+      const payload = {
+        ci: form.CI,
+        nombre: form.nombre,
+        apellido: form.apellido,
+        direccion: form.direccion,
+        correo: form.correo_electronico,
+        fecha_inicio: form.fecha_inicio,
+      };
 
-  return (
-    <div style={styles.pagina}>
-      <Sidebar usuario={usuario} onLogout={onLogout} onNavegar={onNavegar} />
+      const res = await fetchConToken(`${API_BASE}/rrhh/empleados/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
 
-      <main style={styles.contenido}>
-        <div style={styles.wrapper}>
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Error al guardar el empleado");
 
-          <h1 style={styles.titulo}>
-            {modoCrear ? "Crear Empleado" : "Gestión de Personal"}
-          </h1>
+      if (onGuardado) onGuardado(data);
+      setEditando(false);
+      setError("");
+    } catch (err) {
+      setError(err.message || "Error al guardar empleado");
+    }
+  };
 
-          <div style={styles.grid}>
+if (cargando) return <div>Cargando...</div>;
 
-            {/* IZQUIERDA */}
+return (
+  <div style={styles.pagina}>
+    <Sidebar usuario={usuario} onLogout={onLogout} onNavegar={onNavegar} />
+
+    <main style={styles.contenido}>
+      <div style={styles.wrapper}>
+
+        <h1 style={styles.titulo}>
+          {modoCrear ? "Crear Empleado" : "Gestión de Personal"}
+        </h1>
+
+        <div style={styles.grid}>
+
+          {/* IZQUIERDA */}
+          <div style={styles.card}>
+            <h3>Datos personales</h3>
+
+            <div style={styles.form}>
+              <Field label="Nombre" name="nombre" value={form.nombre} onChange={handleChange} editando={editando} />
+              <Field label="Apellido" name="apellido" value={form.apellido} onChange={handleChange} editando={editando} />
+              <Field label="CI" name="CI" value={form.CI} onChange={handleChange} editando={editando} />
+              <Field label="Ciudad" name="ciudad" value={form.ciudad} onChange={handleChange} editando={editando} />
+              <Field label="Dirección" name="direccion" value={form.direccion} onChange={handleChange} editando={editando} />
+              <Field label="Correo" name="correo_electronico" value={form.correo_electronico} onChange={handleChange} editando={editando} />
+            </div>
+          </div>
+
+          {/* DERECHA */}
+          <div style={styles.right}>
+
             <div style={styles.card}>
-              <h3>Datos personales</h3>
+              <h3>Datos empresariales</h3>
 
               <div style={styles.form}>
-                <Field label="Nombre" name="nombre" value={form.nombre} onChange={handleChange} editando={editando} />
-                <Field label="Apellido" name="apellido" value={form.apellido} onChange={handleChange} editando={editando} />
-                <Field label="CI" name="CI" value={form.CI} onChange={handleChange} editando={editando} />
-                <Field label="Ciudad" name="ciudad" value={form.ciudad} onChange={handleChange} editando={editando} />
-                <Field label="Dirección" name="direccion" value={form.direccion} onChange={handleChange} editando={editando} />
-                <Field label="Correo" name="correo_electronico" value={form.correo_electronico} onChange={handleChange} editando={editando} />
+                <Field label="Fecha inicio" name="fecha_inicio" value={form.fecha_inicio} onChange={handleChange} editando={editando} />
+                <Field label="Cargo" name="cargo" value={form.cargo} onChange={handleChange} editando={editando} />
+                <Field label="Estado" name="estado" value={form.estado} onChange={handleChange} editando={editando} />
               </div>
             </div>
 
-            {/* DERECHA */}
-            <div style={styles.right}>
+            <div style={styles.card}>
+              <h3>Datos familiares</h3>
 
-              <div style={styles.card}>
-                <h3>Datos empresariales</h3>
-
-                <div style={styles.form}>
-                  <Field label="Fecha inicio" name="fecha_inicio" value={form.fecha_inicio} onChange={handleChange} editando={editando} />
-                  <Field label="Cargo" name="cargo" value={form.cargo} onChange={handleChange} editando={editando} />
-                  <Field label="Estado" name="estado" value={form.estado} onChange={handleChange} editando={editando} />
-                </div>
+              <div style={styles.form}>
+                <Field label="Cónyuge" name="conyugue" value={form.conyugue} onChange={handleChange} editando={editando} />
+                <Field label="Hijos" name="hijos" value={form.hijos} onChange={handleChange} editando={editando} />
+                <Field label="Hijos menores" name="hijos_menores" value={form.hijos_menores} onChange={handleChange} editando={editando} />
               </div>
-
-              <div style={styles.card}>
-                <h3>Datos familiares</h3>
-
-                <div style={styles.form}>
-                  <Field label="Cónyuge" name="conyugue" value={form.conyugue} onChange={handleChange} editando={editando} />
-                  <Field label="Hijos" name="hijos" value={form.hijos} onChange={handleChange} editando={editando} />
-                  <Field label="Hijos menores" name="hijos_menores" value={form.hijos_menores} onChange={handleChange} editando={editando} />
-                </div>
-              </div>
-
             </div>
-          </div>
-
-          {/* BOTONES */}
-          <div style={styles.footer}>
-
-            {modoCrear ? (
-              <Button
-                label="Crear empleado"
-                variant="amarillo"
-                onClick={() => console.log("CREAR:", form)}
-              />
-            ) : (
-              <>
-                {!editando ? (
-                  <Button label="Editar" variant="amarillo" onClick={() => setEditando(true)} />
-                ) : (
-                  <>
-                    <Button label="Cancelar" variant="gris" onClick={() => setEditando(false)} />
-                    <Button
-                      label="Guardar"
-                      variant="amarillo"
-                      onClick={() => {
-                        console.log("UPDATE:", form);
-                        setEditando(false);
-                      }}
-                    />
-                  </>
-                )}
-              </>
-            )}
 
           </div>
+        </div>
+
+        {/* BOTONES */}
+        <div style={styles.footer}>
+
+          {modoCrear ? (
+            <Button
+              label="Crear empleado"
+              variant="amarillo"
+              onClick={() => console.log("CREAR:", form)}
+            />
+          ) : (
+            <>
+              {!editando ? (
+                <Button label="Editar" variant="amarillo" onClick={() => setEditando(true)} />
+              ) : (
+                <>
+                  <Button label="Cancelar" variant="gris" onClick={() => setEditando(false)} />
+                  <Button
+                    label="Guardar"
+                    variant="amarillo"
+                    onClick={() => {
+                      editEmpleado();
+                      setEditando(false);
+                    }}
+                  />
+                </>
+              )}
+            </>
+          )}
 
         </div>
-      </main>
-    </div>
-  );
+
+      </div>
+    </main>
+  </div>
+);
 }
 
 const styles = {

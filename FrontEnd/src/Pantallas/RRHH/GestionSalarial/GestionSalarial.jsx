@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import Sidebar from '../../../components/Sidebar';
+import SearchBar from "../../../components/Searchbar";
 import fetchConToken from '../../../token';
 import { getColor } from '../../../components/Colors';
 import { IconoDropdown, IconoMas, IconoCerrar } from '../../../components/Icons';
@@ -10,6 +11,12 @@ function ColumnaItems({ titulo, tipo, items, onChange }) {
   const color = tipo === 'bonificacion' ? getColor('verde') : getColor('rojo');
   const bgColor = tipo === 'bonificacion' ? '#f0fdf4' : '#fef2f2';
   const borderColor = tipo === 'bonificacion' ? '#bbf7d0' : '#fecaca';
+
+  //Back
+  const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:9128/api';
+  const tipoNovedad = titulo === "bonificaciones" ? "Ingreso" : "Egreso";
+  const [novedadSeleccionada, setNovedadSeleccionada] = useState(null);
+  const [searchKeyNovedad, setSearchKeyNovedad] = useState(0);
 
   const agregar = () => {
     onChange([...items, { id: Date.now(), nombre: '', monto: '' }]);
@@ -44,12 +51,27 @@ function ColumnaItems({ titulo, tipo, items, onChange }) {
 
         {items.map(item => (
           <div key={item.id} style={styles.itemRow}>
-            <input
-              type="text"
-              placeholder="Descripción"
-              value={item.nombre}
-              onChange={e => actualizar(item.id, 'nombre', e.target.value)}
-              style={{ ...styles.inputItem, flex: 2 }}
+
+            <SearchBar
+              key={searchKeyNovedad}
+              apiUrl={`${API_BASE}/rrhh/salarios/novedades/${tipoNovedad}`}
+              queryParam="search"
+              placeholder="Buscar novedad ..."
+              fetchOnMount={true}
+              onSelect={(rawItem) => setNovedadSeleccionada(rawItem)}
+              onClear={() => setNovedadSeleccionada(null)}
+              getLabel={(item) => item?.nombre || ""}
+              renderOption={(item) => (
+                <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                  <span style={{ fontWeight: 700, fontSize: 14 }}>{item.nombre}</span>
+                  <span style={{ fontSize: 12, color: "#888" }}>
+                    {item.tipo_novedad ?? "—"}
+                    {" · "}{item.clase ?? "—"}
+                    {" · "}{item.es_fijo ? "Fijo" : "Variable"}
+                  </span>
+                </div>
+              )}
+              style={{ flex: 1, minWidth: 250 }}
             />
 
             <input
@@ -111,11 +133,14 @@ export default function GestionSalarial({ usuario, onLogout, onNavegar }) {
         const res = await fetchConToken(`${API_BASE}/rrhh/empleados/${id}`);
         const data = await res.json();
 
+        const res2 = await fetchConToken(`${API_BASE}/rrhh/salarios/salario/empleado/${id}`)
+        const salario = await res2.json()
+          ;
         setEmpleado({
           nombre: data?.personas?.nombre ?? '',
           apellido: data?.personas?.apellido ?? '',
           cargo: data?.personas_horario_cargo?.[0]?.cargo?.nombre ?? '',
-          salarioBase: data?.salario_base ?? 0,
+          salarioBase: salario?.salario ?? 0,
         });
       } catch (e) {
         console.error(e);

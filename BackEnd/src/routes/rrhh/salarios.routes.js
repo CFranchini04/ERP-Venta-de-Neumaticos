@@ -23,4 +23,13 @@ router.delete('/pagos/:id', salariosController.deletePago)
 // PHC
 router.get('/salario/empleado/:id', salariosController.getSalarioEmpleado)
 
+// Novedades 
+
+router.get('/novedades/:tipo_novedad', salariosController.searchNovedades)
+router.get('/novedades', salariosController.getAllNovedades)
+router.get('/novedades/detalle/:id', salariosController.getNovedad)
+router.post('/novedades', salariosController.postNovedad)
+router.put('/novedades/:id', salariosController.updateNovedad)
+router.patch('/novedades/:id/estado', salariosController.updateEstadoNovedad)
+
 export default router

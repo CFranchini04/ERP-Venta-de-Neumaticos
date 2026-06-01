@@ -159,4 +159,64 @@ const getSalarioEmpleado = async (req, res) => {
     }
 }
 
-export default { getAllProcesos, getProceso, postProceso, updateEstadoProceso, getAllPagos, getPago, getPagosByEmpleado, getPagosByProceso, getTablePagos, postPago, updatePago, updateEstadoPago, deletePago, getSalarioEmpleado }
+// Novedades
+
+const getAllNovedades = async (req, res) => {
+    try {
+        const data = await salariosService.getAllNovedades()
+        res.json(data)
+    } catch (err) {
+        res.status(500).json({ message: err.message })
+    }
+}
+const searchNovedades = async (req, res) => {
+    try {
+        const { search } = req.query
+        const { tipo_novedad } = req.params
+        const data = await salariosService.searchNovedades(search || '', tipo_novedad || '')
+        res.status(200).json(data)
+    } catch (err) {
+        res.status(400).json({ message: err.message })
+    }
+}
+const getNovedad = async (req, res) => {
+    try {
+        const { id } = req.params
+        const data = await salariosService.getNovedad(id)
+        res.json(data)
+    } catch (err) {
+        res.status(500).json({ message: err.message })
+    }
+}
+
+const postNovedad = async (req, res) => {
+    try {
+        const { nombre, tipo_novedad, formula, clase, es_fijo, id_estado } = req.body
+        const data = await salariosService.postNovedad(nombre, tipo_novedad, formula, clase, es_fijo, id_estado)
+        res.status(201).json(data)
+    } catch (err) {
+        res.status(500).json({ message: err.message })
+    }
+}
+
+const updateNovedad = async (req, res) => {
+    try {
+        const { id } = req.params
+        const data = await salariosService.updateNovedad(id, req.body)
+        res.json(data)
+    } catch (err) {
+        res.status(500).json({ message: err.message })
+    }
+}
+
+const updateEstadoNovedad = async (req, res) => {
+    try {
+        const { id } = req.params
+        const { id_estado } = req.body
+        const data = await salariosService.updateEstadoNovedad(id, id_estado)
+        res.json(data)
+    } catch (err) {
+        res.status(500).json({ message: err.message })
+    }
+}
+export default { getAllProcesos, getProceso, postProceso, updateEstadoProceso, getAllPagos, getPago, getPagosByEmpleado, getPagosByProceso, getTablePagos, postPago, updatePago, updateEstadoPago, deletePago, getSalarioEmpleado, getAllNovedades, searchNovedades, getNovedad, postNovedad, updateNovedad, updateEstadoNovedad }
