@@ -20,8 +20,10 @@ export default function DetalleFactura({ usuario, onNavegar, onLogout }) {
         setLoading(true);
         setError("");
 
-        const response = await fetchConToken(`${API_BASE}/ventas/facturas/${id}`);
-        
+        const response = await fetchConToken(
+          `${API_BASE}/ventas/facturas/${id}`,
+        );
+
         if (!response.ok && response.status === 404) {
           setFactura(null);
           setLoading(false);
@@ -55,10 +57,14 @@ export default function DetalleFactura({ usuario, onNavegar, onLogout }) {
   }, [id]);
 
   const getEstadoBadge = (estado) => {
-    if (estado === "Anulada") return { bg: "#FFE0E0", color: "#E74C3C", border: "#FF6B6B" };
-    if (estado === "Emitida") return { bg: "#E0F7E0", color: "#27AE60", border: "#7ED321" };
-    if (estado === "Pendiente") return { bg: "#FFF8DC", color: "#F39C12", border: "#FFB700" };
-    if (estado === "Pagada") return { bg: "#E0F4FF", color: "#3498DB", border: "#5DADE2" };
+    if (estado === "Anulada")
+      return { bg: "#FFE0E0", color: "#E74C3C", border: "#FF6B6B" };
+    if (estado === "Emitida")
+      return { bg: "#E0F7E0", color: "#27AE60", border: "#7ED321" };
+    if (estado === "Pendiente")
+      return { bg: "#FFF8DC", color: "#F39C12", border: "#FFB700" };
+    if (estado === "Pagada")
+      return { bg: "#E0F4FF", color: "#3498DB", border: "#5DADE2" };
     return { bg: "#F5F5F5", color: "#333", border: "#CCC" };
   };
 
@@ -66,21 +72,21 @@ export default function DetalleFactura({ usuario, onNavegar, onLogout }) {
     if (!factura || !factura.detalles_facturas_ventas) {
       return { subtotal: 0, iva: 0, total: 0 };
     }
-    
+
     const subtotal = factura.detalles_facturas_ventas.reduce((acc, d) => {
       const precio = Number(d.precio_unitario || 0);
       const cantidad = Number(d.cantidad || 0);
-      return acc + (precio * cantidad);
+      return acc + precio * cantidad;
     }, 0);
-    
+
     // Si no hay detalles pero hay importe_total, usarlo
     if (subtotal === 0 && factura.importe_total) {
       const importeTotal = Number(factura.importe_total);
-      const iva = importeTotal / 1.1 * 0.1; // Deducir IVA de 10%
+      const iva = (importeTotal / 1.1) * 0.1; // Deducir IVA de 10%
       const subtotalDeducido = importeTotal - iva;
       return { subtotal: subtotalDeducido, iva, total: importeTotal };
     }
-    
+
     const iva = subtotal * 0.1;
     const total = subtotal + iva;
     return { subtotal, iva, total };
@@ -91,20 +97,272 @@ export default function DetalleFactura({ usuario, onNavegar, onLogout }) {
   const handleDescargar = () => {
     if (!factura) return;
 
-    const contenido = "Factura";
+    const fmtFecha = (f) =>
+      f ? new Date(f).toLocaleDateString("es-ES") : "-";
+    const fmtGs = (n) => Number(n || 0).toLocaleString("es-PY") + " Gs.";
 
-    const elemento = document.createElement("a");
-    elemento.setAttribute("href", "data:text/plain;charset=utf-8," + encodeURIComponent(contenido));
-    elemento.setAttribute("download", `${factura.codigo_factura}.txt`);
-    elemento.style.display = "none";
-    document.body.appendChild(elemento);
-    elemento.click();
-    document.body.removeChild(elemento);
+    const filas = (factura.detalles_facturas_ventas || [])
+      .map((item, idx) => {
+        const subtotal =
+          Number(item.precio_unitario || 0) * Number(item.cantidad || 0);
+        return `
+          <tr>
+            <td style="text-align:center">${idx + 1}</td>
+            <td>${item.productos?.id_producto || item.id_producto || "-"}</td>
+            <td>${item.productos?.nombre || "-"}</td>
+            <td style="text-align:center">${item.cantidad || 0}</td>
+            <td style="text-align:right">${fmtGs(item.precio_unitario)}</td>
+            <td style="text-align:right">${fmtGs(subtotal)}</td>
+          </tr>
+        `;
+      })
+      .join("");
+
+    const cliente = factura.clientes || {};
+    const persona = cliente.personas || {};
+    const nombreCliente =
+      `${persona.nombre || ""} ${persona.apellido || ""}`.trim() || "-";
+    const rucCliente = persona.ruc || cliente.ci || "-";
+    const direccionCliente =
+      persona.direccion || cliente.direccion || factura.direccion || "-";
+    const telefonoCliente =
+      persona.telefono || cliente.telefono || factura.telefono || "-";
+    const emailCliente = persona.email || cliente.email || "-";
+
+    const estadoNombre = factura.estados?.nombre || factura.estado || "-";
+    const totalFinal = Number(factura.importe_total || totales.total || 0);
+
+    const ventana = window.open("", "_blank", "width=1000,height=900");
+
+    ventana.document.write(`
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <meta charset="utf-8" />
+        <title>Factura ${factura.codigo_factura || ""}</title>
+        <style>
+          * { box-sizing: border-box; }
+          body {
+            font-family: Arial, sans-serif;
+            padding: 30px 40px;
+            color: #222;
+            font-size: 12px;
+          }
+          .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            border-bottom: 3px solid #000;
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+          }
+          .empresa h2 { margin: 0 0 4px 0; font-size: 20px; }
+          .empresa p { margin: 2px 0; font-size: 11px; color: #555; }
+          .factura-box {
+            border: 2px solid #000;
+            padding: 10px 16px;
+            text-align: center;
+            min-width: 220px;
+          }
+          .factura-box .titulo {
+            font-size: 18px;
+            font-weight: bold;
+            letter-spacing: 1px;
+          }
+          .factura-box .codigo {
+            font-size: 16px;
+            font-weight: bold;
+            margin-top: 4px;
+          }
+          .factura-box .nro { font-size: 11px; color: #555; margin-top: 4px; }
+
+          .meta {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+          }
+          .bloque {
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            padding: 12px 14px;
+          }
+          .bloque h3 {
+            margin: 0 0 8px 0;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 6px;
+          }
+          .bloque .row { display: flex; justify-content: space-between; padding: 3px 0; }
+          .bloque .row span:first-child { color: #555; font-weight: 600; }
+
+          table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+          }
+          th, td {
+            border: 1px solid #bbb;
+            padding: 8px 10px;
+            font-size: 11px;
+          }
+          th {
+            background: #f2f2f2;
+            text-align: left;
+          }
+          tbody tr:nth-child(even) { background: #fafafa; }
+
+          .totales-wrap {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+            gap: 20px;
+          }
+          .obs {
+            flex: 1;
+            border: 1px dashed #aaa;
+            border-radius: 6px;
+            padding: 10px 12px;
+            font-size: 11px;
+            color: #555;
+          }
+          .totales {
+            width: 320px;
+          }
+          .totales .fila {
+            display: flex;
+            justify-content: space-between;
+            padding: 6px 10px;
+            border-bottom: 1px solid #eee;
+          }
+          .totales .total {
+            font-size: 16px;
+            font-weight: bold;
+            border-top: 2px solid #000;
+            border-bottom: 2px solid #000;
+            margin-top: 6px;
+            padding: 10px;
+          }
+
+          .footer {
+            margin-top: 35px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            font-size: 11px;
+            color: #555;
+          }
+          .firma {
+            text-align: center;
+            border-top: 1px solid #000;
+            padding-top: 6px;
+            width: 220px;
+          }
+          .estado-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 4px;
+            border: 1px solid;
+            font-weight: bold;
+            text-transform: uppercase;
+            font-size: 10px;
+          }
+          @media print {
+            body { padding: 15px; }
+          }
+        </style>
+      </head>
+
+      <body>
+        <div class="header">
+          <div class="empresa">
+            <h2>ERP Venta de Neumáticos</h2>
+            <p>RUC: 80012345-6</p>
+            <p>Dirección: Av. Siempre Viva 742, Springfield</p>
+            <p>Tel: (021) 123-456 — sistemas@de.gestion</p>
+          </div>
+          <div class="factura-box">
+            <div class="titulo">FACTURA</div>
+            <div class="codigo">${factura.codigo_factura || "-"}</div>
+            <div class="nro">Nº ${factura.nro_factura || "-"}</div>
+            <div class="nro">Timbrado: ${factura.timbrado || "-"}</div>
+          </div>
+        </div>
+
+        <div class="meta">
+          <div class="bloque">
+            <h3>Datos del Cliente</h3>
+            <div class="row"><span>Nombre:</span><span>${nombreCliente}</span></div>
+            <div class="row"><span>CI/RUC:</span><span>${rucCliente}</span></div>
+            <div class="row"><span>Dirección:</span><span>${direccionCliente}</span></div>
+            <div class="row"><span>Teléfono:</span><span>${telefonoCliente}</span></div>
+            <div class="row"><span>Email:</span><span>${emailCliente}</span></div>
+          </div>
+          <div class="bloque">
+            <h3>Datos de la Factura</h3>
+            <div class="row"><span>Fecha Emisión:</span><span>${fmtFecha(factura.fecha_emision)}</span></div>
+            <div class="row"><span>Fecha Vencimiento:</span><span>${fmtFecha(factura.fecha_vencimiento)}</span></div>
+            <div class="row"><span>Condición:</span><span>${factura.condicion || "Contado"}</span></div>
+            <div class="row"><span>Moneda:</span><span>${factura.moneda || "Guaraníes (PYG)"}</span></div>
+            <div class="row"><span>Estado:</span><span class="estado-badge">${estadoNombre}</span></div>
+          </div>
+        </div>
+
+        <table>
+          <thead>
+            <tr>
+              <th style="width:5%; text-align:center">#</th>
+              <th style="width:10%">Cód.</th>
+              <th>Descripción</th>
+              <th style="width:10%; text-align:center">Cant.</th>
+              <th style="width:18%; text-align:right">Precio Unit.</th>
+              <th style="width:20%; text-align:right">Subtotal</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${filas || `<tr><td colspan="6" style="text-align:center; color:#999">Sin productos</td></tr>`}
+          </tbody>
+        </table>
+
+        <div class="totales-wrap">
+          <div class="obs">
+            <strong>Observaciones:</strong>
+            <p style="margin: 6px 0 0 0;">
+              ${factura.observaciones || "Esta factura es válida como comprobante fiscal según las normativas vigentes."}
+            </p>
+          </div>
+          <div class="totales">
+            <div class="fila"><span>Subtotal:</span><span>${fmtGs(totales.subtotal)}</span></div>
+            <div class="fila"><span>IVA (10%):</span><span>${fmtGs(totales.iva)}</span></div>
+            <div class="total fila"><span>TOTAL:</span><span>${fmtGs(totalFinal)}</span></div>
+          </div>
+        </div>
+
+        <div class="footer">
+          <div>
+            <p>Documento generado: ${new Date().toLocaleString("es-ES")}</p>
+            <p>Gracias por su compra.</p>
+          </div>
+          <div class="firma">Firma autorizada</div>
+        </div>
+      </body>
+    </html>
+  `);
+
+    ventana.document.close();
+
+    setTimeout(() => {
+      ventana.focus();
+      ventana.print();
+    }, 300);
   };
+  const estadoBadge = factura
+    ? getEstadoBadge(factura.estados?.nombre || factura.estado)
+    : {};
 
-  const estadoBadge = factura ? getEstadoBadge(factura.estados?.nombre || factura.estado) : {};
-
-  const clienteNombre = factura?.clientes?.personas 
+  const clienteNombre = factura?.clientes?.personas
     ? `${factura.clientes.personas.nombre} ${factura.clientes.personas.apellido || ""}`.trim()
     : "-";
 
@@ -123,7 +381,9 @@ export default function DetalleFactura({ usuario, onNavegar, onLogout }) {
             >
               <IconoSalir />
             </button>
-            <h1 style={styles.titulo}>{factura?.codigo_factura || "Cargando..."}</h1>
+            <h1 style={styles.titulo}>
+              {factura?.codigo_factura || "Cargando..."}
+            </h1>
             <div style={{ width: 40 }} />
           </div>
           <div style={styles.separador} />
@@ -157,36 +417,68 @@ export default function DetalleFactura({ usuario, onNavegar, onLogout }) {
                   <div style={styles.tablaHeaderProducto}>
                     <div style={{ width: "10%" }}>ID</div>
                     <div style={{ width: "35%" }}>Producto</div>
-                    <div style={{ width: "15%", textAlign: "center" }}>Cantidad</div>
-                    <div style={{ width: "15%", textAlign: "right" }}>Precio Unitario</div>
-                    <div style={{ width: "25%", textAlign: "right" }}>Subtotal</div>
+                    <div style={{ width: "15%", textAlign: "center" }}>
+                      Cantidad
+                    </div>
+                    <div style={{ width: "15%", textAlign: "right" }}>
+                      Precio Unitario
+                    </div>
+                    <div style={{ width: "25%", textAlign: "right" }}>
+                      Subtotal
+                    </div>
                   </div>
 
-                  {factura.detalles_facturas_ventas && factura.detalles_facturas_ventas.length > 0 ? (
+                  {factura.detalles_facturas_ventas &&
+                  factura.detalles_facturas_ventas.length > 0 ? (
                     factura.detalles_facturas_ventas.map((item, idx) => {
-                      const subtotal = (Number(item.precio_unitario || 0) * Number(item.cantidad || 0));
+                      const subtotal =
+                        Number(item.precio_unitario || 0) *
+                        Number(item.cantidad || 0);
                       return (
                         <div
                           key={idx}
                           style={{
                             ...styles.tablaFilaProducto,
-                            background: idx % 2 === 0 ? "#F9F9F9" : "#FFFFFF"
+                            background: idx % 2 === 0 ? "#F9F9F9" : "#FFFFFF",
                           }}
                         >
-                          <div style={{ width: "10%" }}>{item.productos?.id_producto || item.id_producto || "-"}</div>
-                          <div style={{ width: "35%" }}>{item.productos?.nombre || "-"}</div>
-                          <div style={{ width: "15%", textAlign: "center" }}>{item.cantidad}</div>
-                          <div style={{ width: "15%", textAlign: "right" }}>
-                            {Number(item.precio_unitario || 0).toLocaleString("es-PY")} Gs.
+                          <div style={{ width: "10%" }}>
+                            {item.productos?.id_producto ||
+                              item.id_producto ||
+                              "-"}
                           </div>
-                          <div style={{ width: "25%", textAlign: "right", fontWeight: "600" }}>
+                          <div style={{ width: "35%" }}>
+                            {item.productos?.nombre || "-"}
+                          </div>
+                          <div style={{ width: "15%", textAlign: "center" }}>
+                            {item.cantidad}
+                          </div>
+                          <div style={{ width: "15%", textAlign: "right" }}>
+                            {Number(item.precio_unitario || 0).toLocaleString(
+                              "es-PY",
+                            )}{" "}
+                            Gs.
+                          </div>
+                          <div
+                            style={{
+                              width: "25%",
+                              textAlign: "right",
+                              fontWeight: "600",
+                            }}
+                          >
                             {Number(subtotal || 0).toLocaleString("es-PY")} Gs.
                           </div>
                         </div>
                       );
                     })
                   ) : (
-                    <div style={{ padding: "20px", textAlign: "center", color: "#999" }}>
+                    <div
+                      style={{
+                        padding: "20px",
+                        textAlign: "center",
+                        color: "#999",
+                      }}
+                    >
                       No hay productos en esta factura
                     </div>
                   )}
@@ -201,14 +493,22 @@ export default function DetalleFactura({ usuario, onNavegar, onLogout }) {
                 <div style={styles.filaResumen}>
                   <span>Fecha Emisión:</span>
                   <span style={{ fontWeight: "600" }}>
-                    {factura.fecha_emision ? new Date(factura.fecha_emision).toLocaleDateString("es-ES") : "-"}
+                    {factura.fecha_emision
+                      ? new Date(factura.fecha_emision).toLocaleDateString(
+                          "es-ES",
+                        )
+                      : "-"}
                   </span>
                 </div>
 
                 <div style={styles.filaResumen}>
                   <span>Fecha Vencimiento:</span>
                   <span style={{ fontWeight: "600" }}>
-                    {factura.fecha_vencimiento ? new Date(factura.fecha_vencimiento).toLocaleDateString("es-ES") : "-"}
+                    {factura.fecha_vencimiento
+                      ? new Date(factura.fecha_vencimiento).toLocaleDateString(
+                          "es-ES",
+                        )
+                      : "-"}
                   </span>
                 </div>
 
@@ -228,7 +528,12 @@ export default function DetalleFactura({ usuario, onNavegar, onLogout }) {
 
                 <div style={styles.filaResumenTotal}>
                   <span>Total:</span>
-                  <span>{Number(factura.importe_total || totales.total || 0).toLocaleString("es-PY")} Gs.</span>
+                  <span>
+                    {Number(
+                      factura.importe_total || totales.total || 0,
+                    ).toLocaleString("es-PY")}{" "}
+                    Gs.
+                  </span>
                 </div>
 
                 {factura.estados?.nombre && (
@@ -237,28 +542,31 @@ export default function DetalleFactura({ usuario, onNavegar, onLogout }) {
                       ...styles.estadoBadge,
                       background: estadoBadge.bg,
                       borderColor: estadoBadge.border,
-                      color: estadoBadge.color
+                      color: estadoBadge.color,
                     }}
                   >
-                    <strong>FACTURA {factura.estados.nombre.toUpperCase()}</strong>
+                    <strong>
+                      {factura.estados.nombre.toUpperCase()}
+                    </strong>
                     <p style={{ margin: "8px 0 0 0", fontSize: 11 }}>
                       Vencimiento:{" "}
                       {factura.fecha_vencimiento
-                        ? new Date(factura.fecha_vencimiento).toLocaleDateString("es-ES")
+                        ? new Date(
+                            factura.fecha_vencimiento,
+                          ).toLocaleDateString("es-ES")
                         : "-"}
                     </p>
                   </div>
                 )}
 
-                <button
-                  onClick={handleDescargar}
-                  style={styles.botonDescargar}
-                >
-                  Descargar Factura
+                <button onClick={handleDescargar} style={styles.botonDescargar}>
+                  Imprimir Factura
                 </button>
 
                 <button
-                  onClick={() => navigate(`/ventas/facturas/${id}/nota-credito`)}
+                  onClick={() =>
+                    navigate(`/ventas/facturas/${id}/nota-credito`)
+                  }
                   style={styles.botonNotaCredito}
                 >
                   Crear Nota de Crédito
@@ -276,7 +584,7 @@ const styles = {
   pagina: {
     display: "flex",
     minHeight: "100vh",
-    background: "#F5F5F5"
+    background: "#F5F5F5",
   },
   contenido: {
     flex: 1,
@@ -284,7 +592,7 @@ const styles = {
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
-    overflowY: "auto"
+    overflowY: "auto",
   },
   encabezado: {
     width: "100%",
@@ -293,7 +601,7 @@ const styles = {
     alignItems: "center",
     gap: 12,
     padding: "24px 0",
-    marginBottom: 24
+    marginBottom: 24,
   },
   headerTop: {
     display: "flex",
@@ -301,7 +609,7 @@ const styles = {
     justifyContent: "center",
     width: "100%",
     gap: 20,
-    position: "relative"
+    position: "relative",
   },
   botonVolver: {
     position: "absolute",
@@ -313,7 +621,7 @@ const styles = {
     alignItems: "center",
     justifyContent: "center",
     padding: 8,
-    fontSize: 20
+    fontSize: 20,
   },
   titulo: {
     color: "#000000",
@@ -322,36 +630,36 @@ const styles = {
     fontWeight: 700,
     lineHeight: 1.2,
     margin: 0,
-    textAlign: "center"
+    textAlign: "center",
   },
   separador: {
     width: "min(1200px, 90%)",
     height: 4,
-    background: "#000000"
+    background: "#000000",
   },
   contenedor: {
     display: "grid",
     gridTemplateColumns: "1fr 380px",
     gap: 24,
     width: "100%",
-    maxWidth: 1200
+    maxWidth: 1200,
   },
   columnaIzq: {
     display: "flex",
     flexDirection: "column",
-    gap: 24
+    gap: 24,
   },
   columnaDer: {
     display: "flex",
     flexDirection: "column",
-    gap: 24
+    gap: 24,
   },
   card: {
     background: "#FFFFFF",
     borderRadius: 16,
     padding: 24,
     border: "1px solid #CCCCCC",
-    boxShadow: "0px 2px 8px rgba(0, 0, 0, 0.08)"
+    boxShadow: "0px 2px 8px rgba(0, 0, 0, 0.08)",
   },
   cardTitulo: {
     fontSize: 15,
@@ -360,38 +668,38 @@ const styles = {
     margin: "0 0 18px 0",
     textAlign: "center",
     borderBottom: "2px solid #E0E0E0",
-    paddingBottom: 12
+    paddingBottom: 12,
   },
   datosFila: {
     display: "grid",
     gridTemplateColumns: "1fr 1fr",
     gap: 16,
-    marginBottom: 16
+    marginBottom: 16,
   },
   datoGrupo: {
     display: "flex",
     flexDirection: "column",
-    gap: 4
+    gap: 4,
   },
   datoLabel: {
     fontSize: 11,
     fontWeight: "700",
     color: "#666666",
     textTransform: "uppercase",
-    letterSpacing: 0.5
+    letterSpacing: 0.5,
   },
   datoValor: {
     fontSize: 13,
     color: "#333333",
     margin: 0,
-    fontWeight: "500"
+    fontWeight: "500",
   },
   tablaProductos: {
     display: "flex",
     flexDirection: "column",
     border: "1px solid #E0E0E0",
     borderRadius: 8,
-    overflow: "hidden"
+    overflow: "hidden",
   },
   tablaHeaderProducto: {
     display: "flex",
@@ -400,21 +708,21 @@ const styles = {
     fontWeight: "700",
     fontSize: 12,
     color: "#000000",
-    borderBottom: "1px solid #D0D0D0"
+    borderBottom: "1px solid #D0D0D0",
   },
   tablaFilaProducto: {
     display: "flex",
     padding: "12px 16px",
     borderBottom: "1px solid #E0E0E0",
     fontSize: 12,
-    alignItems: "center"
+    alignItems: "center",
   },
   filaResumen: {
     display: "flex",
     justifyContent: "space-between",
     padding: "10px 0",
     borderBottom: "1px solid #E0E0E0",
-    fontSize: 13
+    fontSize: 13,
   },
   filaResumenTotal: {
     display: "flex",
@@ -424,7 +732,7 @@ const styles = {
     borderBottom: "2px solid #333333",
     fontSize: 16,
     fontWeight: "700",
-    marginBottom: 16
+    marginBottom: 16,
   },
   estadoBadge: {
     background: "#FFF8DC",
@@ -434,7 +742,7 @@ const styles = {
     fontSize: 12,
     border: "2px solid #FFB700",
     textAlign: "center",
-    fontWeight: "700"
+    fontWeight: "700",
   },
   botonDescargar: {
     width: "100%",
@@ -447,7 +755,7 @@ const styles = {
     cursor: "pointer",
     color: "#000000",
     transition: "all 0.2s ease",
-    marginBottom: 12
+    marginBottom: 12,
   },
   botonNotaCredito: {
     width: "100%",
@@ -460,6 +768,6 @@ const styles = {
     cursor: "pointer",
     color: "#000000",
     transition: "all 0.2s ease",
-    boxShadow: "0px 2px 4px rgba(0, 0, 0, 0.1)"
-  }
+    boxShadow: "0px 2px 4px rgba(0, 0, 0, 0.1)",
+  },
 };
