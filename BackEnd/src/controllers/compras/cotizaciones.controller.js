@@ -40,16 +40,29 @@ const getTableCotizaciones = async (req, res) => {
 
 const postCotizacion = async (req, res) => {
     try {
-        const { id_pedido, id_proveedor, fecha_respuesta, observacion, id_estado, codigo_cotizacion, detalles } = req.body
-
-        if (!id_pedido || !id_proveedor || !codigo_cotizacion || !id_estado)
-            return res.status(400).json({ message: 'Faltan datos requeridos' })
-
+        const { id_pedido, id_proveedor, id_estado, detalles } = req.body
+        if (!id_pedido || !id_estado)
+            return res.status(400).json({ message: 'Faltan datos requeridos: id_pedido, id_estado' })
         if (!detalles || detalles.length === 0)
             return res.status(400).json({ message: 'Debe incluir al menos un detalle' })
-
-        const cotizacion = await cotizacionesService.postCotizacion(id_pedido, id_proveedor, fecha_respuesta, observacion, id_estado, codigo_cotizacion, detalles)
+        const cotizacion = await cotizacionesService.postCotizacion(id_pedido, id_proveedor, id_estado, detalles)
         res.status(201).json(cotizacion)
+    } catch (error) {
+        res.status(400).json({ message: error.message })
+    }
+}
+
+// POST /api/compras/cotizaciones/:id/detalle
+// Agrega filas a cotizaciones_proveedores_detalle para la cotizacion existente
+const addDetallesToCotizacion = async (req, res) => {
+    try {
+        const { id } = req.params
+        const { detalles } = req.body
+        if (!id) return res.status(400).json({ message: 'Id de cotizacion requerido' })
+        if (!detalles || detalles.length === 0)
+            return res.status(400).json({ message: 'Debe incluir al menos un detalle' })
+        const result = await cotizacionesService.addDetallesToCotizacion(Number(id), detalles)
+        res.status(201).json(result)
     } catch (error) {
         res.status(400).json({ message: error.message })
     }
@@ -90,4 +103,4 @@ const deleteCotizacion = async (req, res) => {
     }
 }
 
-export default { getAllCotizaciones, getCotizacion, getCotizacionByCodigo, getTableCotizaciones, postCotizacion, updateCotizacion, updateEstadoCotizacion, deleteCotizacion }
+export default { getAllCotizaciones, getCotizacion, getCotizacionByCodigo, getTableCotizaciones, postCotizacion, addDetallesToCotizacion, updateCotizacion, updateEstadoCotizacion, deleteCotizacion }

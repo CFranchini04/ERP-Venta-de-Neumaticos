@@ -28,8 +28,6 @@ const getTablePedidos = async (req, res) => {
     }
 }
 
-// GET /api/compras/pedidos/:id/completo
-// Devuelve cabecera + detalle de productos + cotizaciones del pedido
 const getPedidoCompleto = async (req, res) => {
     try {
         const { id } = req.params
@@ -60,22 +58,14 @@ const postDetallePedido = async (req, res) => {
     }
 }
 
-/**
- * POST /api/compras/pedidos/:id/cotizaciones
- * Genera cotizaciones (una por proveedor) vinculadas al pedido,
- * usando los productos del detalle del pedido.
- */
-const crearCotizacionesPedido = async (req, res) => {
+// POST /api/compras/pedidos/:id/cotizaciones
+// Crea UNA cabecera de cotizacion vinculada al pedido (sin detalles aun).
+const crearCotizacionPedido = async (req, res) => {
     try {
         const { id } = req.params
-        const { detalles } = req.body
-
         if (!id) return res.status(400).json({ message: 'Id de pedido requerido' })
-        if (!detalles || !Array.isArray(detalles) || detalles.length === 0)
-            return res.status(400).json({ message: 'Se requiere el array de detalles del pedido' })
-
-        const cotizaciones = await pedidosService.crearCotizacionesParaPedido(Number(id), detalles)
-        res.status(201).json({ message: 'Cotizaciones creadas correctamente', cotizaciones })
+        const cotizacion = await pedidosService.crearCotizacionParaPedido(Number(id))
+        res.status(201).json({ message: 'Cotizacion creada correctamente', cotizacion })
     } catch (error) {
         res.status(400).json({ message: error.message })
     }
@@ -88,5 +78,5 @@ export default {
     getPedidoCompleto,
     postPedido,
     postDetallePedido,
-    crearCotizacionesPedido,
+    crearCotizacionPedido,
 }

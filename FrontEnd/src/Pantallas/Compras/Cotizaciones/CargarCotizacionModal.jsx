@@ -9,18 +9,18 @@ const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:9128/api";
  * CargarCotizacionModal
  *
  * Props:
- *   open          {boolean}
- *   onClose       {function}
- *   onGuardado    {function}
- *   idPedido      {number}
- *   productos     {array}   [{ id_producto, producto, cantidad, ... }]
- *   proveedores   {array}   [{ id, nombre }]
+ *   open            {boolean}
+ *   onClose         {function}
+ *   onGuardado      {function}
+ *   idCotizacion    {number}   ID de la cabecera de cotizacion ya existente
+ *   productos       {array}    [{ id_producto, producto, cantidad, ... }]
+ *   proveedores     {array}    [{ id, nombre }]
  */
 export default function CargarCotizacionModal({
   open,
   onClose,
   onGuardado,
-  idPedido,
+  idCotizacion,
   productos = [],
   proveedores = [],
 }) {
@@ -29,7 +29,6 @@ export default function CargarCotizacionModal({
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState("");
 
-  // Reiniciar al abrir
   useEffect(() => {
     if (open) {
       setProveedorSeleccionado("");
@@ -42,7 +41,7 @@ export default function CargarCotizacionModal({
           precioUnitario: "",
           esMejorOpcion: false,
           observacion: "",
-          incluido: true,   // ← nuevo: controla si este producto va en la cotización
+          incluido: true,
         }))
       );
     }
@@ -90,6 +89,10 @@ export default function CargarCotizacionModal({
       setError("Debes seleccionar un proveedor.");
       return;
     }
+    if (!idCotizacion) {
+      setError("No se encontró la cotización asociada al pedido.");
+      return;
+    }
     if (productosIncluidos.length === 0) {
       setError("Debes incluir al menos un producto en la cotización.");
       return;
@@ -106,30 +109,28 @@ export default function CargarCotizacionModal({
     setGuardando(true);
 
     try {
-      const codigoCotizacion = `COT_${Date.now()}`;
       const hoy = new Date().toISOString().split("T")[0];
 
-      const payload = {
-        id_pedido: idPedido,
-        id_proveedor: Number(proveedorSeleccionado),
-        fecha_respuesta: hoy,
-        observacion: "",
-        id_estado: 1,
-        codigo_cotizacion: codigoCotizacion,
-        detalles: productosIncluidos.map((d) => ({
-          id_producto: d.id_producto,
-          cantidad: Number(d.cantidad),
-          precio_unitario: Number(d.precioUnitario),
-          es_mejor_opcion: d.esMejorOpcion ?? false,
-          observacion: d.observacion ?? "",
-        })),
-      };
-
-      const res = await fetchConToken(`${API_BASE}/compras/cotizaciones`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
+      // POST a /:idCotizacion/detalle — inserta en cotizaciones_proveedores_detalle.
+      // id_proveedor y fecha_respuesta son NOT NULL en BD.
+      const res = await fetchConToken(
+        `${API_BASE}/compras/cotizaciones/${idCotizacion}/detalle`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            detalles: productosIncluidos.map((d) => ({
+              id_producto: d.id_producto,
+              cantidad: Number(d.cantidad),
+              precio_unitario: Number(d.precioUnitario),
+              es_mejor_opcion: d.esMejorOpcion ?? false,
+              observacion: d.observacion ?? "",
+              id_proveedor: Number(proveedorSeleccionado),
+              fecha_respuesta: hoy,
+            })),
+          }),
+        }
+      );
 
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || "Error al guardar la cotización");
@@ -149,7 +150,6 @@ export default function CargarCotizacionModal({
     <div style={styles.overlay} onClick={onClose}>
       <div style={styles.modal} onClick={(e) => e.stopPropagation()}>
 
-        {/* HEADER */}
         <div style={styles.header}>
           <h2 style={styles.headerTitulo}>Cargar Cotización de Proveedor</h2>
           <button style={styles.botonCerrar} onClick={onClose}>
@@ -157,10 +157,8 @@ export default function CargarCotizacionModal({
           </button>
         </div>
 
-        {/* BODY */}
         <div style={styles.body}>
 
-          {/* SELECT PROVEEDOR */}
           <div style={styles.campo}>
             <label style={styles.label}>Proveedor *</label>
             <select
@@ -175,7 +173,6 @@ export default function CargarCotizacionModal({
             </select>
           </div>
 
-          {/* Indicador de productos incluidos */}
           <div style={{ display: "flex", alignItems: "center", gap: 8, fontFamily: "Lato, sans-serif", fontSize: 13, color: "#555" }}>
             <span>
               Productos incluidos en esta cotización:{" "}
@@ -186,7 +183,6 @@ export default function CargarCotizacionModal({
             <span style={{ color: "#888" }}>— Desmarcá los productos que este proveedor no cotice.</span>
           </div>
 
-          {/* TABLA DE PRODUCTOS */}
           <div style={styles.tablaContainer}>
             <table style={styles.table}>
               <thead>
@@ -213,7 +209,6 @@ export default function CargarCotizacionModal({
                         transition: "opacity 0.15s, background 0.15s",
                       }}
                     >
-                      {/* Checkbox incluir/excluir */}
                       <td style={{ ...styles.td, width: 40 }}>
                         <div
                           onClick={() => toggleIncluido(index)}
@@ -229,54 +224,29 @@ export default function CargarCotizacionModal({
                           {item.incluido && <span style={{ fontSize: 12, fontWeight: 900, color: "#1D1D1D" }}>✓</span>}
                         </div>
                       </td>
-
-                      {/* Nombre producto */}
                       <td onClick={() => toggleIncluido(index)} style={{ ...styles.td, textAlign: "left", fontWeight: 500, color: excluido ? "#aaa" : "#1D1D1D", cursor: "pointer", userSelect: "none" }}>
                         {item.producto}
                       </td>
-
-                      {/* Cantidad */}
                       <td style={styles.td}>{item.cantidad}</td>
-
-                      {/* Precio unitario */}
                       <td style={styles.td}>
                         <input
                           type="number"
                           min="0"
                           disabled={excluido}
-                          style={{
-                            ...styles.input,
-                            background: excluido ? "#eee" : "#FAFAFA",
-                            cursor: excluido ? "not-allowed" : "text",
-                            color: excluido ? "#aaa" : "#1D1D1D",
-                          }}
+                          style={{ ...styles.input, background: excluido ? "#eee" : "#FAFAFA", cursor: excluido ? "not-allowed" : "text", color: excluido ? "#aaa" : "#1D1D1D" }}
                           value={item.precioUnitario}
                           onChange={(e) => handlePrecioChange(index, e.target.value)}
                           placeholder="0"
                         />
                       </td>
-
-                      {/* Subtotal */}
-                      <td style={{
-                        ...styles.td,
-                        fontWeight: subtotal > 0 ? 600 : 400,
-                        color: excluido ? "#ccc" : subtotal > 0 ? "#1D1D1D" : "#aaa"
-                      }}>
+                      <td style={{ ...styles.td, fontWeight: subtotal > 0 ? 600 : 400, color: excluido ? "#ccc" : subtotal > 0 ? "#1D1D1D" : "#aaa" }}>
                         {subtotal > 0 ? subtotal.toLocaleString("es-PY") : "—"}
                       </td>
-
-                      {/* Observación */}
                       <td style={styles.td}>
                         <input
                           type="text"
                           disabled={excluido}
-                          style={{
-                            ...styles.input,
-                            width: 140, fontSize: 12,
-                            background: excluido ? "#eee" : "#FAFAFA",
-                            cursor: excluido ? "not-allowed" : "text",
-                            color: excluido ? "#aaa" : "#1D1D1D",
-                          }}
+                          style={{ ...styles.input, width: 140, fontSize: 12, background: excluido ? "#eee" : "#FAFAFA", cursor: excluido ? "not-allowed" : "text", color: excluido ? "#aaa" : "#1D1D1D" }}
                           value={item.observacion}
                           onChange={(e) => handleObservacionChange(index, e.target.value)}
                           placeholder="Opcional..."
@@ -289,7 +259,6 @@ export default function CargarCotizacionModal({
             </table>
           </div>
 
-          {/* TOTAL */}
           <div style={styles.totalContainer}>
             <strong>Total estimado ({contadorIncluidos} producto{contadorIncluidos !== 1 ? "s" : ""}):</strong>
             <span style={{ fontSize: 18, fontWeight: 700, color: "#1D1D1D" }}>
@@ -299,10 +268,8 @@ export default function CargarCotizacionModal({
 
         </div>
 
-        {/* ERROR */}
         {error && <div style={styles.error}>{error}</div>}
 
-        {/* FOOTER */}
         <div style={styles.footer}>
           <button style={styles.botonCancelar} onClick={onClose} disabled={guardando}>
             Cancelar
@@ -322,20 +289,9 @@ export default function CargarCotizacionModal({
 }
 
 const styles = {
-  overlay: {
-    position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)",
-    display: "flex", justifyContent: "center", alignItems: "center", zIndex: 1000,
-  },
-  modal: {
-    width: "980px", maxWidth: "95vw", maxHeight: "92vh",
-    background: "#fff", borderRadius: 16, overflow: "hidden",
-    display: "flex", flexDirection: "column",
-    boxShadow: "0 12px 40px rgba(0,0,0,0.3)",
-  },
-  header: {
-    background: getColor("amarillo"), padding: "18px 24px",
-    display: "flex", justifyContent: "space-between", alignItems: "center",
-  },
+  overlay: { position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)", display: "flex", justifyContent: "center", alignItems: "center", zIndex: 1000 },
+  modal: { width: "980px", maxWidth: "95vw", maxHeight: "92vh", background: "#fff", borderRadius: 16, overflow: "hidden", display: "flex", flexDirection: "column", boxShadow: "0 12px 40px rgba(0,0,0,0.3)" },
+  header: { background: getColor("amarillo"), padding: "18px 24px", display: "flex", justifyContent: "space-between", alignItems: "center" },
   headerTitulo: { margin: 0, fontSize: 24, fontWeight: 700, fontFamily: "Lato, sans-serif" },
   botonCerrar: { border: "none", background: "transparent", cursor: "pointer" },
   body: { padding: 24, display: "flex", flexDirection: "column", gap: 16, overflowY: "auto", flex: 1 },

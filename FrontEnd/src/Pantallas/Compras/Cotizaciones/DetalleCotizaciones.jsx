@@ -138,7 +138,8 @@ export default function DetalleCotizacion({ usuario, onNavegar, onLogout }) {
     if (!id) return;
     try {
       setLoading(true); setError("");
-      const res = await fetchConToken(`${API_BASE}/compras/cotizaciones/codigo/${id}`);
+      // Navegar con id_cotizacion (numerico) → usar /:id en lugar de /codigo/:codigo
+      const res = await fetchConToken(`${API_BASE}/compras/cotizaciones/${id}`);
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || "No se pudo cargar la cotización");
       setCotizacion(data);
@@ -156,7 +157,6 @@ export default function DetalleCotizacion({ usuario, onNavegar, onLogout }) {
       : "—";
     const provId = cotizacion?.id_proveedor ?? cotizacion?.proveedores?.id_proveedor ?? null;
 
-    // Initialize from this cotización's details
     const initialSel = {};
     (cotizacion.cotizaciones_proveedores_detalle ?? []).forEach((d) => {
       initialSel[d.id_producto] = {
@@ -173,7 +173,6 @@ export default function DetalleCotizacion({ usuario, onNavegar, onLogout }) {
 
     const pedidoId = cotizacion?.id_pedido ?? cotizacion?.pedidos_compras?.id_pedido;
 
-    // Restore localStorage selection (overrides defaults)
     if (pedidoId) {
       try {
         const saved = localStorage.getItem(storageKey(pedidoId));
@@ -186,13 +185,11 @@ export default function DetalleCotizacion({ usuario, onNavegar, onLogout }) {
     if (!pedidoId) return;
     setIdPedido(pedidoId);
 
-    // Check if this cotización already has an order in DB
     fetchConToken(`${API_BASE}/compras/ordenes-compra/verificar/cotizacion/${cotizacion.id_cotizacion}`)
       .then((r) => r.json())
       .then((data) => { if (data?.tieneOrden) setYaGenerado(true); })
       .catch(() => {});
 
-    // Load all cotizaciones for the pedido (for lápiz modal)
     fetchConToken(`${API_BASE}/compras/pedidos/${pedidoId}/completo`)
       .then((r) => r.json())
       .then((data) => {
@@ -338,17 +335,17 @@ export default function DetalleCotizacion({ usuario, onNavegar, onLogout }) {
         </div>
 
         <div style={styles.card}>
-          <h2 style={styles.subtitulo}>🗒 Información de la Cotización</h2>
+          <h2 style={styles.subtitulo}>Información de la Cotización</h2>
           <div style={{ height: 2, background: "#000", marginBottom: 12 }} />
           <div style={styles.infoContainer}>
-            <div><strong>Código:</strong> {cotizacion?.codigo_cotizacion ?? "—"}</div>
+            <div><strong>Código:</strong> {cotizacion?.codigo_cotizacion ?? `COT-${cotizacion?.id_cotizacion ?? "—"}`}</div>
             <div>
               <strong>Estado:</strong>{" "}
               <span style={{ background: cotizacion?.estados?.nombre === "Aprobado" ? "#D9F7BE" : cotizacion?.estados?.nombre === "Cancelado" ? "#FFE0E0" : "#FFF3CD", color: cotizacion?.estados?.nombre === "Aprobado" ? "#237804" : cotizacion?.estados?.nombre === "Cancelado" ? "#E30613" : "#856404", borderRadius: 12, padding: "2px 10px", fontSize: 13, fontWeight: 600 }}>
                 {cotizacion?.estados?.nombre ?? "—"}
               </span>
             </div>
-            <div><strong>Fecha:</strong> {cotizacion?.fecha_respuesta ?? "—"}</div>
+            <div><strong>Fecha:</strong> {cotizacion?.fecha_respuesta ?? cotizacion?.pedidos_compras?.fecha_creacion ?? "—"}</div>
             <div><strong>Proveedor:</strong> {proveedorNombre}</div>
             <div><strong>Pedido:</strong> {cotizacion?.pedidos_compras?.codigo_pedido ?? "—"}</div>
           </div>
@@ -442,7 +439,7 @@ export default function DetalleCotizacion({ usuario, onNavegar, onLogout }) {
 
       </main>
 
-      <CargarCotizacionModal open={modalCargar} onClose={() => setModalCargar(false)} onGuardado={() => { setModalCargar(false); fetchCotizacion(); }} idPedido={idPedido} productos={productosPedido} proveedores={proveedores} />
+      <CargarCotizacionModal open={modalCargar} onClose={() => setModalCargar(false)} onGuardado={() => { setModalCargar(false); fetchCotizacion(); }} idCotizacion={cotizacion?.id_cotizacion} idPedido={idPedido} productos={productosPedido} proveedores={proveedores} />
       <ModalCambiarCotizacion open={modalCambiar.open} onClose={() => setModalCambiar({ open: false, producto: null, opciones: [] })} onGuardar={handleGuardarCambio} productoNombre={modalCambiar.producto?.producto ?? ""} opciones={modalCambiar.opciones} seleccionActual={seleccionPorProducto[modalCambiar.producto?.id_producto] ?? null} />
     </div>
   );

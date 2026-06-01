@@ -13,6 +13,9 @@ import pedidosRoutes from './routes/compras/pedidos.routes.js'
 import facturasRoutes from './routes/compras/facturas.routes.js'
 import cotizacionesRoutes from './routes/compras/cotizaciones.routes.js'
 
+//MISC
+import productosRoutes from './routes/misc/productos.routes.js'
+
 //RRHH
 import empleadosRoutes from './routes/rrhh/empleados.routes.js'
 import salariosRoutes from './routes/rrhh/salarios.routes.js'
@@ -49,6 +52,9 @@ app.use('/api/ventas/', soloRol('admin', 'ventas'))
 app.use('/api/rrhh/', soloRol('admin', 'rrhh'))
 app.use('/api/contabilidad/', soloRol('admin', 'contabilidad'))
 app.use('/api/tesoreria/', soloRol('admin', 'tesoreria'))
+
+//MISC (accesible con token, sin restriccion de rol - uso transversal)
+app.use('/api/misc/productos', productosRoutes)
 
 //COMPRAS
 app.use('/api/compras/proveedores', proveedoresRoutes)

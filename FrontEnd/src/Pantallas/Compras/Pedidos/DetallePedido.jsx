@@ -391,7 +391,7 @@ export default function DetallePedido({ usuario, onNavegar, onLogout }) {
 
       </main>
 
-      <CargarCotizacionModal open={modalCargar} onClose={() => setModalCargar(false)} onGuardado={() => { setModalCargar(false); fetchPedido(); }} idPedido={pedido?.id_pedido ?? Number(id)} productos={pedido?.detalle ?? []} proveedores={proveedores} />
+      <CargarCotizacionModal open={modalCargar} onClose={() => setModalCargar(false)} onGuardado={() => { setModalCargar(false); fetchPedido(); }} idCotizacion={pedido?.cotizaciones?.[0]?.id_cotizacion} idPedido={pedido?.id_pedido ?? Number(id)} productos={pedido?.detalle ?? []} proveedores={proveedores} />
       <ModalCambiarCotizacion open={modalCambiar.open} onClose={() => setModalCambiar({ open: false, producto: null, opciones: [] })} onGuardar={handleGuardarCambio} productoNombre={modalCambiar.producto?.producto ?? ""} opciones={modalCambiar.opciones} seleccionActual={seleccionPorProducto[modalCambiar.producto?.id_producto] ?? null} />
     </div>
   );

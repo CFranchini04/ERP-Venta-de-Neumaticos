@@ -2,6 +2,7 @@ import supabase from '../../config/supabase.js'
 
 const SELECT_ALL = `*, pedidos_compras(*), estados(nombre), cotizaciones_proveedores_detalle(*, proveedores(*, personas(*)), productos(*))`
 const SELECT_SINGLE = `*, pedidos_compras(fecha_creacion, codigo_pedido), estados(nombre), cotizaciones_proveedores_detalle(*,proveedores(personas(nombre, apellido)), productos(*))`
+
 const getAllCotizaciones = async () => {
     const { data, error } = await supabase
         .from('cotizaciones')
@@ -33,10 +34,11 @@ const getCotizacionByCodigo = async (codigo) => {
 const getTableCotizaciones = async () => {
     const { data, error } = await supabase
         .from('cotizaciones')
-        .select('cotizaciones_proveedores_detalle(proveedores(personas(nombre, apellido))), pedidos_compras(codigo_pedido, fecha_creacion), estados(nombre)')
+        .select('id_cotizacion, id_pedido, cotizaciones_proveedores_detalle(proveedores(personas(nombre, apellido))), pedidos_compras(codigo_pedido, fecha_creacion), estados(nombre)')
     if (error) throw new Error(error.message)
     return data
 }
+
 const postCotizacion = async (id_pedido, id_proveedor, id_estado, detalles) => {
     const { data: cotizacion, error } = await supabase
         .from('cotizaciones')
@@ -125,4 +127,25 @@ const deleteCotizacion = async (id) => {
     return { message: 'Cotizacion eliminada correctamente' }
 }
 
-export default { getAllCotizaciones, getCotizacion, getCotizacionByCodigo, getTableCotizaciones, postCotizacion, updateCotizacion, updateEstadoCotizacion, deleteCotizacion }
+// Inserta filas en cotizaciones_proveedores_detalle para una cotizacion existente.
+// id_proveedor y fecha_respuesta son NOT NULL en BD.
+const addDetallesToCotizacion = async (id_cotizacion, detalles) => {
+    const rows = detalles.map((d) => ({
+        id_cotizacion,
+        id_producto: d.id_producto,
+        cantidad: Number(d.cantidad),
+        precio_unitario: Number(d.precio_unitario),
+        es_mejor_opcion: d.es_mejor_opcion ?? false,
+        observacion: d.observacion ?? '',
+        id_proveedor: d.id_proveedor,
+        fecha_respuesta: d.fecha_respuesta,
+    }))
+    const { data, error } = await supabase
+        .from('cotizaciones_proveedores_detalle')
+        .insert(rows)
+        .select()
+    if (error) throw new Error(error.message)
+    return data
+}
+
+export default { getAllCotizaciones, getCotizacion, getCotizacionByCodigo, getTableCotizaciones, postCotizacion, addDetallesToCotizacion, updateCotizacion, updateEstadoCotizacion, deleteCotizacion }
