@@ -39,7 +39,7 @@ export default function Tesoreria({ usuario = 'Empleado', onLogout, onNavegar })
             return;
         }
 
-        if(moduloId === 'movimiento'){
+        if (moduloId === 'movimiento') {
             navigate('/tesoreria/movimiento');
             return;
         }
@@ -81,6 +81,25 @@ export default function Tesoreria({ usuario = 'Empleado', onLogout, onNavegar })
         )
     );
 
+    const movimientosOrdenados = [...movimientosFiltrados].sort((a, b) => {
+        if (!orderBy) return 0;
+
+        const valorA = a[orderBy];
+        const valorB = b[orderBy];
+
+        if (orderBy === 'total') {
+            const numA = Number(String(valorA).replace(/\D/g, '')) || 0;
+            const numB = Number(String(valorB).replace(/\D/g, '')) || 0;
+            return numB - numA;
+        }
+
+        if (orderBy === 'fecha') {
+            return new Date(b.fecha) - new Date(a.fecha);
+        }
+
+        return String(valorA).localeCompare(String(valorB), 'es-PY');
+    });
+
     return (
         <div style={styles.pagina}>
             <Sidebar usuario={usuario} onNavegar={handleNavegar} onLogout={onLogout} />
@@ -97,7 +116,7 @@ export default function Tesoreria({ usuario = 'Empleado', onLogout, onNavegar })
                         { label: 'Bancos y Saldos', icon: <IconoTesoreria size={36} />, id: 'bancos-saldos' },
                         { label: 'Depositos', icon: <IconoFactura size={36} />, id: 'deposito' },
                         { label: 'Movimientos', icon: <IconoMovimiento size={36} />, id: 'movimiento' },
-                        { label: 'Conciliación', icon: <IconoPedidos size={36} />, id: 'venta_directa' },
+
                     ].map((item) => (
                         <button
                             key={item.id}
@@ -113,7 +132,7 @@ export default function Tesoreria({ usuario = 'Empleado', onLogout, onNavegar })
                 <section style={styles.listaFacturas}>
                     <h3 style={styles.subtitulo}>Movimientos</h3>
                     <List
-                        data={movimientosFiltrados}
+                        data={movimientosOrdenados}
                         columns={columns}
                         controls={[
                             {
@@ -125,6 +144,7 @@ export default function Tesoreria({ usuario = 'Empleado', onLogout, onNavegar })
                             {
                                 type: "select",
                                 options: columns,
+                                label: "Ordenar",
                                 placeholder: "Ordenar por...",
                                 value: orderBy,
                                 onChange: (e) => setOrderBy(e.target.value)
