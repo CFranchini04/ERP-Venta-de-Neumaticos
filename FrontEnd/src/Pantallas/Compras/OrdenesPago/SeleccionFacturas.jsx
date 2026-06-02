@@ -4,44 +4,40 @@ import Sidebar from "../../../components/Sidebar";
 import List from "../../../components/Lista";
 import { Button } from "../../../components/Buttons";
 import { getColor } from "../../../components/Colors";
-import { IconoLupa, IconoDropdown } from "../../../components/Icons";
+import SearchBar from "../../../components/Searchbar";
 import fetchConToken from "../../../token";
 import ModalPagoFacturas from "./ModalPagoFacturas";
 
 const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:9128/api";
 
 export default function PagoFacturas({ usuario, onNavegar, onLogout }) {
-  const navigate = useNavigate();
-  const [facturasTodas, setFacturasTodas] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [busquedaProv, setBusquedaProv] = useState("");
-  const [proveedorSeleccionado, setProveedorSeleccionado] = useState(null);
-  const [listaProvExpanded, setListaProvExpanded] = useState(true);
-  const [busquedaFac, setBusquedaFac] = useState("");
-  const [filtroVencimiento, setFiltroVencimiento] = useState("");
-  const [ordenFac, setOrdenFac] = useState("");
-  const [facturasSeleccionadas, setFacturasSeleccionadas] = useState([]);
-  const [modalAbierto, setModalAbierto] = useState(false);
+  const navigate = useNavigate()
+  const [facturasTodas, setFacturasTodas] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState("")
+  const [proveedorSeleccionado, setProveedorSeleccionado] = useState(null)
+  const [searchKey, setSearchKey] = useState(0)
+  const [busquedaFac, setBusquedaFac] = useState("")
+  const [filtroVencimiento, setFiltroVencimiento] = useState("")
+  const [ordenFac, setOrdenFac] = useState("")
+  const [facturasSeleccionadas, setFacturasSeleccionadas] = useState([])
+  const [modalAbierto, setModalAbierto] = useState(false)
 
   useEffect(() => {
     const cargar = async () => {
       try {
-        setLoading(true);
-        setError("");
+        setLoading(true)
+        setError("")
 
-        const response = await fetchConToken(`${API_BASE}/compras/facturas`);
-
+        const response = await fetchConToken(`${API_BASE}/compras/facturas`, {}, navigate)
         if (!response.ok)
-          throw new Error(
-            `Error ${response.status}: No se pudieron cargar las facturas`,
-          );
+          throw new Error(`Error ${response.status}: No se pudieron cargar las facturas`)
 
-        const contentType = response.headers.get("content-type");
+        const contentType = response.headers.get("content-type")
         if (!contentType || !contentType.includes("application/json"))
-          throw new Error("La respuesta del servidor no es JSON válido");
+          throw new Error("La respuesta del servidor no es JSON válido")
 
-        const data = await response.json();
+        const data = await response.json()
 
         setFacturasTodas(
           (data || []).map((f) => ({
@@ -50,122 +46,64 @@ export default function PagoFacturas({ usuario, onNavegar, onLogout }) {
             fecha_creacion: f.fecha_emision,
             fecha_limite: f.fecha_vencimiento,
             orden_compra: f.ordenes_compras?.codigo_orden || "",
+            proveedor_id: f.proveedores?.id_proveedor,
             proveedor: f.proveedores?.personas?.nombre || "",
             estado: f.estados?.nombre || "",
-            importe_total: f.importe_total ?? 0, 
-          })),
-        );
+            importe_total: f.importe_total ?? 0,
+          }))
+        )
       } catch (err) {
-        setError(err.message);
+        setError(err.message)
       } finally {
-        setLoading(false);
+        setLoading(false)
       }
-    };
-
-    cargar();
-  }, []);
-
-  const proveedores = Array.from(
-    new Map(
-      facturasTodas.map((f) => [
-        f.proveedor,
-        { id: f.proveedor, nombre: f.proveedor },
-      ]),
-    ).values(),
-  ).filter((p) => {
-    const texto = busquedaProv.toLowerCase();
-    return p.nombre.toLowerCase().includes(texto);
-  });
+    }
+    cargar()
+  }, [])
 
   const facturasBruto = proveedorSeleccionado
-    ? facturasTodas.filter((f) => f.proveedor === proveedorSeleccionado.id)
-    : [];
+    ? facturasTodas.filter((f) => f.proveedor_id === proveedorSeleccionado.id)
+    : []
 
   const facturasFiltradas = facturasBruto
     .filter((f) => {
-      const texto = busquedaFac.toLowerCase();
+      const texto = busquedaFac.toLowerCase()
       return (
         f.codigo.toLowerCase().includes(texto) ||
-        f.fecha_creacion.includes(texto) ||
-        f.fecha_limite.includes(texto) ||
+        f.fecha_creacion?.includes(texto) ||
+        f.fecha_limite?.includes(texto) ||
         f.orden_compra.toLowerCase().includes(texto)
-      );
+      )
     })
     .filter((f) => {
-      if (!filtroVencimiento) return true;
-      const hoy = new Date();
-      const limite = new Date(f.fecha_limite);
-      if (filtroVencimiento === "vencidas") return limite < hoy;
+      if (!filtroVencimiento) return true
+      const hoy = new Date()
+      const limite = new Date(f.fecha_limite)
+      if (filtroVencimiento === "vencidas") return limite < hoy
       if (filtroVencimiento === "proximas") {
-        const diff = (limite - hoy) / (1000 * 60 * 60 * 24);
-        return diff >= 0 && diff <= 7;
+        const diff = (limite - hoy) / (1000 * 60 * 60 * 24)
+        return diff >= 0 && diff <= 7
       }
-      if (filtroVencimiento === "al_dia") return limite >= hoy;
-      return true;
+      if (filtroVencimiento === "al_dia") return limite >= hoy
+      return true
     })
     .sort((a, b) => {
       if (ordenFac === "fechaCreacionDesc")
-        return new Date(b.fecha_creacion) - new Date(a.fecha_creacion);
+        return new Date(b.fecha_creacion) - new Date(a.fecha_creacion)
       if (ordenFac === "fechaCreacionAsc")
-        return new Date(a.fecha_creacion) - new Date(b.fecha_creacion);
+        return new Date(a.fecha_creacion) - new Date(b.fecha_creacion)
       if (ordenFac === "fechaLimiteAsc")
-        return new Date(a.fecha_limite) - new Date(b.fecha_limite);
-      return 0;
-    });
-
-  const handleSeleccionarProveedor = (prov) => {
-    if (proveedorSeleccionado?.id === prov.id) {
-      setProveedorSeleccionado(null);
-      setFacturasSeleccionadas([]);
-      setListaProvExpanded(true);
-    } else {
-      setProveedorSeleccionado(prov);
-      setFacturasSeleccionadas([]);
-      setListaProvExpanded(false);
-    }
-  };
+        return new Date(a.fecha_limite) - new Date(b.fecha_limite)
+      return 0
+    })
 
   const toggleFactura = (factura) => {
     setFacturasSeleccionadas((prev) =>
       prev.find((f) => f.id === factura.id)
         ? prev.filter((f) => f.id !== factura.id)
-        : [...prev, factura],
-    );
-  };
-
-  const handleProceder = () => {
-    setModalAbierto(true);
-  };
-
-  const columnsProveedores = [
-    {
-      key: "nombre",
-      label: "Proveedor",
-      render: (prov) => (
-        <span
-          onClick={() => handleSeleccionarProveedor(prov)}
-          style={{ cursor: "pointer", display: "block", width: "100%" }}
-        >
-          {prov.nombre}
-        </span>
-      ),
-    },
-    {
-      key: "seleccionar",
-      label: "",
-      width: "48px",
-      render: (prov) => (
-        <div style={{ display: "flex", justifyContent: "center" }}>
-          <input
-            type="checkbox"
-            checked={proveedorSeleccionado?.id === prov.id}
-            onChange={() => handleSeleccionarProveedor(prov)}
-            style={{ width: 18, height: 18, cursor: "pointer" }}
-          />
-        </div>
-      ),
-    },
-  ];
+        : [...prev, factura]
+    )
+  }
 
   const columnsFacturas = [
     { key: "codigo", label: "Código" },
@@ -188,7 +126,7 @@ export default function PagoFacturas({ usuario, onNavegar, onLogout }) {
         </div>
       ),
     },
-  ];
+  ]
 
   return (
     <div style={styles.pagina}>
@@ -205,39 +143,48 @@ export default function PagoFacturas({ usuario, onNavegar, onLogout }) {
 
         {!loading && !error && (
           <>
-            {/* PROVEEDORES */}
+            {/* BÚSQUEDA DE PROVEEDOR */}
             <section style={styles.seccion}>
-              <div
-                style={styles.seccionHeader}
-                onClick={() => setListaProvExpanded((v) => !v)}
-              >
-                <h2 style={styles.subtitulo}>
-                  1. Seleccione un proveedor
-                  {proveedorSeleccionado && (
-                    <span style={styles.proveedorBadge}>
-                      {proveedorSeleccionado.nombre}
-                    </span>
-                  )}
-                </h2>
-                <IconoDropdown active={listaProvExpanded} />
-              </div>
+              <h2 style={styles.subtitulo}>
+                1. Seleccione un proveedor
+                {proveedorSeleccionado && (
+                  <span style={styles.proveedorBadge}>
+                    {proveedorSeleccionado.nombre}
+                  </span>
+                )}
+              </h2>
 
-              {listaProvExpanded && (
-                <List
-                  data={proveedores}
-                  columns={columnsProveedores}
-                  selectable={false}
-                  onRowClick={(prov) => handleSeleccionarProveedor(prov)}
-                  controls={[
-                    {
-                      type: "search",
-                      placeholder: "Buscar proveedor...",
-                      value: busquedaProv,
-                      onChange: (e) => setBusquedaProv(e.target.value),
-                    },
-                  ]}
-                />
-              )}
+              <SearchBar
+                key={searchKey}
+                apiUrl={`${API_BASE}/compras/proveedores/search`}
+                queryParam="search"
+                placeholder="Buscar proveedor..."
+                fetchOnMount={true}
+                onSelect={(rawItem) => {
+                  setProveedorSeleccionado({
+                    id: rawItem.id_proveedor,
+                    nombre: rawItem.personas?.nombre ?? ''
+                  })
+                  setFacturasSeleccionadas([])
+                }}
+                onClear={() => {
+                  setProveedorSeleccionado(null)
+                  setFacturasSeleccionadas([])
+                }}
+                getLabel={(item) => item?.personas?.nombre || ""}
+                renderOption={(item) => (
+                  <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                    <span style={{ fontWeight: 700, fontSize: 14 }}>
+                      {item.personas?.nombre} {item.personas?.apellido ?? ''}
+                    </span>
+                    <span style={{ fontSize: 12, color: "#888" }}>
+                      RUC: {item.personas?.ruc ?? '—'}
+                      {" · Plazo: "}{item.plazo_entrega ?? '—'} días
+                    </span>
+                  </div>
+                )}
+                style={{ maxWidth: 500 }}
+              />
             </section>
 
             {/* FACTURAS */}
@@ -279,14 +226,8 @@ export default function PagoFacturas({ usuario, onNavegar, onLogout }) {
                       value: ordenFac,
                       onChange: (e) => setOrdenFac(e.target.value),
                       options: [
-                        {
-                          key: "fechaCreacionDesc",
-                          label: "Emisión más reciente",
-                        },
-                        {
-                          key: "fechaCreacionAsc",
-                          label: "Emisión más antigua",
-                        },
+                        { key: "fechaCreacionDesc", label: "Emisión más reciente" },
+                        { key: "fechaCreacionAsc", label: "Emisión más antigua" },
                         { key: "fechaLimiteAsc", label: "Vence primero" },
                       ],
                     },
@@ -304,7 +245,7 @@ export default function PagoFacturas({ usuario, onNavegar, onLogout }) {
                       label="Proceder al pago"
                       variant="amarillo"
                       size="lg"
-                      onClick={handleProceder}
+                      onClick={() => setModalAbierto(true)}
                     />
                   </div>
                 )}
@@ -313,21 +254,22 @@ export default function PagoFacturas({ usuario, onNavegar, onLogout }) {
           </>
         )}
       </main>
+
       {modalAbierto && (
         <ModalPagoFacturas
           proveedor={proveedorSeleccionado}
           facturas={facturasSeleccionadas}
           onClose={() => setModalAbierto(false)}
           onConfirmar={() => {
-            setModalAbierto(false);
-            setFacturasSeleccionadas([]);
-            setProveedorSeleccionado(null);
-            setListaProvExpanded(true);
+            setModalAbierto(false)
+            setFacturasSeleccionadas([])
+            setProveedorSeleccionado(null)
+            setSearchKey(k => k + 1)
           }}
         />
       )}
     </div>
-  );
+  )
 }
 
 const styles = {
@@ -372,13 +314,6 @@ const styles = {
     flexDirection: "column",
     gap: 12,
   },
-  seccionHeader: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    cursor: "pointer",
-    userSelect: "none",
-  },
   subtitulo: {
     fontSize: 20,
     fontFamily: "Lato, sans-serif",
@@ -397,10 +332,6 @@ const styles = {
     padding: "2px 10px",
     color: getColor("negro"),
   },
-  chevron: {
-    fontSize: 14,
-    color: getColor("negro"),
-  },
   resumen: {
     display: "flex",
     justifyContent: "space-between",
@@ -416,4 +347,4 @@ const styles = {
     fontSize: 16,
     color: getColor("negro"),
   },
-};
+}
