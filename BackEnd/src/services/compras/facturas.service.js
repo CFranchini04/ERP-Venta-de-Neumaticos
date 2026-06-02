@@ -83,6 +83,15 @@ const getTableFacturas = async () => {
     return data
 }
 
+const getNextCodigoFactura = async () => {
+    const { count, error } = await supabase
+        .from('facturas_compras')
+        .select('*', { count: 'exact', head: true })
+    if (error) throw new Error(error.message)
+    const siguiente = (count ?? 0) + 1
+    return `FAC-${String(siguiente).padStart(5, '0')}`
+}
+
 const postFactura = async (id_proveedor, id_orden_compra, timbrado, nro_factura, fecha_emision, importe_total, fecha_vencimiento, id_estado, codigo_factura, detalles) => {
     const { data: factura, error } = await supabase
         .from('facturas_compras')
@@ -171,4 +180,4 @@ const deleteFactura = async (id) => {
     return { message: 'Factura eliminada correctamente' }
 }
 
-export default { getAllFacturas, getFactura, getFacturaByCodigo, getTableFacturas, postFactura, updateFactura, updateEstadoFactura, deleteFactura }
+export default { getAllFacturas, getFactura, getFacturaByCodigo, getTableFacturas, getNextCodigoFactura, postFactura, updateFactura, updateEstadoFactura, deleteFactura }
