@@ -85,7 +85,7 @@ const postEmpleado = async (ci, conyugue, nro_hijos, hijos_menores, nombre, apel
 }
 
 const updateEmpleado = async (id, data) => {
-    const { ci, conyugue, nro_hijos, hijos_menores, fecha_inicio, ...datosPersona } = data
+    const { ci, conyugue, nro_hijos, hijos_menores, fecha_inicio, id_cargo, id_estado, ...datosPersona } = data
 
     const { data: empExistente, error: errorBuscar } = await supabase
         .from('empleados')
@@ -107,7 +107,6 @@ const updateEmpleado = async (id, data) => {
     const actualizarPersona = Object.fromEntries(
         Object.entries(datosPersona).filter(([_, v]) => v !== undefined && v !== '')
     )
-
     const { data: persona, error: errorPer } = await supabase
         .from('personas')
         .update(actualizarPersona)
@@ -117,7 +116,7 @@ const updateEmpleado = async (id, data) => {
     if (errorPer) throw new Error(errorPer.message)
 
     const actualizarEmpleado = Object.fromEntries(
-        Object.entries({ ci, conyugue, nro_hijos, hijos_menores }).filter(([_, v]) => v !== undefined && v !== '')
+        Object.entries({ ci, conyugue, nro_hijos, hijos_menores }).filter(([_, v]) => v !== undefined)
     )
     const { data: empleado, error: errorEmp } = await supabase
         .from('empleados')
@@ -128,7 +127,7 @@ const updateEmpleado = async (id, data) => {
     if (errorEmp) throw new Error(errorEmp.message)
 
     const actualizarPhc = Object.fromEntries(
-        Object.entries({ fecha_inicio }).filter(([_, v]) => v !== undefined && v !== '')
+        Object.entries({ fecha_inicio, id_cargo, id_estado }).filter(([_, v]) => v !== undefined && v !== '')
     )
     const { data: phc, error: errorPhc } = await supabase
         .from('personas_horario_cargo')

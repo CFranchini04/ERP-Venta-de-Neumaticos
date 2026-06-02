@@ -169,12 +169,21 @@ export default function GestionPersonal({ usuario, onLogout, onNavegar, onGuarda
   const editEmpleado = async () => {
     if (!validar()) return;
     try {
+      const id_cargo = cargosDisponibles.find(c => c.nombre === form.cargo)?.id_cargo
+      const estado = form.estado === 'Confirmado' ? 1 : form.estado === 'Anulado' ? 3 : null;
       const payload = {
-        ci: form.CI, nombre: form.nombre, apellido: form.apellido,
-        direccion: form.direccion, correo: form.correo_electronico,
-        conyugue: form.conyugue, nro_hijos: form.hijos, hijos_menores: form.hijos_menores,
+        ci: form.CI,
+        nombre: form.nombre,
+        apellido: form.apellido,
+        direccion: form.direccion,
+        correo: form.correo_electronico,
+        conyugue: form.conyugue ?? "",
+        nro_hijos: form.hijos !== "" ? Number(form.hijos) : null,       // ← null si vacío
+        hijos_menores: form.hijos_menores !== "" ? Number(form.hijos_menores) : null,
         fecha_inicio: form.fecha_inicio,
-      };
+        id_cargo,
+        id_estado: estado ?? null
+      }
       const res = await fetchConToken(`${API_BASE}/rrhh/empleados/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
@@ -194,6 +203,7 @@ export default function GestionPersonal({ usuario, onLogout, onNavegar, onGuarda
     if (!validar()) return;
     try {
       const id_cargo = cargosDisponibles.find(c => c.nombre === form.cargo)?.id_cargo
+      const estado = form.estado === 'Confirmado' ? 1 : form.estado === 'Anulado' ? 3 : null;
       const payload = {
         ci: form.CI,
         nombre: form.nombre,
@@ -205,7 +215,7 @@ export default function GestionPersonal({ usuario, onLogout, onNavegar, onGuarda
         hijos_menores: form.hijos_menores !== "" ? Number(form.hijos_menores) : null,
         fecha_inicio: form.fecha_inicio,
         id_cargo,
-        id_estado: form.id_estado ?? null
+        id_estado: estado ?? null
       }
 
       const res = await fetchConToken(`${API_BASE}/rrhh/empleados/`, {
