@@ -128,8 +128,19 @@ const deleteCotizacion = async (id) => {
 }
 
 // Inserta filas en cotizaciones_proveedores_detalle para una cotizacion existente.
-// id_proveedor y fecha_respuesta son NOT NULL en BD.
-const addDetallesToCotizacion = async (id_cotizacion, detalles) => {
+// Si sobreescribir=true, elimina primero las filas existentes para cada id_proveedor involucrado.
+const addDetallesToCotizacion = async (id_cotizacion, detalles, sobreescribir = false) => {
+    if (sobreescribir && detalles.length > 0) {
+        const proveedoresUnicos = [...new Set(detalles.map(d => d.id_proveedor))]
+        for (const idProv of proveedoresUnicos) {
+            const { error: delError } = await supabase
+                .from('cotizaciones_proveedores_detalle')
+                .delete()
+                .eq('id_cotizacion', id_cotizacion)
+                .eq('id_proveedor', idProv)
+            if (delError) throw new Error(delError.message)
+        }
+    }
     const rows = detalles.map((d) => ({
         id_cotizacion,
         id_producto: d.id_producto,

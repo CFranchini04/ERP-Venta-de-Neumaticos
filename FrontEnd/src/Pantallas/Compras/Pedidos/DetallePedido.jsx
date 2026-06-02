@@ -78,9 +78,9 @@ function ModalCambiarCotizacion({ open, onClose, onGuardar, productoNombre, opci
               <div style={{ padding: 20, textAlign: "center", color: "#888", fontFamily: "Lato", fontStyle: "italic" }}>No hay cotizaciones disponibles para este producto.</div>
             ) : (
               opcionesFiltradas.map((op, i) => {
-                const selected = seleccionada?.id_cotizacion === op.id_cotizacion;
+                const selected = seleccionada?.id_cotizacion_detalle === op.id_cotizacion_detalle;
                 return (
-                  <div key={op.id_cotizacion} onClick={() => setSeleccionada(selected ? null : op)}
+                  <div key={op.id_cotizacion_detalle} onClick={() => setSeleccionada(selected ? null : op)}
                     style={{ display: "grid", gridTemplateColumns: "1.8fr 1fr 1fr 50px", padding: "10px 16px", background: selected ? "rgba(255,204,0,0.18)" : i % 2 === 0 ? "#fff" : "#CECECE", fontSize: 14, fontFamily: "Lato, sans-serif", cursor: "pointer", borderTop: i > 0 ? "1px solid #ddd" : "none" }}>
                     <span style={{ fontWeight: 500 }}>{op.proveedor}</span>
                     <span>{Number(op.precio_unitario).toLocaleString("es-PY")}</span>
@@ -144,16 +144,37 @@ export default function DetallePedido({ usuario, onNavegar, onLogout }) {
 
   useEffect(() => { fetchPedido(); }, [id]);
 
-  // After pedido loads: restore localStorage selection + check DB for existing order
+  // After pedido loads: auto-populate selections from cotizacion data, then merge localStorage
   useEffect(() => {
     if (!pedido) return;
     const pidPedido = pedido.id_pedido ?? Number(id);
 
-    // Restore selection from localStorage
+    // Auto-populate: one entry per product using the first proveedor that quoted it
+    const cot = pedido.cotizaciones?.[0];
+    const autoSel = {};
+    if (cot?.detalle) {
+      cot.detalle.forEach((d) => {
+        if (autoSel[d.id_producto]) return;
+        autoSel[d.id_producto] = {
+          id_cotizacion: cot.id_cotizacion,
+          id_cotizacion_detalle: d.id_cotizacion_detalle,
+          id_proveedor: d.id_proveedor,
+          proveedor: d.proveedor,
+          estado: cot.estado,
+          precio_unitario: d.precio_unitario,
+          subtotal: d.subtotal,
+          cantidad: d.cantidad,
+        };
+      });
+    }
+
+    // Merge with localStorage — manual selections override the auto ones
     try {
       const saved = localStorage.getItem(storageKey(pidPedido));
-      if (saved) setSeleccionPorProducto(JSON.parse(saved));
+      if (saved) Object.assign(autoSel, JSON.parse(saved));
     } catch {}
+
+    setSeleccionPorProducto(autoSel);
 
     // Check if this pedido already has an orden_compra in the DB
     fetchConToken(`${API_BASE}/compras/ordenes-compra/verificar/pedido/${pidPedido}`)
@@ -178,23 +199,24 @@ export default function DetallePedido({ usuario, onNavegar, onLogout }) {
   };
 
   const handleAbrirModalCambiar = (productoItem) => {
-    const opciones = (pedido?.cotizaciones ?? [])
-      .map((cot) => {
-        const d = cot.detalle.find((x) => x.id_producto === productoItem.id_producto);
-        if (!d) return null;
-        return {
-          id_cotizacion: cot.id_cotizacion,
-          id_cotizacion_detalle: d.id_cotizacion_detalle ?? null,
-          id_proveedor: cot.id_proveedor ?? null,
-          proveedor: cot.proveedor,
-          estado: cot.estado,
-          precio_unitario: d.precio_unitario,
-          subtotal: d.subtotal,
-          cantidad: d.cantidad,
-          cantidadPedido: productoItem.cantidad,
-        };
-      })
-      .filter(Boolean);
+    // One cotizacion per pedido — iterate its detalle rows filtered by product.
+    // Each matching row represents a different proveedor's quote for this product.
+    const cot = pedido?.cotizaciones?.[0];
+    if (!cot) { setModalCambiar({ open: true, producto: productoItem, opciones: [] }); return; }
+
+    const opciones = (cot.detalle ?? [])
+      .filter((d) => d.id_producto === productoItem.id_producto)
+      .map((d) => ({
+        id_cotizacion: cot.id_cotizacion,
+        id_cotizacion_detalle: d.id_cotizacion_detalle,
+        id_proveedor: d.id_proveedor,
+        proveedor: d.proveedor,
+        estado: cot.estado,
+        precio_unitario: d.precio_unitario,
+        subtotal: d.subtotal,
+        cantidad: d.cantidad,
+        cantidadPedido: productoItem.cantidad,
+      }));
     setModalCambiar({ open: true, producto: productoItem, opciones });
   };
 
@@ -242,7 +264,7 @@ export default function DetallePedido({ usuario, onNavegar, onLogout }) {
       setMensajeExito(`Orden${n > 1 ? "es" : ""} de compra generada${n > 1 ? "s" : ""} exitosamente.`);
       setYaGenerado(true);
       localStorage.removeItem(storageKey(pedido?.id_pedido ?? Number(id)));
-      setTimeout(() => navigate("/compras/ordenes"), 1800);
+      setTimeout(() => navigate("/compras/ordenes-de-compra"), 1800);
     } catch (err) {
       alert(`Error: ${err.message}`);
     } finally {
@@ -391,7 +413,7 @@ export default function DetallePedido({ usuario, onNavegar, onLogout }) {
 
       </main>
 
-      <CargarCotizacionModal open={modalCargar} onClose={() => setModalCargar(false)} onGuardado={() => { setModalCargar(false); fetchPedido(); }} idCotizacion={pedido?.cotizaciones?.[0]?.id_cotizacion} idPedido={pedido?.id_pedido ?? Number(id)} productos={pedido?.detalle ?? []} proveedores={proveedores} />
+      <CargarCotizacionModal open={modalCargar} onClose={() => setModalCargar(false)} onGuardado={() => { setModalCargar(false); fetchPedido(); }} idCotizacion={pedido?.cotizaciones?.[0]?.id_cotizacion} idPedido={pedido?.id_pedido ?? Number(id)} productos={pedido?.detalle ?? []} proveedores={proveedores} detallesExistentes={pedido?.cotizaciones?.[0]?.detalle ?? []} />
       <ModalCambiarCotizacion open={modalCambiar.open} onClose={() => setModalCambiar({ open: false, producto: null, opciones: [] })} onGuardar={handleGuardarCambio} productoNombre={modalCambiar.producto?.producto ?? ""} opciones={modalCambiar.opciones} seleccionActual={seleccionPorProducto[modalCambiar.producto?.id_producto] ?? null} />
     </div>
   );

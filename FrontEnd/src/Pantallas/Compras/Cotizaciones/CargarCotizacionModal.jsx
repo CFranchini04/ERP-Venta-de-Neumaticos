@@ -9,12 +9,14 @@ const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:9128/api";
  * CargarCotizacionModal
  *
  * Props:
- *   open            {boolean}
- *   onClose         {function}
- *   onGuardado      {function}
- *   idCotizacion    {number}   ID de la cabecera de cotizacion ya existente
- *   productos       {array}    [{ id_producto, producto, cantidad, ... }]
- *   proveedores     {array}    [{ id, nombre }]
+ *   open               {boolean}
+ *   onClose            {function}
+ *   onGuardado         {function}
+ *   idCotizacion       {number}   ID de la cabecera de cotizacion ya existente
+ *   productos          {array}    [{ id_producto, producto, cantidad, ... }]
+ *   proveedores        {array}    [{ id, nombre }]
+ *   detallesExistentes {array}    [{ id_proveedor, id_producto, precio_unitario, cantidad }]
+ *                                 Filas ya cargadas en esta cotizacion (para detección de duplicados)
  */
 export default function CargarCotizacionModal({
   open,
@@ -23,11 +25,21 @@ export default function CargarCotizacionModal({
   idCotizacion,
   productos = [],
   proveedores = [],
+  detallesExistentes = [],
 }) {
   const [proveedorSeleccionado, setProveedorSeleccionado] = useState("");
   const [detalles, setDetalles] = useState([]);
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState("");
+
+  // Set of proveedor IDs that already have at least one row in this cotizacion
+  const proveedoresConCotizacion = useMemo(() => {
+    const ids = new Set();
+    detallesExistentes.forEach((d) => { if (d.id_proveedor) ids.add(String(d.id_proveedor)); });
+    return ids;
+  }, [detallesExistentes]);
+
+  const esSobreescritura = proveedorSeleccionado !== "" && proveedoresConCotizacion.has(proveedorSeleccionado);
 
   useEffect(() => {
     if (open) {
@@ -36,7 +48,7 @@ export default function CargarCotizacionModal({
       setDetalles(
         productos.map((p) => ({
           id_producto: p.id_producto,
-          producto: p.producto,
+          producto: p.producto ?? p.nombre ?? "—",
           cantidad: p.cantidad,
           precioUnitario: "",
           esMejorOpcion: false,
@@ -46,6 +58,25 @@ export default function CargarCotizacionModal({
       );
     }
   }, [open, productos]);
+
+  // When proveedor changes to one that already has rows, pre-fill prices from existing rows
+  useEffect(() => {
+    if (!proveedorSeleccionado || detallesExistentes.length === 0) return;
+    const existentesDeEsteProv = detallesExistentes.filter(
+      (d) => String(d.id_proveedor) === String(proveedorSeleccionado)
+    );
+    if (existentesDeEsteProv.length === 0) return;
+
+    setDetalles((prev) =>
+      prev.map((item) => {
+        const existente = existentesDeEsteProv.find((e) => e.id_producto === item.id_producto);
+        if (existente) {
+          return { ...item, precioUnitario: String(existente.precio_unitario ?? ""), incluido: true };
+        }
+        return item;
+      })
+    );
+  }, [proveedorSeleccionado]);
 
   const toggleIncluido = (index) => {
     setError("");
@@ -111,14 +142,13 @@ export default function CargarCotizacionModal({
     try {
       const hoy = new Date().toISOString().split("T")[0];
 
-      // POST a /:idCotizacion/detalle — inserta en cotizaciones_proveedores_detalle.
-      // id_proveedor y fecha_respuesta son NOT NULL en BD.
       const res = await fetchConToken(
         `${API_BASE}/compras/cotizaciones/${idCotizacion}/detalle`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
+            sobreescribir: esSobreescritura,
             detalles: productosIncluidos.map((d) => ({
               id_producto: d.id_producto,
               cantidad: Number(d.cantidad),
@@ -168,10 +198,18 @@ export default function CargarCotizacionModal({
             >
               <option value="">— Seleccionar proveedor —</option>
               {proveedores.map((p) => (
-                <option key={p.id} value={p.id}>{p.nombre}</option>
+                <option key={p.id} value={p.id}>
+                  {p.nombre}{proveedoresConCotizacion.has(String(p.id)) ? " ✎ (ya cotizado)" : ""}
+                </option>
               ))}
             </select>
           </div>
+
+          {esSobreescritura && (
+            <div style={styles.avisoSobreescritura}>
+              <strong>⚠ Este proveedor ya tiene una cotización cargada.</strong> Al guardar, se sobreescribirán los precios anteriores con los nuevos valores. Los precios existentes fueron pre-cargados para facilitar la edición.
+            </div>
+          )}
 
           <div style={{ display: "flex", alignItems: "center", gap: 8, fontFamily: "Lato, sans-serif", fontSize: 13, color: "#555" }}>
             <span>
@@ -275,11 +313,16 @@ export default function CargarCotizacionModal({
             Cancelar
           </button>
           <button
-            style={{ ...styles.botonGuardar, opacity: guardando ? 0.6 : 1, cursor: guardando ? "not-allowed" : "pointer" }}
+            style={{
+              ...styles.botonGuardar,
+              opacity: guardando ? 0.6 : 1,
+              cursor: guardando ? "not-allowed" : "pointer",
+              background: esSobreescritura ? "#F59E0B" : getColor("amarillo"),
+            }}
             onClick={handleGuardar}
             disabled={guardando}
           >
-            {guardando ? "Guardando..." : "Guardar Cotización"}
+            {guardando ? "Guardando..." : esSobreescritura ? "Sobreescribir Cotización" : "Guardar Cotización"}
           </button>
         </div>
 
@@ -298,6 +341,7 @@ const styles = {
   campo: { display: "flex", flexDirection: "column", gap: 8 },
   label: { fontWeight: 700, fontSize: 14, fontFamily: "Lato, sans-serif", color: "#333" },
   select: { padding: "10px 12px", borderRadius: 8, border: "1.5px solid #ccc", fontSize: 14, fontFamily: "Lato, sans-serif", background: "#FAFAFA", outline: "none", cursor: "pointer" },
+  avisoSobreescritura: { background: "#FFF3CD", border: "1.5px solid #F0A500", borderRadius: 8, padding: "10px 16px", color: "#856404", fontSize: 13, fontFamily: "Lato, sans-serif", lineHeight: 1.5 },
   tablaContainer: { border: "1px solid #ddd", borderRadius: 12, overflow: "hidden" },
   table: { width: "100%", borderCollapse: "collapse" },
   th: { background: getColor("amarillo"), padding: "12px 14px", textAlign: "center", fontSize: 14, fontFamily: "Lato, sans-serif", fontWeight: 700 },
@@ -307,5 +351,5 @@ const styles = {
   error: { background: "#fff0f0", border: "1px solid #E30613", borderRadius: 8, padding: "10px 24px", color: "#E30613", fontSize: 14, fontFamily: "Lato, sans-serif", margin: "0 24px" },
   footer: { padding: "16px 24px", borderTop: "1px solid #eee", display: "flex", justifyContent: "flex-end", gap: 12 },
   botonCancelar: { padding: "10px 24px", borderRadius: 999, border: "1px solid #999", background: "#fff", cursor: "pointer", fontFamily: "Lato, sans-serif" },
-  botonGuardar: { padding: "10px 28px", borderRadius: 999, border: "none", background: getColor("amarillo"), fontWeight: "bold", cursor: "pointer", fontFamily: "Lato, sans-serif", fontSize: 15 },
+  botonGuardar: { padding: "10px 28px", borderRadius: 999, border: "none", fontWeight: "bold", fontFamily: "Lato, sans-serif", fontSize: 15 },
 };
