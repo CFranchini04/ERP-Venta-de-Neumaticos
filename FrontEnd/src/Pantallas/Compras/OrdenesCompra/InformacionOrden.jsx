@@ -40,9 +40,9 @@ function ModalCargarFactura({ orden, onClose, onGuardado }) {
   const [loadingProveedor, setLoadingProveedor] = useState(false);
 
   const [lineas, setLineas] = useState([]);
-
+  
   const [proveedores, setProveedores] = useState([]);
-
+    
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState("");
 
@@ -173,7 +173,7 @@ function ModalCargarFactura({ orden, onClose, onGuardado }) {
 
     if (detallesAEnviar.length === 0)
       return setError(
-        "Debes incluir al menos un producto con cantidad mayor a 0.",
+        "Debés incluir al menos un producto con cantidad mayor a 0.",
       );
 
     try {
@@ -573,7 +573,7 @@ export default function InformacionOrden({
     { key: "importe_total", label: "Importe Total" },
   ];
 
-  if (!ordenActual) return <div>No hay orden seleccionada</div>;
+  if (!ordenActual) return <div>Cargando orden...</div>;
 
   return (
     <div style={styles.pagina}>
