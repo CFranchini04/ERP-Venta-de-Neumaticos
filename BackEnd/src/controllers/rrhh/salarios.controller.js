@@ -21,12 +21,21 @@ const getProceso = async (req, res) => {
     }
 }
 
+const getUltimoProceso = async (req, res) => {
+    try {
+        const proceso = await salariosService.getUltimoProceso()
+        res.status(200).json(proceso)
+    } catch (error) {
+        res.status(400).json({ message: error.message })
+    }
+}
+
 const postProceso = async (req, res) => {
     try {
-        const { mes_año, tipo_proceso, fecha_alta, id_estado } = req.body
-        if (!mes_año || !tipo_proceso)
+        const { tipo_proceso, fecha_inicio, fecha_fin, id_estado } = req.body
+        if (!tipo_proceso || !fecha_inicio || !fecha_fin)
             return res.status(400).json({ message: 'Faltan datos requeridos' })
-        const proceso = await salariosService.postProceso(mes_año, tipo_proceso, fecha_alta, id_estado)
+        const proceso = await salariosService.postProceso(tipo_proceso, fecha_inicio, fecha_fin, id_estado)
         res.status(201).json(proceso)
     } catch (error) {
         res.status(400).json({ message: error.message })
@@ -159,16 +168,17 @@ const getSalarioEmpleado = async (req, res) => {
     }
 }
 
-// Novedades
+// ─── NOVEDADES ──────────────────────────────────────────────────
 
 const getAllNovedades = async (req, res) => {
     try {
         const data = await salariosService.getAllNovedades()
-        res.json(data)
+        res.status(200).json(data)
     } catch (err) {
-        res.status(500).json({ message: err.message })
+        res.status(400).json({ message: err.message })
     }
 }
+
 const searchNovedades = async (req, res) => {
     try {
         const { search } = req.query
@@ -179,13 +189,14 @@ const searchNovedades = async (req, res) => {
         res.status(400).json({ message: err.message })
     }
 }
+
 const getNovedad = async (req, res) => {
     try {
         const { id } = req.params
         const data = await salariosService.getNovedad(id)
-        res.json(data)
+        res.status(200).json(data)
     } catch (err) {
-        res.status(500).json({ message: err.message })
+        res.status(400).json({ message: err.message })
     }
 }
 
@@ -195,7 +206,7 @@ const postNovedad = async (req, res) => {
         const data = await salariosService.postNovedad(nombre, tipo_novedad, formula, clase, es_fijo, id_estado)
         res.status(201).json(data)
     } catch (err) {
-        res.status(500).json({ message: err.message })
+        res.status(400).json({ message: err.message })
     }
 }
 
@@ -203,9 +214,9 @@ const updateNovedad = async (req, res) => {
     try {
         const { id } = req.params
         const data = await salariosService.updateNovedad(id, req.body)
-        res.json(data)
+        res.status(200).json(data)
     } catch (err) {
-        res.status(500).json({ message: err.message })
+        res.status(400).json({ message: err.message })
     }
 }
 
@@ -214,9 +225,15 @@ const updateEstadoNovedad = async (req, res) => {
         const { id } = req.params
         const { id_estado } = req.body
         const data = await salariosService.updateEstadoNovedad(id, id_estado)
-        res.json(data)
+        res.status(200).json(data)
     } catch (err) {
-        res.status(500).json({ message: err.message })
+        res.status(400).json({ message: err.message })
     }
 }
-export default { getAllProcesos, getProceso, postProceso, updateEstadoProceso, getAllPagos, getPago, getPagosByEmpleado, getPagosByProceso, getTablePagos, postPago, updatePago, updateEstadoPago, deletePago, getSalarioEmpleado, getAllNovedades, searchNovedades, getNovedad, postNovedad, updateNovedad, updateEstadoNovedad }
+
+export default {
+    getAllProcesos, getProceso, getUltimoProceso, postProceso, updateEstadoProceso,
+    getAllPagos, getPago, getPagosByEmpleado, getPagosByProceso, getTablePagos, postPago, updatePago, updateEstadoPago, deletePago,
+    getSalarioEmpleado,
+    getAllNovedades, searchNovedades, getNovedad, postNovedad, updateNovedad, updateEstadoNovedad
+}
