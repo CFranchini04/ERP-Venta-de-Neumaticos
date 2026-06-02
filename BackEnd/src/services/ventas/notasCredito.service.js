@@ -94,7 +94,7 @@ const getTableNC = async () => {
     return data
 }
  
-const postNC = async (id_factura_venta, nro_nota_credito, timbrado, fecha_emision, monto_total, motivo, id_estado, detalles) => {
+    const postNC = async (id_factura_venta, nro_nota_credito, timbrado, fecha_emision, monto_total, motivo, id_estado, detalles) => {
     const { data: nc, error } = await supabase
         .from('notas_credito_ventas')
         .insert({ id_factura_venta, nro_nota_credito, timbrado, fecha_emision, monto_total, motivo, id_estado })
@@ -106,6 +106,7 @@ const postNC = async (id_factura_venta, nro_nota_credito, timbrado, fecha_emisio
         id_producto: d.id_producto,
         cantidad: d.cantidad,
         precio_unitario: d.precio_unitario,
+        monto_iva: d.monto_iva,     
         id_nota_credito_venta: nc.id_nota_credito_venta
     }))
  
