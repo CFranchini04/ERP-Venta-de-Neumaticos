@@ -38,6 +38,15 @@ const getTableFacturas = async (req, res) => {
   }
 }
 
+const getNextCodigoFactura = async (req, res) => {
+  try {
+    const codigo = await facturasService.getNextCodigoFactura()
+    res.status(200).json({ codigo_factura: codigo })
+  } catch (error) {
+    res.status(400).json({ message: error.message })
+  }
+}
+
 const postFactura = async (req, res) => {
   try {
     const { id_proveedor, id_orden_compra, timbrado, nro_factura, fecha_emision, importe_total, fecha_vencimiento, id_estado, codigo_factura, detalles } = req.body
@@ -90,4 +99,4 @@ const deleteFactura = async (req, res) => {
   }
 }
 
-export default { getAllFacturas, getFactura, getFacturaByCodigo, getTableFacturas, postFactura, updateFactura, updateEstadoFactura, deleteFactura }
+export default { getAllFacturas, getFactura, getFacturaByCodigo, getTableFacturas, getNextCodigoFactura, postFactura, updateFactura, updateEstadoFactura, deleteFactura }

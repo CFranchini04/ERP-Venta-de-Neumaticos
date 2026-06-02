@@ -187,23 +187,13 @@ export default function Movimiento({ usuario = 'Empleado', onLogout, onNavegar }
                 columns={[
                   { key: 'fecha', label: 'Fecha' },
                   { key: 'cuentaOrigen', label: 'Cuenta origen' },
-                  { key: 'cuentaDestino', label: 'Cuenta destino' },
+                  { key: 'cuentaDestino', label: 'Cuenta destino'},
+                  { key: 'estado', label: 'Estado' },
                   { key: 'tipo', label: 'Tipo' },
                   {
                     key: 'monto',
                     label: 'Monto',
                     render: item => formatearGs(item.monto),
-                  },
-                  {
-                    label: 'Acciones',
-                    render: item => (
-                      <button
-                        style={styles.btnMas}
-                        onClick={() => console.log('Ver movimiento', item.id)}
-                      >
-                        <IconoMas />
-                      </button>
-                    ),
                   },
                 ]}
               />
