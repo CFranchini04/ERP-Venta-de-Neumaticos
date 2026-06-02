@@ -1,6 +1,6 @@
 import supabase from '../../config/supabase.js'
-const SELECT_ALL = `*, personas(*), personas_horario_cargo(*,cargo(*), estados(*)),familiares(*, personas(*))`
-const SELECT_SINGLE = `*, personas(*), personas_horario_cargo(*,cargo(*), estados(nombre)),familiares(relacion, personas(nombre, apellido, fecha_nacimiento))`
+const SELECT_ALL = `*, personas(*), personas_horario_cargo(*,cargo(*), estados(*)))`
+const SELECT_SINGLE = `*, personas(*), personas_horario_cargo(*,cargo(*), estados(nombre)))`
 const getAllEmpleados = async () => {
     const { data, error } = await supabase
         .from('empleados')
@@ -57,7 +57,7 @@ const getEmpleadoByRuc = async (ruc) => {
     return data
 }
 
-const postEmpleado = async (ci, nombre, apellido, ruc, direccion, telefono, correo, tipo_persona, fecha_nacimiento) => {
+const postEmpleado = async (ci, conyugue, nro_hijos, hijos_menores, nombre, apellido, ruc, direccion, telefono, correo, tipo_persona, fecha_nacimiento) => {
     const { data: persona, error: errorPer } = await supabase
         .from('personas')
         .insert({ nombre, apellido, ruc, direccion, telefono, correo, tipo_persona, fecha_nacimiento })
@@ -75,7 +75,7 @@ const postEmpleado = async (ci, nombre, apellido, ruc, direccion, telefono, corr
 }
 
 const updateEmpleado = async (id, data) => {
-    const { ci, fecha_inicio, ...datosPersona } = data
+    const { ci, conyugue, nro_hijos, hijos_menores, fecha_inicio, ...datosPersona } = data
 
     const { data: empExistente, error: errorBuscar } = await supabase
         .from('empleados')
@@ -107,7 +107,7 @@ const updateEmpleado = async (id, data) => {
     if (errorPer) throw new Error(errorPer.message)
 
     const actualizarEmpleado = Object.fromEntries(
-        Object.entries({ ci }).filter(([_, v]) => v !== undefined && v !== '')
+        Object.entries({ ci, conyugue, nro_hijos, hijos_menores }).filter(([_, v]) => v !== undefined && v !== '')
     )
     const { data: empleado, error: errorEmp } = await supabase
         .from('empleados')
@@ -156,4 +156,13 @@ const deleteEmpleado = async (id) => {
     return { message: 'Empleado eliminado correctamente' }
 }
 
-export default { getAllEmpleados, getTableEmpleado, getEmpleado, getEmpleadoByNombre, getEmpleadoByCi, getEmpleadoByRuc, postEmpleado, updateEmpleado, deleteEmpleado }
+const getAllCargos = async () => {
+    const { data, error } = await supabase
+        .from('cargo')
+        .select('*')
+        .order('nombre', { ascending: true })
+    if (error) throw new Error(error.message)
+    return data
+}
+
+export default { getAllEmpleados, getTableEmpleado, getEmpleado, getEmpleadoByNombre, getEmpleadoByCi, getEmpleadoByRuc, postEmpleado, updateEmpleado, deleteEmpleado, getAllCargos }
