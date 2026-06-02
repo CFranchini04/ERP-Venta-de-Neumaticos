@@ -1,42 +1,65 @@
-// Controlador HTTP para Plan de Cuentas.
-import {
-  listarCuentas,
-  obtenerCuenta,
-  crearCuenta,
-  actualizarCuenta,
-  eliminarCuenta,
-} from './cuentas.service';
+import cuentasService from '../../services/contabilidad/cuentas.service.js'
 
-export const getCuentas = (_req, res) => {
-  res.json(listarCuentas());
-};
-
-export const getCuenta = (req, res) => {
-  const cuenta = obtenerCuenta(req.params.codigo);
-  if (!cuenta) return res.status(404).json({ error: 'Cuenta no encontrada' });
-  res.json(cuenta);
-};
-
-export const postCuenta = (req, res) => {
+const getCuentas = async (_req, res) => {
   try {
-    res.status(201).json(crearCuenta(req.body));
-  } catch (e) {
-    res.status(400).json({ error: e.message });
+    const cuentas = await cuentasService.listarCuentas()
+    res.status(200).json(cuentas)
+  } catch (error) {
+    res.status(400).json({ message: error.message })
   }
-};
+}
 
-export const putCuenta = (req, res) => {
+const getCuenta = async (req, res) => {
   try {
-    res.json(actualizarCuenta(req.params.codigo, req.body));
-  } catch (e) {
-    res.status(400).json({ error: e.message });
+    const { codigo } = req.params
+    const cuenta = await cuentasService.obtenerCuenta(codigo)
+    if (!cuenta) return res.status(404).json({ message: 'Cuenta no encontrada' })
+    res.status(200).json(cuenta)
+  } catch (error) {
+    res.status(400).json({ message: error.message })
   }
-};
+}
 
-export const deleteCuenta = (req, res) => {
+const postCuenta = async (req, res) => {
   try {
-    res.json(eliminarCuenta(req.params.codigo));
-  } catch (e) {
-    res.status(400).json({ error: e.message });
+    const datos = req.body
+    if (!datos.codigo || !datos.cuenta) {
+      return res.status(400).json({ message: 'Código y nombre de cuenta requeridos' })
+    }
+    const nuevaCuenta = await cuentasService.crearCuenta(datos)
+    res.status(201).json(nuevaCuenta)
+  } catch (error) {
+    res.status(400).json({ message: error.message })
   }
-};
+}
+
+const putCuenta = async (req, res) => {
+  try {
+    const { codigo } = req.params
+    const datos = req.body
+    if (!codigo) return res.status(400).json({ message: 'Código requerido' })
+    const cuentaActualizada = await cuentasService.actualizarCuenta(codigo, datos)
+    res.status(200).json(cuentaActualizada)
+  } catch (error) {
+    res.status(400).json({ message: error.message })
+  }
+}
+
+const deleteCuenta = async (req, res) => {
+  try {
+    const { codigo } = req.params
+    if (!codigo) return res.status(400).json({ message: 'Código requerido' })
+    const resultado = await cuentasService.eliminarCuenta(codigo)
+    res.status(200).json(resultado)
+  } catch (error) {
+    res.status(400).json({ message: error.message })
+  }
+}
+
+export default {
+  getCuentas,
+  getCuenta,
+  postCuenta,
+  putCuenta,
+  deleteCuenta
+}

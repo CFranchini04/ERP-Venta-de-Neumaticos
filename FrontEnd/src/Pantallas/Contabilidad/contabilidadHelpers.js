@@ -1,4 +1,6 @@
-export const API = "http://localhost:3000/api";
+import fetchConToken from "../../token";
+
+export const API = "http://localhost:9128/api";
 
 export const fmt = (n) =>
   `Gs. ${(n ?? 0).toLocaleString("es-PY", { maximumFractionDigits: 0 })}`;
@@ -20,18 +22,18 @@ export const esDeudora = (codigo) => {
 
 // Fetchers
 export const fetchCuentas = () =>
-  fetch(`${API}/cuentas`).then((r) => r.json());
+  fetchConToken(`${API}/contabilidad/cuentas/`).then((r) => r.json());
 
 export const fetchAsientos = (desde, hasta) => {
   const qs = new URLSearchParams();
   if (desde) qs.set("desde", desde);
   if (hasta) qs.set("hasta", hasta);
-  const url = `${API}/asientos${qs.toString() ? `?${qs}` : ""}`;
-  return fetch(url).then((r) => r.json());
+  const url = `${API}/contabilidad/asientos${qs.toString() ? `?${qs}` : ""}`;
+  return fetchConToken(url).then((r) => r.json());
 };
 
 export const crearAsientoAPI = (asiento) =>
-  fetch(`${API}/asientos`, {
+  fetchConToken(`${API}/contabilidad/asientos`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(asiento),
@@ -41,7 +43,7 @@ export const crearAsientoAPI = (asiento) =>
   });
 
 export const crearCuentaAPI = (cuenta) =>
-  fetch(`${API}/cuentas`, {
+  fetchConToken(`${API}/contabilidad/cuentas`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(cuenta),
@@ -51,7 +53,7 @@ export const crearCuentaAPI = (cuenta) =>
   });
 
 export const actualizarCuentaAPI = (codigo, cambios) =>
-  fetch(`${API}/cuentas/${encodeURIComponent(codigo)}`, {
+  fetchConToken(`${API}/contabilidad/cuentas/${encodeURIComponent(codigo)}`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(cambios),

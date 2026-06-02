@@ -66,7 +66,7 @@ export default function PlanDeCuentas({ usuario = "Empleado", onNavegar, onLogou
   useEffect(() => {
     fetchCuentas()
       .then((data) => setCuentas([...data].sort(sortByCodigo)))
-      .catch((e) => alert("Error al cargar cuentas: " + e.message));
+      .catch((e) => console.log("Error al cargar cuentas: " + e.message));
   }, []);
 
   const datos = useMemo(() => {
