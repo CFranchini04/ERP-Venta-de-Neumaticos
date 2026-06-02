@@ -14,8 +14,7 @@ const SELECT_SINGLE_PAGO = `
     *,
     personas(nombre, apellido, ruc, direccion, telefono, correo),
     personas_horario_cargo(
-      salario,
-      cargo(nombre),
+      cargo(nombre, salario),
       horarios(*),
       estados(nombre)
     )
@@ -220,9 +219,8 @@ const getSalarioEmpleado = async (id_empleado) => {
     const { data, error } = await supabase
         .from('personas_horario_cargo')
         .select(`
-            salario,
             estados(nombre),
-            cargo(nombre),
+            cargo(nombre, salario),
             horarios(*)
         `)
         .eq('id_empleado', id_empleado)

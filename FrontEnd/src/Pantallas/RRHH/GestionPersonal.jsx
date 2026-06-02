@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Sidebar from "../../components/Sidebar";
 import { Button } from '../../components/Buttons';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import fetchConToken from '../../token';
 function InputSugerencias({ value, onChange, opciones, placeholder }) {
   const [mostrar, setMostrar] = useState(false)
@@ -86,7 +86,7 @@ const CAMPOS_REQUERIDOS = {
 
 export default function GestionPersonal({ usuario, onLogout, onNavegar, onGuardado }) {
   const { id } = useParams();
-  const modoCrear = !id || id === -1;
+  const modoCrear = !id || id === '-1';
 
   const [editando, setEditando] = useState(modoCrear);
   const [cargando, setCargando] = useState(!modoCrear);
@@ -95,6 +95,7 @@ export default function GestionPersonal({ usuario, onLogout, onNavegar, onGuarda
   const [cargo, setCargo] = useState('')
   const [cargosDisponibles, setCargosDisponibles] = useState([])
   const estadosDisponibles = ['Confirmado', 'Anulado']
+  const navigate = useNavigate();
 
 
   const [form, setForm] = useState({
@@ -126,11 +127,6 @@ export default function GestionPersonal({ usuario, onLogout, onNavegar, onGuarda
           hijos: data.nro_hijos || 0,
           hijos_menores: data.hijos_menores || 0
         });
-        const res2 = await fetchConToken(`${API_BASE}/rrhh/empleados/cargos`)
-        const data2 = await res2.json()
-        if (Array.isArray(data2)) {
-          setCargosDisponibles(data2.map(c => ({ id_cargo: c.id_cargo, nombre: c.nombre })))
-        }
 
       } finally {
         setCargando(false);
@@ -138,6 +134,20 @@ export default function GestionPersonal({ usuario, onLogout, onNavegar, onGuarda
     };
     cargarEmpleado();
   }, [id]);
+
+  useEffect(() => {
+    const cargarCargos = async () => {
+      try {
+        const res = await fetchConToken(`${API_BASE}/rrhh/empleados/cargos`)
+        const data = await res.json()
+        if (Array.isArray(data))
+          setCargosDisponibles(data.map(c => ({ id_cargo: c.id_cargo, nombre: c.nombre })))
+      } catch (err) {
+        console.error('Error cargando cargos:', err)
+      }
+    }
+    cargarCargos()
+  }, [])
 
   const handleChange = (key, value) => {
     setForm(prev => ({ ...prev, [key]: value }));
@@ -180,10 +190,39 @@ export default function GestionPersonal({ usuario, onLogout, onNavegar, onGuarda
     }
   };
 
-  const crearEmpleado = () => {
+  const crearEmpleado = async () => {
     if (!validar()) return;
-    console.log("CREAR:", form);
-  };
+    try {
+      const id_cargo = cargosDisponibles.find(c => c.nombre === form.cargo)?.id_cargo
+      const payload = {
+        ci: form.CI,
+        nombre: form.nombre,
+        apellido: form.apellido,
+        direccion: form.direccion,
+        correo: form.correo_electronico,
+        conyugue: form.conyugue ?? "",
+        nro_hijos: form.hijos !== "" ? Number(form.hijos) : null,       // ← null si vacío
+        hijos_menores: form.hijos_menores !== "" ? Number(form.hijos_menores) : null,
+        fecha_inicio: form.fecha_inicio,
+        id_cargo,
+        id_estado: form.id_estado ?? null
+      }
+
+      const res = await fetchConToken(`${API_BASE}/rrhh/empleados/`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      })
+
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.message || "Error al crear el empleado")
+      if (onGuardado) onGuardado(data)
+      setErrorGeneral("")
+      navigate("/rrhh")
+    } catch (err) {
+      setErrorGeneral(err.message || "Error al crear empleado")
+    }
+  }
 
   const cancelarEdicion = () => {
     setEditando(false);
@@ -232,20 +271,20 @@ export default function GestionPersonal({ usuario, onLogout, onNavegar, onGuarda
 
                   ) : (
                     <>
-                    <p>Cargo:</p>
-                    <InputSugerencias
-                      value={form.cargo}
-                      onChange={(val) => handleChange('cargo', val)}
-                      opciones={cargosDisponibles.map(c => c.nombre)}
-                      placeholder="Cargo..."
-                    />
-                    <p>Estado:</p>
-                    <InputSugerencias
-                      value={form.estado}
-                      onChange={(val) => handleChange('estado', val)}
-                      opciones={estadosDisponibles}
-                      placeholder="Estado..."
-                    />
+                      <p>Cargo:</p>
+                      <InputSugerencias
+                        value={form.cargo}
+                        onChange={(val) => handleChange('cargo', val)}
+                        opciones={cargosDisponibles.map(c => c.nombre)}
+                        placeholder="Cargo..."
+                      />
+                      <p>Estado:</p>
+                      <InputSugerencias
+                        value={form.estado}
+                        onChange={(val) => handleChange('estado', val)}
+                        opciones={estadosDisponibles}
+                        placeholder="Estado..."
+                      />
                     </>
                   )}
                 </div>
@@ -275,23 +314,17 @@ export default function GestionPersonal({ usuario, onLogout, onNavegar, onGuarda
 
           {/* BOTONES */}
           <div style={styles.footer}>
-            {modoCrear ? (
+            {!modoCrear && !editando && (
+              <Button label="Editar" variant="amarillo" onClick={() => setEditando(true)} />
+            )}
+            {!modoCrear && editando && (
+              <Button label="Cancelar" variant="gris" onClick={cancelarEdicion} />
+            )}
+            {modoCrear && (
               <Button label="Crear empleado" variant="amarillo" onClick={crearEmpleado} />
-            ) : (
-              <>
-                {!editando ? (
-                  <Button label="Editar" variant="amarillo" onClick={() => setEditando(true)} />
-                ) : (
-                  <>
-                    <Button label="Cancelar" variant="gris" onClick={cancelarEdicion} />
-                    {modoCrear ? (
-                      <Button label="Crear empleado" variant="amarillo" onClick={crearEmpleado} />
-                    ) : (
-                      <Button label="Guardar" variant="amarillo" onClick={editEmpleado} />
-                    )}
-                  </>
-                )}
-              </>
+            )}
+            {!modoCrear && editando && (
+              <Button label="Guardar" variant="amarillo" onClick={editEmpleado} />
             )}
           </div>
 

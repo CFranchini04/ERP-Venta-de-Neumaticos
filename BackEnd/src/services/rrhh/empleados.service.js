@@ -57,7 +57,8 @@ const getEmpleadoByRuc = async (ruc) => {
     return data
 }
 
-const postEmpleado = async (ci, conyugue, nro_hijos, hijos_menores, nombre, apellido, ruc, direccion, telefono, correo, tipo_persona, fecha_nacimiento) => {
+const postEmpleado = async (ci, conyugue, nro_hijos, hijos_menores, nombre, apellido, ruc, direccion, telefono, correo, tipo_persona, fecha_nacimiento, id_cargo, id_estado, fecha_inicio) => {
+
     const { data: persona, error: errorPer } = await supabase
         .from('personas')
         .insert({ nombre, apellido, ruc, direccion, telefono, correo, tipo_persona, fecha_nacimiento })
@@ -65,13 +66,22 @@ const postEmpleado = async (ci, conyugue, nro_hijos, hijos_menores, nombre, apel
         .single()
     if (errorPer) throw new Error(errorPer.message)
 
+
     const { data: empleado, error: errorEmp } = await supabase
         .from('empleados')
-        .insert({ ci, id_persona: persona.id_persona })
+        .insert({ ci, conyugue, nro_hijos, hijos_menores, id_persona: persona.id_persona })
         .select()
         .single()
     if (errorEmp) throw new Error(errorEmp.message)
-    return empleado
+
+    const { data: phc, error: errorPhc } = await supabase
+        .from('personas_horario_cargo')
+        .insert({ id_empleado: empleado.id_empleado, id_cargo, id_estado, fecha_inicio })
+        .select()
+        .single()
+    if (errorPhc) throw new Error(errorPhc.message)
+
+    return { persona, empleado, phc }
 }
 
 const updateEmpleado = async (id, data) => {

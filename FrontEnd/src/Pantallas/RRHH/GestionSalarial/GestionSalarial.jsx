@@ -103,11 +103,12 @@ export default function GestionSalarial({ usuario, onLogout, onNavegar }) {
         const salario = await resSal.json();
         const pdp = await resPdp.json();
 
+
         setEmpleado({
           nombre: dataEmp?.personas?.nombre ?? '',
           apellido: dataEmp?.personas?.apellido ?? '',
           cargo: dataEmp?.personas_horario_cargo?.[0]?.cargo?.nombre ?? '',
-          salarioBase: salario?.salario ?? 0,
+          salarioBase: salario?.cargo?.salario ?? 0,
         });
 
         if (pdp?.id_pdp) {
