@@ -140,17 +140,6 @@ export default function Deposito({ usuario = 'Empleado', onLogout, onNavegar }) 
                     label: 'Total',
                     render: (item) => formatearGs(item.total)
                   },
-                  {
-                    label: 'Acciones',
-                    render: (item) => (
-                      <button
-                        style={styles.btnMas}
-                        onClick={() => console.log('Ver depósito', item.id)}
-                      >
-                        <IconoMas />
-                      </button>
-                    )
-                  },
                 ]}
               />
             </div>
