@@ -173,7 +173,7 @@ function ModalCargarFactura({ orden, onClose, onGuardado }) {
 
     if (detallesAEnviar.length === 0)
       return setError(
-        "Debés incluir al menos un producto con cantidad mayor a 0.",
+        "Debes incluir al menos un producto con cantidad mayor a 0.",
       );
 
     try {
@@ -365,7 +365,7 @@ function ModalCargarFactura({ orden, onClose, onGuardado }) {
           <div style={ms.seccion}>
             <p style={ms.seccionTitulo}>Productos de la Orden</p>
             <p style={ms.hint}>
-              Ingresá la cantidad que el proveedor entrega en esta factura. No
+              Ingresa la cantidad que el proveedor entrega en esta factura. No
               puede superar el pendiente.
             </p>
 
