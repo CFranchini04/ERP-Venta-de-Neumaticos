@@ -1,9 +1,10 @@
 import supabase from '../../config/supabase.js'
-
+const SELECT_ALL = `*, personas(*), personas_horario_cargo(*,cargo(*), estados(*)),familiares(*, personas(*))`
+const SELECT_SINGLE = `*, personas(*), personas_horario_cargo(*,cargo(*), estados(nombre)),familiares(relacion, personas(nombre, apellido, fecha_nacimiento))`
 const getAllEmpleados = async () => {
     const { data, error } = await supabase
         .from('empleados')
-        .select('*, personas(*), personas_horario_cargo(*,cargo(*), estados(*)),familiares(*, personas(*))')
+        .select(SELECT_ALL)
     if (error) throw new Error(error.message)
     return data
 }
@@ -19,8 +20,9 @@ const getTableEmpleado = async () => {
 const getEmpleado = async (id) => {
     const { data, error } = await supabase
         .from('empleados')
-        .select('*, personas(*), personas_horario_cargo(*,cargo(*), estados(nombre)),familiares(relacion, personas(nombre, apellido, fecha_nacimiento))')
+        .select(SELECT_SINGLE)
         .eq('id_empleado', id)
+        .single()
     if (error) throw new Error(error.message)
     return data
 }
@@ -28,8 +30,9 @@ const getEmpleado = async (id) => {
 const getEmpleadoByNombre = async (nombre) => {
     const { data, error } = await supabase
         .from('empleados')
-        .select('*, personas(*), personas_horario_cargo(*,cargo(*), estados(nombre)),familiares(relacion, personas(nombre, apellido, fecha_nacimiento))')
+        .select(SELECT_SINGLE)
         .ilike('personas.nombre', `%${nombre}%`)
+        .single()
     if (error) throw new Error(error.message)
     return data
 }
@@ -37,8 +40,9 @@ const getEmpleadoByNombre = async (nombre) => {
 const getEmpleadoByCi = async (ci) => {
     const { data, error } = await supabase
         .from('empleados')
-        .select('*, personas(*), personas_horario_cargo(*,cargo(*), estados(nombre)),familiares(relacion, personas(nombre, apellido, fecha_nacimiento))')
+        .select(SELECT_SINGLE)
         .eq('ci', ci)
+        .single()
     if (error) throw new Error(error.message)
     return data
 }
@@ -46,8 +50,9 @@ const getEmpleadoByCi = async (ci) => {
 const getEmpleadoByRuc = async (ruc) => {
     const { data, error } = await supabase
         .from('empleados')
-        .select('*, personas(*), personas_horario_cargo(*,cargo(*), estados(nombre)),familiares(relacion, personas(nombre, apellido, fecha_nacimiento))')
+        .select(SELECT_SINGLE)
         .eq('personas.ruc', ruc)
+        .single()
     if (error) throw new Error(error.message)
     return data
 }
@@ -70,7 +75,7 @@ const postEmpleado = async (ci, nombre, apellido, ruc, direccion, telefono, corr
 }
 
 const updateEmpleado = async (id, data) => {
-    const { ci, ...datosPersona } = data
+    const { ci, fecha_inicio, ...datosPersona } = data
 
     const { data: empExistente, error: errorBuscar } = await supabase
         .from('empleados')
@@ -79,11 +84,20 @@ const updateEmpleado = async (id, data) => {
         .single()
     if (errorBuscar) throw new Error(errorBuscar.message)
 
+    const { data: phcExistente, error: errorBuscarPhc } = await supabase
+        .from('personas_horario_cargo')
+        .select('id_phc')
+        .eq('id_empleado', id)
+        .single()
+    if (errorBuscarPhc) throw new Error(errorBuscarPhc.message)
+
     const id_persona = empExistente.id_persona
+    const id_phc = phcExistente.id_phc
 
     const actualizarPersona = Object.fromEntries(
         Object.entries(datosPersona).filter(([_, v]) => v !== undefined && v !== '')
     )
+
     const { data: persona, error: errorPer } = await supabase
         .from('personas')
         .update(actualizarPersona)
@@ -103,7 +117,18 @@ const updateEmpleado = async (id, data) => {
         .single()
     if (errorEmp) throw new Error(errorEmp.message)
 
-    return { persona, empleado }
+    const actualizarPhc = Object.fromEntries(
+        Object.entries({ fecha_inicio }).filter(([_, v]) => v !== undefined && v !== '')
+    )
+    const { data: phc, error: errorPhc } = await supabase
+        .from('personas_horario_cargo')
+        .update(actualizarPhc)
+        .eq('id_phc', id_phc)
+        .select()
+        .single()
+    if (errorPhc) throw new Error(errorPhc.message)
+
+    return { persona, empleado, phc }
 }
 
 const deleteEmpleado = async (id) => {
