@@ -143,6 +143,17 @@ export default function Cuenta({ usuario = 'Empleado', onLogout, onNavegar }) {
                         >
                             Depósito
                         </button>
+
+                        <button
+                            style={styles.botonAccion}
+                            onClick={() =>
+                                navigate('/tesoreria/movimiento', {
+                                    state: { cuenta }
+                                })
+                            }
+                        >
+                            Movimiento
+                        </button>
                     </div>
 
                 </div>
