@@ -106,16 +106,22 @@ const getPedidoCompleto = async (id) => {
             proveedor: personas
                 ? `${personas.nombre ?? ''} ${personas.apellido ?? ''}`.trim() || '—'
                 : '—',
-            detalle: (c.cotizaciones_proveedores_detalle || []).map((cd) => ({
-                id_cotizacion_detalle: cd.id_cotizacion_detalle,
-                id_producto: cd.productos?.id_producto ?? null,
-                producto: cd.productos?.nombre ?? '—',
-                cantidad: Number(cd.cantidad ?? 0),
-                precio_unitario: Number(cd.precio_unitario ?? 0),
-                subtotal: Number(cd.subtotal ?? 0),
-                es_mejor_opcion: cd.es_mejor_opcion ?? false,
-                observacion: cd.observacion ?? '',
-            })),
+            detalle: (c.cotizaciones_proveedores_detalle || []).map((cd) => {
+                const personas = cd.proveedores?.personas
+                const provNombre = personas ? `${personas.nombre ?? ''} ${personas.apellido ?? ''}`.trim() || '—' : '—'
+                return {
+                    id_cotizacion_detalle: cd.id_cotizacion_detalle,
+                    id_producto: cd.productos?.id_producto ?? null,
+                    producto: cd.productos?.nombre ?? '—',
+                    id_proveedor: cd.id_proveedor,
+                    proveedor: provNombre,
+                    cantidad: Number(cd.cantidad ?? 0),
+                    precio_unitario: Number(cd.precio_unitario ?? 0),
+                    subtotal: Number(cd.subtotal ?? 0),
+                    es_mejor_opcion: cd.es_mejor_opcion ?? false,
+                    observacion: cd.observacion ?? '',
+                }
+            }),
         }
     })
 

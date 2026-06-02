@@ -49,7 +49,7 @@ function ModalCambiarCotizacion({ open, onClose, onGuardar, productoNombre, opci
     <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)", display: "flex", justifyContent: "center", alignItems: "center", zIndex: 1000 }} onClick={onClose}>
       <div style={{ width: 640, maxWidth: "95vw", background: "#fff", borderRadius: 16, overflow: "hidden", boxShadow: "0 12px 40px rgba(0,0,0,0.3)", display: "flex", flexDirection: "column" }} onClick={(e) => e.stopPropagation()}>
         <div style={{ background: getColor("amarillo"), padding: "14px 20px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <span style={{ fontWeight: 700, fontSize: 18, fontFamily: "Lato, sans-serif" }}>Cambiar cotización / proveedor</span>
+          <span style={{ fontWeight: 700, fontSize: 18, fontFamily: "Lato, sans-serif" }}>Cotizaciones disponibles</span>
           <button onClick={onClose} style={{ border: "none", background: "transparent", cursor: "pointer", fontSize: 20, fontWeight: 700, lineHeight: 1 }}>✕</button>
         </div>
         <div style={{ padding: "20px 24px", display: "flex", flexDirection: "column", gap: 14 }}>
@@ -72,19 +72,19 @@ function ModalCambiarCotizacion({ open, onClose, onGuardar, productoNombre, opci
           </div>
           <div style={{ borderRadius: 8, overflow: "hidden", outline: "1px #1D1D1D solid" }}>
             <div style={{ display: "grid", gridTemplateColumns: "1.8fr 1fr 1fr 50px", background: getColor("amarillo"), padding: "10px 16px", fontWeight: 700, fontSize: 14, fontFamily: "Lato, sans-serif" }}>
-              <span>Proveedor</span><span>Precio</span><span>Cantidad</span><span></span>
+              <span>Proveedor</span><span>Precio Unit.</span><span>Cantidad</span><span></span>
             </div>
             {opcionesFiltradas.length === 0 ? (
-              <div style={{ padding: 20, textAlign: "center", color: "#888", fontFamily: "Lato", fontStyle: "italic" }}>No hay otras cotizaciones disponibles para este producto.</div>
+              <div style={{ padding: 20, textAlign: "center", color: "#888", fontFamily: "Lato", fontStyle: "italic" }}>No hay cotizaciones cargadas para este producto.</div>
             ) : (
               opcionesFiltradas.map((op, i) => {
-                const selected = seleccionada?.id_cotizacion === op.id_cotizacion;
+                const selected = seleccionada?.id_cotizacion_detalle === op.id_cotizacion_detalle;
                 return (
-                  <div key={op.id_cotizacion} onClick={() => setSeleccionada(selected ? null : op)}
+                  <div key={op.id_cotizacion_detalle} onClick={() => setSeleccionada(selected ? null : op)}
                     style={{ display: "grid", gridTemplateColumns: "1.8fr 1fr 1fr 50px", padding: "10px 16px", background: selected ? "rgba(255,204,0,0.18)" : i % 2 === 0 ? "#fff" : "#CECECE", fontSize: 14, fontFamily: "Lato, sans-serif", cursor: "pointer", borderTop: i > 0 ? "1px solid #ddd" : "none" }}>
                     <span style={{ fontWeight: 500 }}>{op.proveedor}</span>
                     <span>{Number(op.precio_unitario).toLocaleString("es-PY")}</span>
-                    <span>{op.cantidad}/{op.cantidadPedido}</span>
+                    <span>{op.cantidad}</span>
                     <span style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
                       <div style={{ width: 18, height: 18, border: `2px solid ${selected ? "#1D1D1D" : "#aaa"}`, borderRadius: 3, background: selected ? getColor("amarillo") : "#fff", display: "flex", alignItems: "center", justifyContent: "center" }}>
                         {selected && <span style={{ fontSize: 11, fontWeight: 900, color: "#1D1D1D" }}>✓</span>}
@@ -99,13 +99,19 @@ function ModalCambiarCotizacion({ open, onClose, onGuardar, productoNombre, opci
         <div style={{ padding: "14px 24px", borderTop: "1px solid #eee", display: "flex", justifyContent: "flex-end", gap: 12 }}>
           <button onClick={() => { if (seleccionada) onGuardar(seleccionada); }} disabled={!seleccionada}
             style={{ padding: "10px 28px", borderRadius: 999, background: seleccionada ? getColor("amarillo") : "#ddd", border: "1px solid #000", fontWeight: 700, fontFamily: "Lato", fontSize: 15, cursor: seleccionada ? "pointer" : "not-allowed" }}>
-            Guardar
+            Seleccionar
           </button>
           <button onClick={onClose} style={{ padding: "10px 28px", borderRadius: 999, border: "1px solid #999", background: "#fff", cursor: "pointer", fontFamily: "Lato", fontSize: 15 }}>Cancelar</button>
         </div>
       </div>
     </div>
   );
+}
+
+function proveedorDesdeDetalle(d) {
+  const personas = d.proveedores?.personas;
+  if (!personas) return "—";
+  return `${personas.nombre ?? ""} ${personas.apellido ?? ""}`.trim() || "—";
 }
 
 export default function DetalleCotizacion({ usuario, onNavegar, onLogout }) {
@@ -118,7 +124,6 @@ export default function DetalleCotizacion({ usuario, onNavegar, onLogout }) {
   const [busqueda, setBusqueda] = useState("");
   const [orden, setOrden] = useState("default");
 
-  const [todasCotizaciones, setTodasCotizaciones] = useState([]);
   const [idPedido, setIdPedido] = useState(null);
 
   const [modalCargar, setModalCargar] = useState(false);
@@ -138,7 +143,6 @@ export default function DetalleCotizacion({ usuario, onNavegar, onLogout }) {
     if (!id) return;
     try {
       setLoading(true); setError("");
-      // Navegar con id_cotizacion (numerico) → usar /:id en lugar de /codigo/:codigo
       const res = await fetchConToken(`${API_BASE}/compras/cotizaciones/${id}`);
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || "No se pudo cargar la cotización");
@@ -152,18 +156,16 @@ export default function DetalleCotizacion({ usuario, onNavegar, onLogout }) {
   useEffect(() => {
     if (!cotizacion) return;
 
-    const provNombre = cotizacion?.proveedores?.personas
-      ? [cotizacion.proveedores.personas.nombre, cotizacion.proveedores.personas.apellido].filter(Boolean).join(" ")
-      : "—";
-    const provId = cotizacion?.id_proveedor ?? cotizacion?.proveedores?.id_proveedor ?? null;
-
+    // Build initial selection: one entry per unique product, from first detalle row for that product.
+    // Read id_proveedor and proveedor name from each detalle row — NOT from the cotizacion header.
     const initialSel = {};
     (cotizacion.cotizaciones_proveedores_detalle ?? []).forEach((d) => {
+      if (initialSel[d.id_producto]) return;
       initialSel[d.id_producto] = {
         id_cotizacion: cotizacion.id_cotizacion,
-        id_cotizacion_detalle: d.id_cotizacion_detalle ?? null,
-        id_proveedor: provId,
-        proveedor: provNombre,
+        id_cotizacion_detalle: d.id_cotizacion_detalle,
+        id_proveedor: d.id_proveedor,
+        proveedor: proveedorDesdeDetalle(d),
         estado: cotizacion.estados?.nombre ?? "—",
         precio_unitario: d.precio_unitario,
         subtotal: d.subtotal,
@@ -171,7 +173,7 @@ export default function DetalleCotizacion({ usuario, onNavegar, onLogout }) {
       };
     });
 
-    const pedidoId = cotizacion?.id_pedido ?? cotizacion?.pedidos_compras?.id_pedido;
+    const pedidoId = cotizacion.id_pedido;
 
     if (pedidoId) {
       try {
@@ -193,11 +195,10 @@ export default function DetalleCotizacion({ usuario, onNavegar, onLogout }) {
     fetchConToken(`${API_BASE}/compras/pedidos/${pedidoId}/completo`)
       .then((r) => r.json())
       .then((data) => {
-        if (data?.cotizaciones) setTodasCotizaciones(data.cotizaciones);
         if (data?.detalle) setProductosPedido(data.detalle);
       })
       .catch((err) => console.error("Error cargando pedido completo:", err));
-  }, [cotizacion]);
+  }, [cotizacion?.id_cotizacion]);
 
   const handleAbrirModalCargar = async () => {
     if (proveedores.length === 0) {
@@ -214,24 +215,22 @@ export default function DetalleCotizacion({ usuario, onNavegar, onLogout }) {
     setModalCargar(true);
   };
 
+  // Options come from all detalle rows in this cotizacion that match the clicked product's id_producto.
+  // Each row represents a different proveedor's quote for that product.
   const handleAbrirModalCambiar = (detalleItem) => {
-    const opciones = todasCotizaciones
-      .map((cot) => {
-        const d = cot.detalle.find((x) => x.id_producto === detalleItem.id_producto);
-        if (!d) return null;
-        return {
-          id_cotizacion: cot.id_cotizacion,
-          id_cotizacion_detalle: d.id_cotizacion_detalle ?? null,
-          id_proveedor: cot.id_proveedor ?? null,
-          proveedor: cot.proveedor,
-          estado: cot.estado,
-          precio_unitario: d.precio_unitario,
-          subtotal: d.subtotal,
-          cantidad: d.cantidad,
-          cantidadPedido: detalleItem.cantidad,
-        };
-      })
-      .filter(Boolean);
+    const opciones = (cotizacion?.cotizaciones_proveedores_detalle ?? [])
+      .filter((d) => d.id_producto === detalleItem.id_producto)
+      .map((d) => ({
+        id_cotizacion: cotizacion.id_cotizacion,
+        id_cotizacion_detalle: d.id_cotizacion_detalle,
+        id_proveedor: d.id_proveedor,
+        proveedor: proveedorDesdeDetalle(d),
+        estado: cotizacion.estados?.nombre ?? "—",
+        precio_unitario: d.precio_unitario,
+        subtotal: d.subtotal,
+        cantidad: d.cantidad,
+        cantidadPedido: detalleItem.cantidad,
+      }));
     setModalCambiar({ open: true, producto: detalleItem, opciones });
   };
 
@@ -278,7 +277,7 @@ export default function DetalleCotizacion({ usuario, onNavegar, onLogout }) {
       setMensajeExito(`Orden${n > 1 ? "es" : ""} de compra generada${n > 1 ? "s" : ""} exitosamente.`);
       setYaGenerado(true);
       if (idPedido) localStorage.removeItem(storageKey(idPedido));
-      setTimeout(() => navigate("/compras/ordenes"), 1800);
+      setTimeout(() => navigate("/compras/ordenes-de-compra"), 1800);
     } catch (err) {
       alert(`Error: ${err.message}`);
     } finally {
@@ -286,17 +285,21 @@ export default function DetalleCotizacion({ usuario, onNavegar, onLogout }) {
     }
   };
 
-  const proveedorNombre = cotizacion?.proveedores?.personas
-    ? [cotizacion.proveedores.personas.nombre, cotizacion.proveedores.personas.apellido].filter(Boolean).join(" ")
-    : "—";
-
-  const detallesBruto = (cotizacion?.cotizaciones_proveedores_detalle ?? []).map((d) => ({
-    id_producto: d.id_producto,
-    producto: d.productos?.nombre ?? "—",
-    cantidad: d.cantidad,
-    precio_unitario_orig: Number(d.precio_unitario ?? 0),
-    subtotal_orig: Number(d.subtotal ?? 0),
-  }));
+  // One row per unique product — group cotizaciones_proveedores_detalle by id_producto
+  const detallesBruto = (() => {
+    const seen = new Set();
+    const result = [];
+    (cotizacion?.cotizaciones_proveedores_detalle ?? []).forEach((d) => {
+      if (seen.has(d.id_producto)) return;
+      seen.add(d.id_producto);
+      result.push({
+        id_producto: d.id_producto,
+        producto: d.productos?.nombre ?? "—",
+        cantidad: d.cantidad,
+      });
+    });
+    return result;
+  })();
 
   const detallesFiltrados = detallesBruto
     .filter((d) => {
@@ -338,16 +341,16 @@ export default function DetalleCotizacion({ usuario, onNavegar, onLogout }) {
           <h2 style={styles.subtitulo}>Información de la Cotización</h2>
           <div style={{ height: 2, background: "#000", marginBottom: 12 }} />
           <div style={styles.infoContainer}>
-            <div><strong>Código:</strong> {cotizacion?.codigo_cotizacion ?? `COT-${cotizacion?.id_cotizacion ?? "—"}`}</div>
+            <div><strong>Código:</strong> {`COT-${cotizacion?.id_cotizacion ?? "—"}`}</div>
             <div>
               <strong>Estado:</strong>{" "}
               <span style={{ background: cotizacion?.estados?.nombre === "Aprobado" ? "#D9F7BE" : cotizacion?.estados?.nombre === "Cancelado" ? "#FFE0E0" : "#FFF3CD", color: cotizacion?.estados?.nombre === "Aprobado" ? "#237804" : cotizacion?.estados?.nombre === "Cancelado" ? "#E30613" : "#856404", borderRadius: 12, padding: "2px 10px", fontSize: 13, fontWeight: 600 }}>
                 {cotizacion?.estados?.nombre ?? "—"}
               </span>
             </div>
-            <div><strong>Fecha:</strong> {cotizacion?.fecha_respuesta ?? cotizacion?.pedidos_compras?.fecha_creacion ?? "—"}</div>
-            <div><strong>Proveedor:</strong> {proveedorNombre}</div>
+            <div><strong>Fecha del pedido:</strong> {cotizacion?.pedidos_compras?.fecha_creacion ?? "—"}</div>
             <div><strong>Pedido:</strong> {cotizacion?.pedidos_compras?.codigo_pedido ?? "—"}</div>
+            <div><strong>Productos:</strong> {detallesBruto.length}</div>
           </div>
         </div>
 
@@ -383,30 +386,40 @@ export default function DetalleCotizacion({ usuario, onNavegar, onLogout }) {
 
           <div style={styles.tabla}>
             <div style={{ display: "grid", gridTemplateColumns: COLS, background: getColor("amarillo"), padding: "10px 14px", fontWeight: 700, fontSize: 13, fontFamily: "Lato, sans-serif" }}>
-              <span>#</span><span>Producto</span><span>Proveedor</span>
+              <span>#</span><span>Producto</span><span>Proveedor seleccionado</span>
               <span style={{ textAlign: "right" }}>Precio Unitario</span>
               <span style={{ textAlign: "right" }}>Subtotal</span>
               <span></span>
             </div>
 
-            {detallesFiltrados.length === 0 && <div style={styles.emptyMsg}>No hay productos en esta cotización.</div>}
+            {detallesFiltrados.length === 0 && (
+              <div style={styles.emptyMsg}>
+                {detallesBruto.length === 0
+                  ? "No hay cotizaciones cargadas. Usá el botón 'Cargar Cotización' para agregar precios de proveedores."
+                  : "No hay productos que coincidan con la búsqueda."}
+              </div>
+            )}
 
             {detallesFiltrados.map((d, i) => {
               const sel = seleccionPorProducto[d.id_producto];
-              const precio = sel ? Number(sel.precio_unitario) : d.precio_unitario_orig;
-              const subtotal = sel ? Number(sel.subtotal) : d.subtotal_orig;
-              const proveedor = sel?.proveedor ?? proveedorNombre;
-              const cambiado = sel && sel.id_cotizacion !== cotizacion?.id_cotizacion;
+              const precio = sel ? Number(sel.precio_unitario) : null;
+              const subtotal = sel ? Number(sel.subtotal) : null;
+              const proveedor = sel?.proveedor ?? "—";
+              const tieneCotizaciones = (cotizacion?.cotizaciones_proveedores_detalle ?? []).some((x) => x.id_producto === d.id_producto);
 
               return (
                 <div key={d.id_producto} style={{ display: "grid", gridTemplateColumns: COLS, padding: "10px 14px", background: i % 2 === 0 ? "#ffffff" : "#CECECE", fontSize: 14, fontFamily: "Lato, sans-serif", alignItems: "center" }}>
                   <span style={{ color: "#888", fontSize: 13 }}>{String(i + 1).padStart(2, "0")}</span>
                   <span style={{ fontWeight: 500 }}>{d.producto}</span>
-                  <span style={{ color: cambiado ? "#856404" : "#1D1D1D", fontWeight: cambiado ? 600 : 400 }}>{proveedor}</span>
-                  <span style={{ textAlign: "right", fontWeight: 600, color: cambiado ? "#856404" : "#1D1D1D" }}>{precio.toLocaleString("es-PY")}</span>
-                  <span style={{ textAlign: "right", fontWeight: 600, color: cambiado ? "#856404" : "#1D1D1D" }}>{subtotal.toLocaleString("es-PY")}</span>
+                  <span style={{ color: sel ? "#1D1D1D" : "#aaa" }}>{proveedor}</span>
+                  <span style={{ textAlign: "right", fontWeight: precio ? 600 : 400, color: precio ? "#856404" : "#aaa" }}>
+                    {precio ? precio.toLocaleString("es-PY") : "—"}
+                  </span>
+                  <span style={{ textAlign: "right", fontWeight: subtotal ? 600 : 400, color: subtotal ? "#856404" : "#aaa" }}>
+                    {subtotal ? subtotal.toLocaleString("es-PY") : "—"}
+                  </span>
                   <span style={{ display: "flex", justifyContent: "center" }}>
-                    <BtnLapiz onClick={() => handleAbrirModalCambiar(d)} />
+                    {tieneCotizaciones && <BtnLapiz onClick={() => handleAbrirModalCambiar(d)} />}
                   </span>
                 </div>
               );
@@ -415,7 +428,10 @@ export default function DetalleCotizacion({ usuario, onNavegar, onLogout }) {
 
           <div style={styles.footer}>
             <span style={{ fontFamily: "Lato", fontWeight: 700, fontSize: 16 }}>
-              Total estimado: <strong>{totalSeleccionado.toLocaleString("es-PY")} Gs.</strong>
+              Total estimado:{" "}
+              {totalSeleccionado > 0
+                ? <strong>{totalSeleccionado.toLocaleString("es-PY")} Gs.</strong>
+                : <span style={{ color: "#aaa", fontWeight: 400 }}>—</span>}
             </span>
             <div style={{ display: "flex", gap: 10 }}>
               <button onClick={handleGuardar} disabled={guardando}
@@ -439,8 +455,23 @@ export default function DetalleCotizacion({ usuario, onNavegar, onLogout }) {
 
       </main>
 
-      <CargarCotizacionModal open={modalCargar} onClose={() => setModalCargar(false)} onGuardado={() => { setModalCargar(false); fetchCotizacion(); }} idCotizacion={cotizacion?.id_cotizacion} idPedido={idPedido} productos={productosPedido} proveedores={proveedores} />
-      <ModalCambiarCotizacion open={modalCambiar.open} onClose={() => setModalCambiar({ open: false, producto: null, opciones: [] })} onGuardar={handleGuardarCambio} productoNombre={modalCambiar.producto?.producto ?? ""} opciones={modalCambiar.opciones} seleccionActual={seleccionPorProducto[modalCambiar.producto?.id_producto] ?? null} />
+      <CargarCotizacionModal
+        open={modalCargar}
+        onClose={() => setModalCargar(false)}
+        onGuardado={() => { setModalCargar(false); fetchCotizacion(); }}
+        idCotizacion={cotizacion?.id_cotizacion}
+        idPedido={idPedido}
+        productos={productosPedido.length > 0 ? productosPedido : detallesBruto}
+        proveedores={proveedores}
+      />
+      <ModalCambiarCotizacion
+        open={modalCambiar.open}
+        onClose={() => setModalCambiar({ open: false, producto: null, opciones: [] })}
+        onGuardar={handleGuardarCambio}
+        productoNombre={modalCambiar.producto?.producto ?? ""}
+        opciones={modalCambiar.opciones}
+        seleccionActual={seleccionPorProducto[modalCambiar.producto?.id_producto] ?? null}
+      />
     </div>
   );
 }

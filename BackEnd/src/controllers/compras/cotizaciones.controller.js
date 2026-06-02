@@ -57,11 +57,11 @@ const postCotizacion = async (req, res) => {
 const addDetallesToCotizacion = async (req, res) => {
     try {
         const { id } = req.params
-        const { detalles } = req.body
+        const { detalles, sobreescribir = false } = req.body
         if (!id) return res.status(400).json({ message: 'Id de cotizacion requerido' })
         if (!detalles || detalles.length === 0)
             return res.status(400).json({ message: 'Debe incluir al menos un detalle' })
-        const result = await cotizacionesService.addDetallesToCotizacion(Number(id), detalles)
+        const result = await cotizacionesService.addDetallesToCotizacion(Number(id), detalles, sobreescribir)
         res.status(201).json(result)
     } catch (error) {
         res.status(400).json({ message: error.message })
