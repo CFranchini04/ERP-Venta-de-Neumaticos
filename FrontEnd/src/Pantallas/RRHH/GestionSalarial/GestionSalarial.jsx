@@ -87,7 +87,6 @@ export default function GestionSalarial({ usuario, onLogout, onNavegar }) {
   const [deducciones, setDeducciones] = useState([]);
 
   const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:9128/api';
-  const hoy = new Date().toISOString().split('T')[0];
 
   useEffect(() => {
     if (!id) { setCargando(false); return; }
@@ -130,9 +129,6 @@ export default function GestionSalarial({ usuario, onLogout, onNavegar }) {
   }, [id]);
 
   const handlePeriodoChange = (nuevo) => {
-    // No permitir fechas anteriores a hoy
-    if (nuevo.fechaInicio && nuevo.fechaInicio < hoy) return;
-    if (nuevo.fechaFin && nuevo.fechaFin < hoy) return;
     // No permitir fin anterior a inicio
     if (nuevo.fechaInicio && nuevo.fechaFin && nuevo.fechaFin < nuevo.fechaInicio) return;
 
@@ -327,7 +323,7 @@ h1{text-align:center;margin-bottom:30px}
                   <input
                     type="date"
                     value={periodo.fechaInicio}
-                    min={hoy}
+                    max={periodo.fechaFin || undefined}
                     onChange={e => handlePeriodoChange({ ...periodo, fechaInicio: e.target.value })}
                     style={styles.inputFecha}
                   />
@@ -337,7 +333,7 @@ h1{text-align:center;margin-bottom:30px}
                   <input
                     type="date"
                     value={periodo.fechaFin}
-                    min={periodo.fechaInicio || hoy}
+                    min={periodo.fechaInicio || undefined}
                     onChange={e => handlePeriodoChange({ ...periodo, fechaFin: e.target.value })}
                     style={styles.inputFecha}
                   />
