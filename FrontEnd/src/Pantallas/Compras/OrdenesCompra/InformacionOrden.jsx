@@ -8,11 +8,14 @@ import fetchConToken from "../../../token";
 const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:9128/api";
 
 // ─── Utilidades ──────────────────────────────────────────────────────────────
-
 const calcularEntregado = (idOrdenDetalle, facturas) => {
   let total = 0;
   for (const f of facturas || []) {
+    // Ignorar facturas placeholder (sin nro_factura = cabecera vacía)
+    if (!f.nro_factura || f.nro_factura.toString().trim() === '') continue;
     for (const d of f.detalles_facturas_compras || f.detalles || []) {
+      // Ignorar detalles placeholder (precio = 0)
+      if (Number(d.precio_unitario) === 0) continue;
       if (d.id_orden_compra_detalle === idOrdenDetalle) {
         total += Number(d.cantidad) || 0;
       }
@@ -40,12 +43,12 @@ function ModalCargarFactura({ orden, onClose, onGuardado }) {
   const [loadingProveedor, setLoadingProveedor] = useState(false);
 
   const [lineas, setLineas] = useState([]);
-  
+
   const [proveedores, setProveedores] = useState([]);
-    
+
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState("");
-
+  const [facturaPlaceholderId, setFacturaPlaceholderId] = useState(null);
   useEffect(() => {
     const init = async () => {
       try {
@@ -69,7 +72,12 @@ function ModalCargarFactura({ orden, onClose, onGuardado }) {
           const d = await resOrden.json();
           const ordenData = d.orden || d;
           const facturasPrevias = ordenData.facturas || [];
-
+          const placeholder = facturasPrevias.find(
+            (f) => !f.nro_factura || f.nro_factura.toString().trim() === ''
+          );
+          if (placeholder) {
+            setFacturaPlaceholderId(placeholder.id_factura_compra ?? placeholder.id);
+          }
           const detalles =
             ordenData.detalle || ordenData.detalles_ordenes_compras || [];
           const lineasIniciales = detalles.map((det) => {
@@ -154,7 +162,6 @@ function ModalCargarFactura({ orden, onClose, onGuardado }) {
     if (!form.nro_factura)
       return setError("El Nro. de Factura es obligatorio.");
     if (!form.id_proveedor) return setError("Seleccioná un proveedor.");
-    if (!form.id_estado) return setError("Seleccioná un estado.");
     if (!form.timbrado) return setError("El timbrado es obligatorio.");
 
     const detallesAEnviar = lineas
@@ -186,16 +193,22 @@ function ModalCargarFactura({ orden, onClose, onGuardado }) {
         fecha_emision: form.fecha_emision || null,
         fecha_vencimiento: form.fecha_vencimiento || null,
         importe_total: importeTotal,
-        id_estado: Number(form.id_estado),
+        //id_estado: Number(form.id_estado),
         codigo_factura: codigoFactura,
         detalles: detallesAEnviar,
       };
 
-      const res = await fetchConToken(`${API_BASE}/compras/facturas`, {
-        method: "POST",
+    if (!facturaPlaceholderId) 
+    return setError("No se encontró la factura asociada a esta orden.");
+
+    const res = await fetchConToken(
+      `${API_BASE}/compras/facturas/${facturaPlaceholderId}/confirmar`,
+      {
+        method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
-      });
+      }
+    );
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || "Error al guardar");
 
@@ -274,19 +287,8 @@ function ModalCargarFactura({ orden, onClose, onGuardado }) {
 
               {/* Estado */}
               <div style={ms.campo}>
-                <label style={ms.label}>
-                  Estado <Req />
-                </label>
-                <select
-                  style={ms.input}
-                  name="id_estado"
-                  value={form.id_estado}
-                  onChange={handleChange}
-                >
-                  <option value="">Seleccionar estado</option>
-                  <option value="2">Pendiente</option>
-                  <option value="3">Confirmado</option>
-                </select>
+                <label style={ms.label}>Estado</label>
+                <div style={ms.inputReadonly}>Confirmado</div>
               </div>
 
               {/* Fecha emisión */}
@@ -319,23 +321,16 @@ function ModalCargarFactura({ orden, onClose, onGuardado }) {
           <div style={ms.seccion}>
             <p style={ms.seccionTitulo}>Información del Proveedor</p>
 
+            {/* DESPUÉS */}
             <div style={ms.campo}>
-              <label style={ms.label}>
-                Seleccionar Proveedor <Req />
-              </label>
-              <select
-                style={ms.input}
-                name="id_proveedor"
-                value={form.id_proveedor}
-                onChange={handleChange}
-              >
-                <option value="">Seleccionar...</option>
-                {proveedores.map((p) => (
-                  <option key={p.id_proveedor} value={p.id_proveedor}>
-                    {p.personas?.nombre} {p.personas?.apellido}
-                  </option>
-                ))}
-              </select>
+              <label style={ms.label}>Proveedor</label>
+              <div style={ms.inputReadonly}>
+                {proveedores.find((p) => String(p.id_proveedor) === String(form.id_proveedor))
+                  ? `${proveedores.find((p) => String(p.id_proveedor) === String(form.id_proveedor))?.personas?.nombre} ${proveedores.find((p) => String(p.id_proveedor) === String(form.id_proveedor))?.personas?.apellido}`
+                  : proveedorInfo
+                    ? `${proveedorInfo.personas?.nombre ?? ''} ${proveedorInfo.personas?.apellido ?? ''}`.trim()
+                    : 'Cargando...'}
+              </div>
             </div>
 
             {loadingProveedor && (
@@ -520,6 +515,7 @@ export default function InformacionOrden({
   const [search, setSearch] = useState("");
   const [orderBy, setOrderBy] = useState("");
   const [modalAbierto, setModalAbierto] = useState(false);
+ 
 
   const { id: idParam } = useParams();
   const idOrden = orden?.id_orden ?? orden?.id ?? idParam;
@@ -552,7 +548,11 @@ export default function InformacionOrden({
   }, [idOrden]);
 
   const ordenActual = ordenCompleta || orden;
+  const productosPendientes = (ordenCompleta?.detalle || []).reduce((acc, det) => {
+    return acc + Math.max(0, (det.cantidad || 0) - (det.cantidad_recibida || 0))
+  }, 0)
 
+const ordenTotalmenteEntregada = productosPendientes === 0 && (ordenCompleta?.detalle?.length > 0)
   const columnsDetalle = [
     { key: "producto", label: "Producto" },
     { key: "categoria", label: "Categoría" },
@@ -587,25 +587,54 @@ export default function InformacionOrden({
 
         {error && <div style={{ color: "red" }}>{error}</div>}
 
-        <div style={styles.contenedorEncabezado}>
-          <h3 style={styles.subtitulo}>Información de la Orden</h3>
-          <div style={styles.subcontenedor}>
-            <div style={styles.item}>
-              <strong>Código:</strong>{" "}
-              {ordenActual.codigo ?? ordenActual.codigo_orden ?? "-"}
-            </div>
-            <div style={styles.item}>
-              <strong>Estado:</strong> {ordenActual.estado || "-"}
-            </div>
-            <div style={styles.item}>
-              <strong>Fecha:</strong> {ordenActual.fecha ?? "-"}
-            </div>
-            <div style={styles.item}>
-              <strong>Proveedor:</strong> {ordenActual.proveedor ?? "-"}
-            </div>
+      <div style={styles.contenedorEncabezado}>
+        <h3 style={styles.subtitulo}>Información de la Orden</h3>
+        <div style={styles.subcontenedor}>
+          <div style={styles.item}>
+            <strong>Código:</strong>{" "}
+            {ordenActual.codigo ?? ordenActual.codigo_orden ?? "-"}
+          </div>
+          <div style={styles.item}>
+            <strong>Estado:</strong> {ordenActual.estado || "-"}
+          </div>
+          <div style={styles.item}>
+            <strong>Fecha:</strong> {ordenActual.fecha ?? "-"}
+          </div>
+          <div style={styles.item}>
+            <strong>Proveedor:</strong> {ordenActual.proveedor ?? "-"}
           </div>
         </div>
-
+      </div>
+      {/* ── Banner estado de entrega ── */}
+      {ordenCompleta && (
+        <div style={{
+          width: "100%",
+          maxWidth: 1100,
+          padding: "12px 20px",
+          borderRadius: 8,
+          display: "flex",
+          alignItems: "center",
+          gap: 12,
+          background: ordenTotalmenteEntregada ? "#E8F5E9" : "#FFF8E1",
+          border: `2px solid ${ordenTotalmenteEntregada ? "#A5D6A7" : "#FFD54F"}`,
+          fontFamily: "Lato",
+          fontSize: 14,
+          boxSizing: "border-box",
+        }}>
+          <div>
+            <strong>
+              {ordenTotalmenteEntregada
+                ? "Todos los productos fueron entregados"
+                : `Entrega pendiente: ${productosPendientes} unidad${productosPendientes !== 1 ? "es" : ""} sin facturar`}
+            </strong>
+            {!ordenTotalmenteEntregada && (
+              <p style={{ margin: 0, color: "#888", fontSize: 13 }}>
+                Podés cargar una nueva factura con los productos restantes desde la pestaña Facturas.
+              </p>
+            )}
+          </div>
+        </div>
+      )}
         <div style={styles.detalle}>
           <div style={styles.tabs}>
             <div
@@ -651,36 +680,34 @@ export default function InformacionOrden({
           )}
 
           {!loading && tabActiva === "facturas" && (
-            <List
-              data={ordenActual.facturas || []}
-              columns={columnsFacturas}
-              controls={[
-                {
-                  type: "search",
-                  placeholder: "Buscar factura...",
-                  value: search,
-                  onChange: (e) => setSearch(e.target.value),
-                },
-                {
-                  type: "select",
-                  label: "Ordenar por:",
-                  placeholder: "Seleccionar",
-                  value: orderBy,
-                  onChange: (e) => setOrderBy(e.target.value),
-                  options: columnsFacturas.map((c) => ({
-                    key: c.key,
-                    label: c.label,
-                  })),
-                },
-                {
-                  type: "button",
-                  label: "Cargar Facturas",
-                  onClick: () => setModalAbierto(true),
-                },
-              ]}
-            />
-          )}
-        </div>
+    <List
+      data={ordenActual.facturas || []}
+      columns={columnsFacturas}
+      controls={[
+        {
+          type: "search",
+          placeholder: "Buscar factura...",
+          value: search,
+          onChange: (e) => setSearch(e.target.value),
+        },
+        {
+          type: "select",
+          label: "Ordenar por:",
+          placeholder: "Seleccionar",
+          value: orderBy,
+          onChange: (e) => setOrderBy(e.target.value),
+          options: columnsFacturas.map((c) => ({ key: c.key, label: c.label })),
+        },
+        // Botón solo visible si hay pendientes
+        ...(!ordenTotalmenteEntregada ? [{
+          type: "button",
+          label: `Cargar Factura${productosPendientes > 0 ? ` (${productosPendientes} pend.)` : ""}`,
+          onClick: () => setModalAbierto(true),
+        }] : [])
+      ]}
+    />
+  )}
+</div>
       </main>
 
       {modalAbierto && (

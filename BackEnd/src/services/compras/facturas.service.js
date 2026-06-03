@@ -158,6 +158,133 @@ const updateEstadoFactura = async (id, id_estado) => {
     return data
 }
 
+const confirmarFacturaPlaceholder = async (id, {
+  id_proveedor, timbrado, nro_factura, fecha_emision,
+  fecha_vencimiento, importe_total, id_orden_compra, detalles
+}) => {
+  // 1. Buscar id_estado "confirmado" automáticamente
+  const { data: estadoConf } = await supabase
+    .from('estados')
+    .select('id_estado')
+    .ilike('nombre', 'confirmado')
+    .maybeSingle()
+  const id_estado = estadoConf?.id_estado ?? null
+
+  // 2. Actualizar cabecera con estado confirmado
+  const { data: factura, error } = await supabase
+    .from('facturas_compras')
+    .update({ id_proveedor, timbrado, nro_factura, fecha_emision, fecha_vencimiento, importe_total, id_estado })
+    .eq('id_factura_compra', id)
+    .select()
+    .single()
+  if (error) throw new Error(error.message)
+
+  // 3. Insertar detalles reales
+  const detallesConId = detalles.map((d) => ({
+    id_factura_compra: id,
+    id_producto: d.id_producto,
+    cantidad: d.cantidad,
+    precio_unitario: d.precio_unitario,
+    porcentaje_iva: d.porcentaje_iva,
+    monto_iva: d.monto_iva,
+    id_orden_compra_detalle: d.id_orden_compra_detalle,
+  }))
+
+  const { data: detallesCreados, error: errorDet } = await supabase
+    .from('detalles_facturas_compras')
+    .insert(detallesConId)
+    .select()
+  if (errorDet) throw new Error(errorDet.message)
+
+  // 4. Sumar cantidad_recibida en cada detalle de orden
+  for (const d of detalles) {
+    if (!d.id_orden_compra_detalle) continue
+    const { data: detOrden } = await supabase
+      .from('ordenes_compras_detalle')
+      .select('cantidad_recibida')
+      .eq('id_orden_compra_detalle', d.id_orden_compra_detalle)
+      .single()
+
+    await supabase
+      .from('ordenes_compras_detalle')
+      .update({ cantidad_recibida: (detOrden?.cantidad_recibida || 0) + d.cantidad })
+      .eq('id_orden_compra_detalle', d.id_orden_compra_detalle)
+  }
+
+  // 5. Verificar si quedan pendientes en la orden
+  const { data: todosDetalles } = await supabase
+    .from('ordenes_compras_detalle')
+    .select('cantidad_solicitada, cantidad_recibida, id_producto, id_orden_compra_detalle')
+    .eq('id_orden', id_orden_compra)
+
+  const todosEntregados = todosDetalles?.every(
+    (d) => Number(d.cantidad_recibida) >= Number(d.cantidad_solicitada)
+  )
+
+  if (todosEntregados) {
+    // Buscar estado "completado" y actualizar la orden
+    const { data: estadoCompleto } = await supabase
+      .from('estados')
+      .select('id_estado')
+      .ilike('nombre', 'completado')
+      .maybeSingle()
+
+    if (estadoCompleto) {
+      await supabase
+        .from('ordenes_compras')
+        .update({ id_estado: estadoCompleto.id_estado })
+        .eq('id_orden', id_orden_compra)
+    }
+  } else {
+    // Crear nuevo placeholder solo con los productos que siguen pendientes
+    const pendientes = (todosDetalles || [])
+      .filter((d) => Number(d.cantidad_recibida) < Number(d.cantidad_solicitada))
+      .map((d) => ({
+        id_orden_compra_detalle: d.id_orden_compra_detalle,
+        id_producto: d.id_producto,
+        cantidad_solicitada: Number(d.cantidad_solicitada) - Number(d.cantidad_recibida),
+      }))
+
+    // crearFacturaVacia está en ordenes_compra.service.js, acá se reimplementa inline
+    const { data: estadoRow } = await supabase
+      .from('estados')
+      .select('id_estado')
+      .ilike('nombre', 'pendiente')
+      .maybeSingle()
+
+    const codigo_factura = `FC-${id_orden_compra}-${id_proveedor}-${Date.now()}`
+
+    const { data: nuevaFactura, error: errorNueva } = await supabase
+      .from('facturas_compras')
+      .insert({
+        id_proveedor,
+        id_orden_compra,
+        id_estado: estadoRow?.id_estado ?? null,
+        codigo_factura
+      })
+      .select()
+      .single()
+    if (errorNueva) throw new Error(`Error creando nueva factura placeholder: ${errorNueva.message}`)
+
+    const detallesNuevos = pendientes.map((p) => ({
+      id_factura_compra: nuevaFactura.id_factura_compra,
+      id_producto: p.id_producto,
+      cantidad: p.cantidad_solicitada,
+      precio_unitario: 0,
+      porcentaje_iva: 10,
+      monto_iva: 0,
+      id_orden_compra_detalle: p.id_orden_compra_detalle,
+    }))
+
+    const { error: errorDetNuevo } = await supabase
+      .from('detalles_facturas_compras')
+      .insert(detallesNuevos)
+    if (errorDetNuevo) throw new Error(`Error creando detalles del nuevo placeholder: ${errorDetNuevo.message}`)
+  }
+
+  return { factura, detalles: detallesCreados, todosEntregados }
+}
+
 const deleteFactura = async (id) => {
     const { error: errorDetalles } = await supabase
         .from('detalles_facturas_compras')
@@ -180,4 +307,4 @@ const deleteFactura = async (id) => {
     return { message: 'Factura eliminada correctamente' }
 }
 
-export default { getAllFacturas, getFactura, getFacturaByCodigo, getTableFacturas, getNextCodigoFactura, postFactura, updateFactura, updateEstadoFactura, deleteFactura }
+export default { getAllFacturas, getFactura, getFacturaByCodigo, getTableFacturas, getNextCodigoFactura, postFactura, updateFactura, updateEstadoFactura, deleteFactura, confirmarFacturaPlaceholder }
