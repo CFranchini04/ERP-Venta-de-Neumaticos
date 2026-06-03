@@ -2,8 +2,8 @@ import supabase from '../../config/supabase.js'
 
 const SELECT_FULL = `
   *,
-  cuentas_bancarias!movimientos_bancarios_id_cuenta_bancaria_fkey(*, bancos(*)),
-  cuentas_bancarias!movimientos_bancarios_id_cuenta_destino_fkey(*, bancos(*)),
+  cuenta_origen:cuentas_bancarias!movimientos_bancarios_id_cuenta_bancaria_fkey(*, bancos(*)),
+  cuenta_destino:cuentas_bancarias!movimientos_bancarios_id_cuenta_destino_fkey(*, bancos(*)),
   tipos_movimiento_bancario(*),
   facturas_ventas(codigo_factura),
   facturas_compras(codigo_factura),
@@ -36,6 +36,7 @@ const getTableMovimientos = async () => {
       fecha,
       tipo,
       monto,
+      id_tipo_movimiento,
       cuentas_bancarias!movimientos_bancarios_id_cuenta_bancaria_fkey(*, bancos(*)),
       tipos_movimiento_bancario(nombre, naturaleza),
       estados(nombre)
@@ -44,10 +45,10 @@ const getTableMovimientos = async () => {
   return data
 }
 
-const postMovimiento = async (id_cuenta_bancaria, id_asiento, id_factura_venta, id_factura_compra, fecha, fecha_conciliacion, tipo, monto, id_tipo_movimiento, id_cuenta_destino, id_estado) => {
+const postMovimiento = async (datos) => {
   const { data, error } = await supabase
     .from('movimientos_bancarios')
-    .insert({ id_cuenta_bancaria, id_asiento, id_factura_venta, id_factura_compra, fecha, fecha_conciliacion, tipo, monto, id_tipo_movimiento, id_cuenta_destino, id_estado })
+    .insert(datos)
     .select()
     .single()
   if (error) throw new Error(error.message)
@@ -142,4 +143,57 @@ const deleteCuenta = async (id) => {
   return { message: 'Cuenta eliminada correctamente' }
 }
 
-export default { getAllMovimientos, getMovimiento, getTableMovimientos, postMovimiento, updateMovimiento, updateEstadoMovimiento, deleteMovimiento, getAllCuentas, getCuenta, postCuenta, updateCuenta, deleteCuenta }
+// BANCOS
+const getAllBancos = async () => {
+  const { data, error } = await supabase
+    .from('bancos')
+    .select('*')
+  if (error) throw new Error(error.message)
+  return data
+}
+
+const getBanco = async (id) => {
+  const { data, error } = await supabase
+    .from('bancos')
+    .select('*')
+    .eq('id_banco', id)
+    .single()
+  if (error) throw new Error(error.message)
+  return data
+}
+
+const postBanco = async (nombre) => {
+  const { data, error } = await supabase
+    .from('bancos')
+    .insert({ nombre })
+    .select()
+    .single()
+  if (error) throw new Error(error.message)
+  return data
+}
+
+const updateBanco = async (id, nombre) => {
+  const { data, error } = await supabase
+    .from('bancos')
+    .update({ nombre })
+    .eq('id_banco', id)
+    .select()
+    .single()
+  if (error) throw new Error(error.message)
+  return data
+}
+
+const deleteBanco = async (id) => {
+  const { error } = await supabase
+    .from('bancos')
+    .delete()
+    .eq('id_banco', id)
+  if (error) throw new Error(error.message)
+  return { deleted: true }
+}
+
+export default {
+  getAllMovimientos, getMovimiento, getTableMovimientos, postMovimiento, updateMovimiento, updateEstadoMovimiento, deleteMovimiento,
+  getAllCuentas, getCuenta, postCuenta, updateCuenta, deleteCuenta,
+  getAllBancos, getBanco, postBanco, updateBanco, deleteBanco
+}

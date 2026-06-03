@@ -28,18 +28,39 @@ const getTableMovimientos = async (req, res) => {
     }
 }
 
+// En movimientos.controller.js — reemplazar postMovimiento:
+
 const postMovimiento = async (req, res) => {
     try {
-        const { id_cuenta_bancaria, id_asiento, id_factura_venta, id_factura_compra, fecha, fecha_conciliacion, tipo, monto, id_tipo_movimiento, id_cuenta_destino, id_estado } = req.body
-        if (!id_cuenta_bancaria || !id_asiento || !monto || !id_tipo_movimiento)
+        const {
+            id_cuenta_bancaria, id_asiento, id_factura_venta, id_factura_compra,
+            fecha, fecha_conciliacion, tipo, monto, id_tipo_movimiento,
+            id_cuenta_destino, id_estado, observacion
+        } = req.body
+
+        if (!id_cuenta_bancaria || !monto || !id_tipo_movimiento)
             return res.status(400).json({ message: 'Faltan datos requeridos' })
-        const movimiento = await movimientosService.postMovimiento(id_cuenta_bancaria, id_asiento, id_factura_venta, id_factura_compra, fecha, fecha_conciliacion, tipo, monto, id_tipo_movimiento, id_cuenta_destino, id_estado)
+
+        const movimiento = await movimientosService.postMovimiento({
+            id_cuenta_bancaria,
+            id_asiento: id_asiento ?? null,
+            id_factura_venta: id_factura_venta ?? null,
+            id_factura_compra: id_factura_compra ?? null,
+            fecha,
+            fecha_conciliacion: fecha_conciliacion ?? null,
+            tipo,
+            monto,
+            id_tipo_movimiento,
+            id_cuenta_destino: id_cuenta_destino ?? null,
+            id_estado: id_estado ?? null,
+            observacion: observacion ?? null,
+        })
+
         res.status(201).json(movimiento)
     } catch (error) {
         res.status(400).json({ message: error.message })
     }
 }
-
 const updateMovimiento = async (req, res) => {
     try {
         const { id } = req.params
@@ -132,4 +153,57 @@ const deleteCuenta = async (req, res) => {
     }
 }
 
-export default { getAllMovimientos, getMovimiento, getTableMovimientos, postMovimiento, updateMovimiento, updateEstadoMovimiento, deleteMovimiento, getAllCuentas, getCuenta, postCuenta, updateCuenta, deleteCuenta }
+// BANCOS
+const getAllBancos = async (req, res) => {
+    try {
+        const data = await movimientosService.getAllBancos()
+        res.json(data)
+    } catch (err) {
+        res.status(500).json({ message: err.message })
+    }
+}
+
+const getBanco = async (req, res) => {
+    try {
+        const data = await movimientosService.getBanco(req.params.id)
+        res.json(data)
+    } catch (err) {
+        res.status(404).json({ message: err.message })
+    }
+}
+
+const postBanco = async (req, res) => {
+    try {
+        const { nombre } = req.body
+        if (!nombre) return res.status(400).json({ message: 'El nombre es obligatorio' })
+        const data = await movimientosService.postBanco(nombre)
+        res.status(201).json(data)
+    } catch (err) {
+        res.status(500).json({ message: err.message })
+    }
+}
+
+const updateBanco = async (req, res) => {
+    try {
+        const { nombre } = req.body
+        if (!nombre) return res.status(400).json({ message: 'El nombre es obligatorio' })
+        const data = await movimientosService.updateBanco(req.params.id, nombre)
+        res.json(data)
+    } catch (err) {
+        res.status(500).json({ message: err.message })
+    }
+}
+
+const deleteBanco = async (req, res) => {
+    try {
+        const data = await movimientosService.deleteBanco(req.params.id)
+        res.json(data)
+    } catch (err) {
+        res.status(500).json({ message: err.message })
+    }
+}
+export default {
+    getAllMovimientos, getMovimiento, getTableMovimientos, postMovimiento, updateMovimiento, updateEstadoMovimiento, deleteMovimiento,
+    getAllCuentas, getCuenta, postCuenta, updateCuenta, deleteCuenta,
+    getAllBancos, getBanco, postBanco, updateBanco, deleteBanco
+}

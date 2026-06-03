@@ -3,6 +3,20 @@ import movimientosController from '../../controllers/tesoreria/movimientos.contr
 
 const router = Router()
 
+// Bancos
+router.get('/bancos', movimientosController.getAllBancos)
+router.get('/bancos/:id', movimientosController.getBanco)
+router.post('/bancos', movimientosController.postBanco)
+router.put('/bancos/:id', movimientosController.updateBanco)
+router.delete('/bancos/:id', movimientosController.deleteBanco)
+
+// Cuentas bancarias
+router.get('/cuentas', movimientosController.getAllCuentas)
+router.get('/cuentas/:id', movimientosController.getCuenta)
+router.post('/cuentas', movimientosController.postCuenta)
+router.put('/cuentas/:id', movimientosController.updateCuenta)
+router.delete('/cuentas/:id', movimientosController.deleteCuenta)
+
 // Movimientos
 router.get('/', movimientosController.getAllMovimientos)
 router.get('/tabla', movimientosController.getTableMovimientos)
@@ -11,12 +25,5 @@ router.post('/', movimientosController.postMovimiento)
 router.put('/:id', movimientosController.updateMovimiento)
 router.patch('/:id/estado', movimientosController.updateEstadoMovimiento)
 router.delete('/:id', movimientosController.deleteMovimiento)
-
-// Cuentas bancarias
-router.get('/cuentas', movimientosController.getAllCuentas)
-router.get('/cuentas/:id', movimientosController.getCuenta)
-router.post('/cuentas', movimientosController.postCuenta)
-router.put('/cuentas/:id', movimientosController.updateCuenta)
-router.delete('/cuentas/:id', movimientosController.deleteCuenta)
 
 export default router

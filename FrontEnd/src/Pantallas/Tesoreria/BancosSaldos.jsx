@@ -1,29 +1,96 @@
 import React, { useState, useEffect } from 'react';
 import Sidebar from '../../components/Sidebar';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
+import fetchConToken from '../../token';
+
+const API_BASE = "http://localhost:9128/api";
 
 const camposVacios = {
   nombre: '',
-  banco: '',
+  id_banco: '',
+  bancoNombre: '',
   tipo: '',
   moneda: '',
   numeroCuenta: '',
   saldoInicial: '',
 };
 
+function InputSugerencias({ value, onChange, opciones, placeholder }) {
+  const [mostrar, setMostrar] = useState(false);
+
+  const sugerencias = opciones.filter(op =>
+    op.toLowerCase().includes(value.toLowerCase()) && value.trim()
+  );
+
+  return (
+    <div style={{ position: 'relative' }}>
+      <input
+        value={value}
+        onChange={(e) => { onChange(e.target.value); setMostrar(true); }}
+        onBlur={() => setTimeout(() => setMostrar(false), 150)}
+        placeholder={placeholder}
+        style={{ padding: '9px 12px', borderRadius: 8, border: '1px solid #ccc', fontSize: 14, fontFamily: 'Lato, sans-serif', background: '#FAFAFA', width: '100%', boxSizing: 'border-box' }}
+      />
+      {mostrar && sugerencias.length > 0 && (
+        <div style={{
+          position: 'absolute', top: '100%', left: 0, right: 0,
+          background: '#fff', border: '1px solid #ddd', borderRadius: '0 0 8px 8px',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.1)', zIndex: 100, maxHeight: 200, overflowY: 'auto'
+        }}>
+          {sugerencias.map((op, i) => (
+            <div
+              key={i}
+              onMouseDown={() => { onChange(op); setMostrar(false); }}
+              style={{ padding: '8px 12px', cursor: 'pointer', fontSize: 14, borderBottom: '1px solid #f0f0f0' }}
+              onMouseEnter={e => e.target.style.background = '#fff9e6'}
+              onMouseLeave={e => e.target.style.background = '#fff'}
+            >
+              {op}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function BancosSaldos({ usuario = 'Empleado', onLogout, onNavegar }) {
   const [bancos, setBancos] = useState([]);
+  const [bancosDisponibles, setBancosDisponibles] = useState([]);
   const [modalAbierto, setModalAbierto] = useState(false);
   const [form, setForm] = useState(camposVacios);
 
   const navigate = useNavigate();
 
   useEffect(() => {
-    setBancos([
-      { id: 1, cuenta: 'Banco Nacional - Cuenta Corriente', saldo: 15000000 },
-      { id: 2, cuenta: 'Banco Itaú - Ahorros', saldo: 8200000 },
-      { id: 3, cuenta: 'Banco Continental - Empresa', saldo: 23450000 },
-    ]);
+    const cargarCuentas = async () => {
+      try {
+        const res = await fetchConToken(`${API_BASE}/tesoreria/movimientos/cuentas`);
+        const data = await res.json();
+        const formateados = data.filter(c => c.tipo_cuenta.toLowerCase() != 'ajena').map((item) => ({
+          id: item.id_cuenta_bancaria,
+          cuenta: `${item.bancos?.nombre ?? '—'} - ${item.tipo_cuenta ?? '—'}`,
+          saldo: item.saldo_disponible ?? 0,
+        }));
+        setBancos(formateados);
+      } catch (err) {
+        console.error('Error cargando cuentas:', err);
+      }
+    };
+    cargarCuentas();
+  }, []);
+
+  useEffect(() => {
+    const cargarBancos = async () => {
+      try {
+        const res = await fetchConToken(`${API_BASE}/tesoreria/movimientos/bancos`);
+        const data = await res.json();
+        setBancosDisponibles(data);
+      } catch (err) {
+        console.error('Error cargando bancos:', err);
+      }
+    };
+    cargarBancos();
   }, []);
 
   function handleNavegar(moduloId) {
@@ -39,11 +106,47 @@ export default function BancosSaldos({ usuario = 'Empleado', onLogout, onNavegar
     setForm(prev => ({ ...prev, [name]: value }));
   }
 
-  function handleGuardar() {
-    // TODO: conectar con BD cuando esté disponible
-    console.log('Nueva cuenta a guardar:', form);
-    setModalAbierto(false);
-    setForm(camposVacios);
+  function handleBancoChange(nombreBanco) {
+    const banco = bancosDisponibles.find(b => b.nombre === nombreBanco);
+    setForm(prev => ({
+      ...prev,
+      bancoNombre: nombreBanco,
+      id_banco: banco?.id_banco ?? '',
+    }));
+  }
+
+  async function handleGuardar() {
+    try {
+      const res = await fetchConToken(`${API_BASE}/tesoreria/movimientos/cuentas`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          nro_cuenta: form.numeroCuenta || null,
+          titular: form.nombre,
+          tipo_cuenta: form.tipo,
+          saldo_contable: Number(form.saldoInicial) || 0,
+          saldo_disponible: Number(form.saldoInicial) || 0,
+          id_banco: form.id_banco || null,
+        }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.message || 'Error al guardar');
+      }
+
+      const nueva = await res.json();
+      setBancos(prev => [...prev, {
+        id: nueva.id_cuenta_bancaria,
+        cuenta: `${nueva.bancos?.nombre ?? '—'} - ${nueva.tipo_cuenta ?? '—'}`,
+        saldo: nueva.saldo_disponible ?? 0,
+      }]);
+
+      setModalAbierto(false);
+      setForm(camposVacios);
+    } catch (err) {
+      console.error('Error guardando cuenta:', err);
+    }
   }
 
   function handleCerrar() {
@@ -51,7 +154,7 @@ export default function BancosSaldos({ usuario = 'Empleado', onLogout, onNavegar
     setForm(camposVacios);
   }
 
-  const camposIncompletos = !form.nombre || !form.banco || !form.tipo || !form.moneda;
+  const camposIncompletos = !form.nombre || !form.id_banco || !form.tipo || !form.moneda;
 
   return (
     <div style={styles.pagina}>
@@ -89,7 +192,6 @@ export default function BancosSaldos({ usuario = 'Empleado', onLogout, onNavegar
 
       </main>
 
-      {/* ── MODAL ── */}
       {modalAbierto && (
         <div style={styles.overlay}>
           <div style={styles.modal}>
@@ -106,8 +208,12 @@ export default function BancosSaldos({ usuario = 'Empleado', onLogout, onNavegar
 
               <div style={styles.campo}>
                 <label style={styles.label}>Banco *</label>
-                <input name="banco" value={form.banco} onChange={handleChange}
-                  placeholder="Ej: Banco Itaú" style={styles.input} />
+                <InputSugerencias
+                  value={form.bancoNombre}
+                  onChange={handleBancoChange}
+                  opciones={bancosDisponibles.map(b => b.nombre)}
+                  placeholder="Ej: Banco Itaú"
+                />
               </div>
 
               <div style={styles.campo}>
@@ -117,6 +223,7 @@ export default function BancosSaldos({ usuario = 'Empleado', onLogout, onNavegar
                   <option value="Corriente">Corriente</option>
                   <option value="Ahorros">Ahorros</option>
                   <option value="Empresarial">Empresarial</option>
+                  <option value="Ajena">Ajena</option>
                 </select>
               </div>
 
@@ -179,8 +286,6 @@ const styles = {
   cuenta: { fontSize: 16, fontWeight: 700, margin: 0 },
   saldo: { fontSize: 14, color: '#333', margin: 0 },
   boton: { padding: '8px 12px', border: 'none', borderRadius: 6, background: '#000', color: '#fff', cursor: 'pointer', fontWeight: 600 },
-
-  // Modal
   overlay: { position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 999 },
   modal: { width: '100%', maxWidth: 560, background: '#fff', borderRadius: 16, padding: 32, display: 'flex', flexDirection: 'column', gap: 20, boxShadow: '0 10px 40px rgba(0,0,0,0.2)' },
   modalTitulo: { margin: 0, fontSize: 22, fontWeight: 700, textAlign: 'center' },
