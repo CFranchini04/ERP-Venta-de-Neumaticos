@@ -1,88 +1,141 @@
-import planInicial from '../../data/contabilidad/planDeCuentas.json' with { type: 'json' };
-
-
-let cuentas = planInicial.map(c => ({ ...c }))
-
+import supabase from '../../config/supabase.js'
 
 const sortByCodigo = (a, b) => {
-  const pa = a.codigo.split('.').map(Number)
-  const pb = b.codigo.split('.').map(Number)
-  const len = Math.max(pa.length, pb.length)
+  const pa = String(a.codigo).split('.').map(Number);
+  const pb = String(b.codigo).split('.').map(Number);
+  const len = Math.max(pa.length, pb.length);
   for (let i = 0; i < len; i++) {
-    const va = pa[i] ?? 0
-    const vb = pb[i] ?? 0
-    if (va !== vb) return va - vb
+    const va = pa[i] ?? 0;
+    const vb = pb[i] ?? 0;
+    if (va !== vb) return va - vb;
   }
-  return 0
-}
+  return 0;
+};
 
 const listarCuentas = async () => {
-  return [...cuentas].sort(sortByCodigo)
-}
+  const { data, error } = await supabase
+    .from('cuentas')
+    .select('*');
+  if (error) throw new Error(error.message);
+  return data.map(mapCuenta).sort(sortByCodigo);
+};
 
 const obtenerCuenta = async (codigo) => {
-  const cuenta = cuentas.find(c => c.codigo === codigo)
-  return cuenta ?? null
-}
+  const { data, error } = await supabase
+    .from('cuentas')
+    .select('*')
+    .eq('codigo', codigo)
+    .single();
+  if (error) throw new Error(error.message);
+  return mapCuenta(data);
+};
 
 const crearCuenta = async (datos) => {
-  const { codigo, cuenta, imputable } = datos
+  const { codigo, cuenta, imputable, id_periodo_fiscal, id_cuenta_padre } = datos;
 
-  if (!codigo || !cuenta) {
-    throw new Error('Código y cuenta son obligatorios')
-  }
+  if (!codigo || !cuenta) throw new Error('Código y cuenta son obligatorios');
+  if (!id_periodo_fiscal) throw new Error('id_periodo_fiscal es obligatorio');
 
-  const existe = cuentas.some(c => c.codigo === codigo)
-  if (existe) {
-    throw new Error(`Ya existe una cuenta con código ${codigo}`)
-  }
+  // Verificar que no exista
+  const { data: existe } = await supabase
+    .from('cuentas')
+    .select('id_cuentas')
+    .eq('codigo', codigo)
+    .maybeSingle();
 
-  const nueva = {
-    codigo,
-    cuenta,
-    imputable: !!imputable,
-    ...(imputable ? { saldo: 0 } : {})
-  }
+  if (existe) throw new Error(`Ya existe una cuenta con código ${codigo}`);
 
-  cuentas.push(nueva)
-  return nueva
-}
+  const nivel = String(codigo).split('.').length;
+
+  const { data, error } = await supabase
+    .from('cuentas')
+    .insert({
+      codigo,
+      nombre: cuenta,
+      es_asentable: !!imputable,
+      id_periodo_fiscal,
+      id_cuenta_padre: id_cuenta_padre ?? null,
+      nivel: String(nivel),
+    })
+    .select()
+    .single();
+
+  if (error) throw new Error(error.message);
+  return mapCuenta(data);
+};
 
 const actualizarCuenta = async (codigo, cambios) => {
-  const idx = cuentas.findIndex(c => c.codigo === codigo)
-  if (idx === -1) throw new Error(`Cuenta ${codigo} no encontrada`)
+  const { data: existente, error: errFind } = await supabase
+    .from('cuentas')
+    .select('id_cuentas')
+    .eq('codigo', codigo)
+    .single();
 
-  const { codigo: _, ...datosAActualizar } = cambios
+  if (errFind) throw new Error(`Cuenta ${codigo} no encontrada`);
 
-  const datosLimpios = Object.fromEntries(
-    Object.entries(datosAActualizar).filter(([_, v]) => v !== undefined && v !== '')
-  )
+  const { codigo: _, ...datosLimpios } = cambios;
 
-  cuentas[idx] = { ...cuentas[idx], ...datosLimpios, codigo }
-  return cuentas[idx]
-}
+  const updates = {};
+  if (datosLimpios.cuenta !== undefined) updates.nombre = datosLimpios.cuenta;
+  if (datosLimpios.imputable !== undefined) updates.es_asentable = datosLimpios.imputable;
+  if (datosLimpios.nombre !== undefined) updates.nombre = datosLimpios.nombre;
+
+  const { data, error } = await supabase
+    .from('cuentas')
+    .update(updates)
+    .eq('id_cuentas', existente.id_cuentas)
+    .select()
+    .single();
+
+  if (error) throw new Error(error.message);
+  return mapCuenta(data);
+};
 
 const eliminarCuenta = async (codigo) => {
-  const prefijo = codigo + '.'
-  const tieneHijos = cuentas.some(c => c.codigo.startsWith(prefijo))
-  if (tieneHijos) {
-    throw new Error('No se puede eliminar: la cuenta tiene subcuentas')
-  }
+  // Verificar hijos
+  const { data: hijos } = await supabase
+    .from('cuentas')
+    .select('id_cuentas')
+    .like('codigo', `${codigo}.%`)
+    .limit(1);
 
-  const longitudInicial = cuentas.length
-  cuentas = cuentas.filter(c => c.codigo !== codigo)
+  if (hijos && hijos.length > 0) throw new Error('No se puede eliminar: la cuenta tiene subcuentas');
 
-  if (cuentas.length === longitudInicial) {
-    throw new Error(`Cuenta ${codigo} no encontrada`)
-  }
+  const { data: existente, error: errFind } = await supabase
+    .from('cuentas')
+    .select('id_cuentas')
+    .eq('codigo', codigo)
+    .single();
 
-  return { codigo, message: 'Cuenta eliminada correctamente' }
-}
+  if (errFind) throw new Error(`Cuenta ${codigo} no encontrada`);
+
+  const { error } = await supabase
+    .from('cuentas')
+    .delete()
+    .eq('id_cuentas', existente.id_cuentas);
+
+  if (error) throw new Error(error.message);
+  return { codigo, message: 'Cuenta eliminada correctamente' };
+};
+
+// Mapea el formato supabase al formato que usa el frontend
+const mapCuenta = (c) => ({
+  id_cuentas: c.id_cuentas,
+  codigo: String(c.codigo),
+  cuenta: c.nombre,
+  nombre: c.nombre,
+  imputable: c.es_asentable ?? false,
+  es_asentable: c.es_asentable ?? false,
+  saldo: c.saldo ?? 0,
+  nivel: c.nivel,
+  id_cuenta_padre: c.id_cuenta_padre,
+  id_periodo_fiscal: c.id_periodo_fiscal,
+});
 
 export default {
   listarCuentas,
   obtenerCuenta,
   crearCuenta,
   actualizarCuenta,
-  eliminarCuenta
-}
+  eliminarCuenta,
+};

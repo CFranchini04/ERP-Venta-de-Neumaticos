@@ -5,6 +5,7 @@ import fetchConToken from '../../../token';
 import { getColor } from '../../../components/Colors';
 import { IconoDropdown, IconoMas, IconoCerrar } from '../../../components/Icons';
 import { formatearGs } from '../../../components/formato';
+import { fetchCuentas, crearAsientoAPI } from '../../../Pantallas/Contabilidad/contabilidadHelpers';
 
 function ColumnaItems({ titulo, tipo, items, onChange }) {
   const color = tipo === 'bonificacion' ? getColor('verde') : getColor('rojo');
@@ -87,6 +88,63 @@ export default function GestionSalarial({ usuario, onLogout, onNavegar }) {
   const [deducciones, setDeducciones] = useState([]);
 
   const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:9128/api';
+  const generarAsientoSalarial = async () => {
+    try {
+      // Buscás las cuentas por código
+      const cuentas = await fetchCuentas()
+      const buscar = (codigo) => cuentas.find(c => c.codigo == codigo)
+
+      const cuentaSueldos = buscar('4.1.1.4.1.01') // Sueldos y cargas sociales ADM
+      const cuentaSueldosCP = buscar('4.1.1.3.1.01') // Sueldos y cargas sociales COMERC
+      const cuentaIPS = buscar('2.1.1.3.02')   // Retenciones a depositar
+      const cuentaSueldosPag = buscar('2.1.1.3.01')   // Sueldos a pagar
+
+      if (!cuentaSueldos || !cuentaSueldosPag || !cuentaIPS) {
+        throw new Error('No se encontraron las cuentas contables requeridas')
+      }
+
+      const lineas = [
+        // DEBE — gasto de sueldos
+        {
+          id_cuenta: cuentaSueldos.id_cuentas,
+          debe: totalIngresos,
+          haber: 0,
+        },
+        // HABER — IPS retenido
+        {
+          id_cuenta: cuentaIPS.id_cuentas,
+          debe: 0,
+          haber: ips,
+        },
+        // HABER — neto a pagar al empleado
+        {
+          id_cuenta: cuentaSueldosPag.id_cuentas,
+          debe: 0,
+          haber: salarioFinal,
+        },
+      ]
+
+      // Si hay deducciones extras agregás líneas adicionales
+      if (totalDeducciones > 0) {
+        const cuentaOtrasDed = buscar('2.1.1.3.03') // Contribuciones patronales
+        if (cuentaOtrasDed) {
+          lineas[1].haber += totalDeducciones
+        }
+      }
+
+      const asiento = await crearAsientoAPI({
+        fecha: periodo.fechaFin,
+        concepto: `Nomina ${empleado.nombre} ${empleado.apellido} - ${periodo.fechaInicio} al ${periodo.fechaFin}`,
+        lineas,
+        id_periodo_fiscal: null,
+        id_estado: 1,
+      })
+
+      return asiento
+    } catch (err) {
+      throw new Error(`Error generando asiento: ${err.message}`)
+    }
+  }
 
   useEffect(() => {
     if (!id) { setCargando(false); return; }
@@ -156,10 +214,10 @@ export default function GestionSalarial({ usuario, onLogout, onNavegar }) {
   const salarioFinal = totalIngresos - totalDescuentos;
 
   const guardarPago = async () => {
-    setGuardando(true);
-    setErrorGuardar('');
+    setGuardando(true)
+    setErrorGuardar('')
     try {
-      let id_pdp = pdpActual?.id_pdp;
+      let id_pdp = pdpActual?.id_pdp
 
       if (pdpModificado || !id_pdp) {
         const resPdp = await fetchConToken(`${API_BASE}/rrhh/salarios/procesos`, {
@@ -171,10 +229,10 @@ export default function GestionSalarial({ usuario, onLogout, onNavegar }) {
             fecha_fin: periodo.fechaFin,
             id_estado: 1,
           }),
-        });
-        const nuevoPdp = await resPdp.json();
-        if (!resPdp.ok) throw new Error(nuevoPdp.message || 'Error al crear proceso');
-        id_pdp = nuevoPdp.id_pdp;
+        })
+        const nuevoPdp = await resPdp.json()
+        if (!resPdp.ok) throw new Error(nuevoPdp.message || 'Error al crear proceso')
+        id_pdp = nuevoPdp.id_pdp
       }
 
       const detalles = [
@@ -193,7 +251,7 @@ export default function GestionSalarial({ usuario, onLogout, onNavegar }) {
         { id_novedad: null, monto: ips, observacion: 'IPS (9%)', tipo_novedad: 'Egreso' },
         ...(descuentoAusencias > 0 ? [{ id_novedad: null, monto: descuentoAusencias, observacion: `Ausencias (${ausencias} dias)`, tipo_novedad: 'Egreso' }] : []),
         ...(pagoHorasExtras > 0 ? [{ id_novedad: null, monto: pagoHorasExtras, observacion: `Horas extras (${horasExtras}h)`, tipo_novedad: 'Ingreso' }] : []),
-      ];
+      ]
 
       const resPago = await fetchConToken(`${API_BASE}/rrhh/salarios/pagos`, {
         method: 'POST',
@@ -208,19 +266,22 @@ export default function GestionSalarial({ usuario, onLogout, onNavegar }) {
           id_estado: 1,
           detalles,
         }),
-      });
+      })
 
-      const dataPago = await resPago.json();
-      if (!resPago.ok) throw new Error(dataPago.message || 'Error al guardar pago');
+      const dataPago = await resPago.json()
+      if (!resPago.ok) throw new Error(dataPago.message || 'Error al guardar pago')
 
-      imprimirRecibo();
-      setMostrarResumen(false);
+      // ← Generás el asiento contable automáticamente
+      await generarAsientoSalarial()
+
+      imprimirRecibo()
+      setMostrarResumen(false)
     } catch (err) {
-      setErrorGuardar(err.message || 'Error al guardar');
+      setErrorGuardar(err.message || 'Error al guardar')
     } finally {
-      setGuardando(false);
+      setGuardando(false)
     }
-  };
+  }
 
   const imprimirRecibo = () => {
     const ventana = window.open('', '_blank');
