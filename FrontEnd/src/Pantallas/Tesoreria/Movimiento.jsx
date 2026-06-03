@@ -1,33 +1,19 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Sidebar from "../../components/Sidebar";
 import { useNavigate, useLocation } from 'react-router-dom';
 import { getColor } from '../../components/Colors';
 import List from '../../components/Lista';
 import { formatearGs } from '../../components/formato';
+import fetchConToken from '../../token';
+import ModalConciliacion from './ModalConciliacion';
 
-const CUENTAS_INICIALES = [
-  { id: 1, nombre: 'Banco Nacional - Cuenta Corriente' },
-  { id: 2, nombre: 'Banco Itaú - Ahorros' },
-  { id: 3, nombre: 'Banco Continental - Empresa' },
-];
-
-const historialMock = [
-  {
-    id: 1,
-    fecha: '10/05/2026',
-    cuentaOrigen: 'Banco Nacional - Cuenta Corriente',
-    cuentaDestino: 'Banco Itaú - Ahorros',
-    tipo: 'Crédito',
-    concepto: 'Transferencia interna',
-    monto: 1500000,
-  },
-];
+const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:9128/api';
+const ID_TRANSFERENCIA = 2;
 
 const CUENTA_VACIA = {
-  numeroCuenta: '',
+  nro_cuenta: '',
   titular: '',
   entidad: '',
-  tipoDocumento: 'CI',
   numeroDocumento: '',
 };
 
@@ -46,6 +32,7 @@ function SearchbarLocal({ data, value, onSelect, placeholder }) {
         placeholder={placeholder}
         onChange={(e) => { setTexto(e.target.value); setMostrar(true); onSelect(null); }}
         onFocus={() => setMostrar(true)}
+        onBlur={() => setTimeout(() => setMostrar(false), 150)}
         style={styles.input}
       />
       {mostrar && filtrados.length > 0 && (
@@ -58,77 +45,6 @@ function SearchbarLocal({ data, value, onSelect, placeholder }) {
           ))}
         </div>
       )}
-    </div>
-  );
-}
-
-// ── Modal cuenta nueva ────────────────────────────────────────────────────────
-function ModalCuentaNueva({ onCerrar, onGuardar }) {
-  const [form, setForm] = useState(CUENTA_VACIA);
-  const [errores, setErrores] = useState({});
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setForm(prev => ({ ...prev, [name]: value }));
-    if (errores[name]) setErrores(prev => ({ ...prev, [name]: '' }));
-  };
-
-  const validar = () => {
-    const nuevos = {};
-    if (!form.numeroCuenta.trim()) nuevos.numeroCuenta = 'Obligatorio';
-    if (!form.titular.trim())      nuevos.titular      = 'Obligatorio';
-    if (!form.entidad.trim())      nuevos.entidad      = 'Obligatorio';
-    if (!form.numeroDocumento.trim()) nuevos.numeroDocumento = 'Obligatorio';
-    setErrores(nuevos);
-    return Object.keys(nuevos).length === 0;
-  };
-
-  const handleGuardar = () => {
-    if (!validar()) return;
-    // TODO: conectar con BD cuando esté disponible
-    console.log('Nueva cuenta a guardar:', form);
-    onGuardar({ id: Date.now(), nombre: `${form.entidad} - ${form.numeroCuenta}`, ...form });
-  };
-
-  return (
-    <div style={styles.modalOverlay} style={{ ...styles.modalOverlay, zIndex: 1100 }}>
-      <div style={{ ...styles.modal, maxWidth: 480 }}>
-
-        <div style={styles.modalHeader}>
-          <h2 style={styles.modalTitulo}>Nueva cuenta</h2>
-          <button style={styles.btnCerrar} onClick={onCerrar}>×</button>
-        </div>
-
-        <div style={styles.modalSeccion}>
-          <div style={gridDos}>
-            <Campo label="Número de cuenta" name="numeroCuenta" value={form.numeroCuenta}
-              onChange={handleChange} error={errores.numeroCuenta} placeholder="Ej: 0001-123456-7" />
-
-            <Campo label="Titular" name="titular" value={form.titular}
-              onChange={handleChange} error={errores.titular} placeholder="Nombre completo" />
-
-            <Campo label="Entidad bancaria" name="entidad" value={form.entidad}
-              onChange={handleChange} error={errores.entidad} placeholder="Ej: Banco Itaú" />
-
-            {/* Tipo documento — solo CI */}
-            <div style={styles.campoWrapper}>
-              <label style={styles.campoLabel}>Tipo de documento</label>
-              <input value="CI" disabled
-                style={{ ...styles.input, background: '#F0F0F0', cursor: 'not-allowed', color: '#888' }} />
-            </div>
-
-            <Campo label="Número de documento" name="numeroDocumento" value={form.numeroDocumento}
-              onChange={handleChange} error={errores.numeroDocumento} placeholder="Ej: 4567890"
-              style={{ gridColumn: '1 / -1' }} />
-          </div>
-        </div>
-
-        <div style={styles.modalFooter}>
-          <button style={styles.btnCancelar} onClick={onCerrar}>Cancelar</button>
-          <button style={styles.btnRegistrar} onClick={handleGuardar}>Guardar cuenta</button>
-        </div>
-
-      </div>
     </div>
   );
 }
@@ -148,23 +64,212 @@ function Campo({ label, name, value, onChange, error, placeholder, style = {} })
 
 const gridDos = { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px 16px' };
 
-// ── Pantalla principal ────────────────────────────────────────────────────────
+function ModalCuentaNueva({ bancosDisponibles, onCerrar, onGuardar }) {
+  const [form, setForm] = useState(CUENTA_VACIA);
+  const [errores, setErrores] = useState({});
+  const [guardando, setGuardando] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setForm(prev => ({ ...prev, [name]: value }));
+    if (errores[name]) setErrores(prev => ({ ...prev, [name]: '' }));
+  };
+
+  const validar = () => {
+    const nuevos = {};
+    if (!form.nro_cuenta.trim()) nuevos.nro_cuenta = 'Obligatorio';
+    if (!form.titular.trim()) nuevos.titular = 'Obligatorio';
+    if (!form.id_banco) nuevos.id_banco = 'Obligatorio';
+    if (!form.numeroDocumento.trim()) nuevos.numeroDocumento = 'Obligatorio';
+    setErrores(nuevos);
+    return Object.keys(nuevos).length === 0;
+  };
+
+  const handleGuardar = async () => {
+    if (!validar()) return;
+    setGuardando(true);
+    setError('');
+    try {
+      const res = await fetchConToken(`${API_BASE}/tesoreria/movimientos/cuentas`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          nro_cuenta: form.nro_cuenta,
+          titular: form.titular,
+          tipo_cuenta: 'Ajena',
+          saldo_contable: 0,
+          saldo_disponible: 0,
+          id_banco: Number(form.id_banco),
+        }),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.message || 'Error al guardar');
+      }
+      const nueva = await res.json();
+      onGuardar({
+        id: nueva.id_cuenta_bancaria,
+        nombre: `${nueva.bancos?.nombre ?? form.entidad} - ${nueva.tipo_cuenta ?? '—'}`,
+        ...nueva,
+      });
+    } catch (err) {
+      setError(err.message || 'Error al guardar');
+    } finally {
+      setGuardando(false);
+    }
+  };
+
+  return (
+    <div style={{ ...styles.modalOverlay, zIndex: 1100 }}>
+      <div style={{ ...styles.modal, maxWidth: 480 }}>
+        <div style={styles.modalHeader}>
+          <h2 style={styles.modalTitulo}>Nueva cuenta</h2>
+          <button style={styles.btnCerrar} onClick={onCerrar}>×</button>
+        </div>
+
+        <div style={styles.modalSeccion}>
+          <div style={gridDos}>
+            <Campo label="Número de cuenta" name="nro_cuenta" value={form.nro_cuenta}
+              onChange={handleChange} error={errores.nro_cuenta} placeholder="Ej: 0001-123456-7" />
+
+            <Campo label="Titular" name="titular" value={form.titular}
+              onChange={handleChange} error={errores.titular} placeholder="Nombre completo" />
+
+            <div style={styles.campoWrapper}>
+              <label style={{ ...styles.campoLabel, color: errores.id_banco ? '#dc2626' : undefined }}>
+                Entidad bancaria{errores.id_banco ? ' *' : ''}
+              </label>
+              <select name="id_banco" value={form.id_banco || ''} onChange={handleChange}
+                style={{ ...styles.input, background: errores.id_banco ? '#fff5f5' : undefined, border: `1px solid ${errores.id_banco ? '#dc2626' : '#CCC'}` }}>
+                <option value="">Seleccionar...</option>
+                {bancosDisponibles.map(b => (
+                  <option key={b.id_banco} value={b.id_banco}>{b.nombre}</option>
+                ))}
+              </select>
+              {errores.id_banco && <span style={{ fontSize: 11, color: '#dc2626' }}>{errores.id_banco}</span>}
+            </div>
+
+            <div style={styles.campoWrapper}>
+              <label style={styles.campoLabel}>Tipo de documento</label>
+              <input value="CI" disabled
+                style={{ ...styles.input, background: '#F0F0F0', cursor: 'not-allowed', color: '#888' }} />
+            </div>
+
+            <Campo label="Número de documento" name="numeroDocumento" value={form.numeroDocumento}
+              onChange={handleChange} error={errores.numeroDocumento} placeholder="Ej: 4567890"
+              style={{ gridColumn: '1 / -1' }} />
+          </div>
+        </div>
+
+        {error && <p style={{ color: 'red', fontSize: 13, margin: 0 }}>{error}</p>}
+
+        <div style={styles.modalFooter}>
+          <button style={styles.btnCancelar} onClick={onCerrar} disabled={guardando}>Cancelar</button>
+          <button style={{ ...styles.btnRegistrar, opacity: guardando ? 0.6 : 1 }} onClick={handleGuardar} disabled={guardando}>
+            {guardando ? 'Guardando...' : 'Guardar cuenta'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function Movimiento({ usuario = 'Empleado', onLogout, onNavegar }) {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const cuentaInicial = location.state?.cuenta || CUENTAS_INICIALES[0];
+  const cuentaInicial = location.state?.cuenta || null;
 
-  const [cuentas, setCuentas] = useState(CUENTAS_INICIALES);
+  const [cuentas, setCuentas] = useState([]);
+  const [cuentasDestino, setCuentasDestino] = useState([]);
+  const [bancosDisponibles, setBancosDisponibles] = useState([]);
+  const [historial, setHistorial] = useState([]);
+  const [cargando, setCargando] = useState(true);
+
   const [mostrarModal, setMostrarModal] = useState(false);
   const [mostrarModalCuenta, setMostrarModalCuenta] = useState(false);
+  const [mostrarModalConciliacion, setMostrarModalConciliacion] = useState(false);
+  const [movimientoSeleccionado, setMovimientoSeleccionado] = useState(null);
+  const [filtroEstado, setFiltroEstado] = useState('');
 
-  const [cuentaOrigen, setCuentaOrigen] = useState(cuentaInicial);
+  const [cuentaOrigenId, setCuentaOrigenId] = useState(cuentaInicial?.id ?? '');
   const [cuentaDestino, setCuentaDestino] = useState(null);
   const [fecha, setFecha] = useState('');
   const [tipoMovimiento, setTipoMovimiento] = useState('');
   const [monto, setMonto] = useState('');
   const [concepto, setConcepto] = useState('');
+  const [guardando, setGuardando] = useState(false);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    const cargar = async () => {
+      try {
+        const [resCuentas, resMov, resBancos, resEstados] = await Promise.all([
+          fetchConToken(`${API_BASE}/tesoreria/movimientos/cuentas`),
+          fetchConToken(`${API_BASE}/tesoreria/movimientos/tabla`),
+          fetchConToken(`${API_BASE}/tesoreria/movimientos/bancos`),
+          fetchConToken(`${API_BASE}/tesoreria/movimientos/estados`),
+        ]);
+
+        const dataCuentas = await resCuentas.json();
+        const dataMov = await resMov.json();
+        const dataBancos = await resBancos.json();
+        const dataEstados = await resEstados.json();
+
+        setCuentas(
+          dataCuentas
+            .filter(c => c.tipo_cuenta?.toLowerCase() !== 'ajena')
+            .map(c => ({
+              id: c.id_cuenta_bancaria,
+              nombre: `${c.bancos?.nombre ?? '—'} - ${c.tipo_cuenta ?? '—'}`,
+            }))
+        );
+
+        setCuentasDestino(
+          dataCuentas.map(c => ({
+            id: c.id_cuenta_bancaria,
+            nombre: `${c.bancos?.nombre ?? '—'} - ${c.tipo_cuenta ?? '—'}`,
+          }))
+        );
+
+        setBancosDisponibles(dataBancos);
+
+        const movs = dataMov
+          .map(m => ({
+            id: m.id_movimiento,
+            idCuenta: m.cuenta_origen?.id_cuenta_bancaria,
+            fecha: m.fecha ? new Date(m.fecha).toLocaleDateString('es-ES') : '—',
+            cuentaOrigen: m.cuenta_origen?.bancos?.nombre
+              ? `${m.cuenta_origen.bancos.nombre} - ${m.cuenta_origen.tipo_cuenta ?? '—'}`
+              : '—',
+            cuentaDestino: m.cuenta_destino?.bancos?.nombre
+              ? `${m.cuenta_destino.bancos.nombre} - ${m.cuenta_destino.tipo_cuenta ?? '—'}`
+              : '—',
+            tipo: m.tipo ?? '—',
+            monto: m.monto ?? 0,
+            estado: m.estados?.nombre ?? '—',
+            idEstado: m.id_estado,
+            ...m,
+          }));
+
+        setHistorial(movs);
+      } catch (err) {
+        console.error('Error cargando datos:', err);
+      } finally {
+        setCargando(false);
+      }
+    };
+    cargar();
+  }, []);
+
+  const historialFiltrado = cuentaOrigenId
+    ? historial.filter(m => {
+        const coincideCuenta = m.idCuenta === Number(cuentaOrigenId);
+        const coincideEstado = filtroEstado === '' || m.estado === filtroEstado;
+        return coincideCuenta && coincideEstado;
+      })
+    : historial.filter(m => filtroEstado === '' || m.estado === filtroEstado);
 
   function handleNavegar(moduloId) {
     if (moduloId === 'cuentas') { navigate('/tesoreria/cuentas'); return; }
@@ -173,25 +278,85 @@ export default function Movimiento({ usuario = 'Empleado', onLogout, onNavegar }
 
   function cerrarModal() {
     setMostrarModal(false);
-    setCuentaOrigen(cuentaInicial);
     setCuentaDestino(null);
     setFecha(''); setTipoMovimiento(''); setMonto(''); setConcepto('');
+    setError('');
   }
 
-  function handleGuardarMovimiento() {
-    if (!cuentaOrigen)    { alert('Seleccione la cuenta origen.');       return; }
-    if (!cuentaDestino)   { alert('Seleccione la cuenta destino.');      return; }
-    if (!fecha)           { alert('Seleccione la fecha.');               return; }
-    if (!tipoMovimiento)  { alert('Seleccione el tipo de movimiento.');  return; }
-    if (!monto)           { alert('Ingrese el monto.');                  return; }
-    console.log('Movimiento registrado:', { cuentaOrigen, cuentaDestino, fecha, tipoMovimiento, monto: Number(monto), concepto });
-    cerrarModal();
+  async function handleGuardarMovimiento() {
+    if (!cuentaOrigenId) { setError('Seleccione la cuenta origen.'); return; }
+    if (!cuentaDestino) { setError('Seleccione la cuenta destino.'); return; }
+    if (!fecha) { setError('Seleccione la fecha.'); return; }
+    if (!tipoMovimiento) { setError('Seleccione el tipo de movimiento.'); return; }
+    if (!monto) { setError('Ingrese el monto.'); return; }
+
+    const observacionFinal = [
+      `${tipoMovimiento}`,
+      concepto,
+    ].filter(Boolean).join(' | ');
+
+    setGuardando(true);
+    setError('');
+    try {
+      const res = await fetchConToken(`${API_BASE}/tesoreria/movimientos`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id_cuenta_bancaria: Number(cuentaOrigenId),
+          id_cuenta_destino: cuentaDestino.id,
+          fecha,
+          tipo: 'Egreso',
+          monto: Number(monto),
+          id_tipo_movimiento: ID_TRANSFERENCIA,
+          observacion: observacionFinal,
+          id_estado: 1,
+        }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.message || 'Error al guardar');
+      }
+
+      const nuevo = await res.json();
+      const cuentaOrigen = cuentas.find(c => c.id === Number(cuentaOrigenId));
+      setHistorial(prev => [{
+        id: nuevo.id_movimiento,
+        idCuenta: Number(cuentaOrigenId),
+        fecha: new Date(fecha).toLocaleDateString('es-ES'),
+        cuentaOrigen: cuentaOrigen?.nombre ?? '—',
+        cuentaDestino: cuentaDestino.nombre,
+        tipo: tipoMovimiento,
+        monto: Number(monto),
+      }, ...prev]);
+
+      cerrarModal();
+    } catch (err) {
+      setError(err.message || 'Error al guardar');
+    } finally {
+      setGuardando(false);
+    }
   }
 
   function handleGuardarCuentaNueva(nuevaCuenta) {
-    setCuentas(prev => [...prev, nuevaCuenta]);
+    setCuentasDestino(prev => [...prev, nuevaCuenta]);
     setCuentaDestino(nuevaCuenta);
     setMostrarModalCuenta(false);
+  }
+
+  function abrirModalConciliacion(movimiento) {
+    setMovimientoSeleccionado(movimiento);
+    setMostrarModalConciliacion(true);
+  }
+
+  function cerrarModalConciliacion() {
+    setMostrarModalConciliacion(false);
+    setMovimientoSeleccionado(null);
+  }
+
+  function handleConciliarMovimiento(movimientoActualizado) {
+    setHistorial(prev => prev.map(m => m.id === movimientoActualizado.id_movimiento ? { ...m, estado: movimientoActualizado.estados?.nombre, idEstado: movimientoActualizado.id_estado } : m));
+    cerrarModalConciliacion();
   }
 
   return (
@@ -200,7 +365,11 @@ export default function Movimiento({ usuario = 'Empleado', onLogout, onNavegar }
 
       <main style={styles.contenido}>
         <header style={styles.encabezado}>
-          <h1 style={styles.titulo}>Movimientos</h1>
+          <h1 style={styles.titulo}>
+            {cuentaOrigenId && cuentas.find(c => c.id === Number(cuentaOrigenId))
+              ? `${cuentas.find(c => c.id === Number(cuentaOrigenId)).nombre} - Movimientos`
+              : 'Movimientos'}
+          </h1>
           <div style={styles.separador} />
         </header>
 
@@ -208,7 +377,8 @@ export default function Movimiento({ usuario = 'Empleado', onLogout, onNavegar }
           <div style={styles.seccion}>
             <h2 style={styles.subtitulo}>Cuenta</h2>
             <div style={styles.filaAccion}>
-              <select value={cuentaOrigen?.id || ''} onChange={e => setCuentaOrigen(cuentas.find(c => c.id === Number(e.target.value)))} style={styles.select}>
+              <select value={cuentaOrigenId} onChange={e => setCuentaOrigenId(e.target.value)} style={styles.select}>
+                <option value="">Todas las cuentas</option>
                 {cuentas.map(c => <option key={c.id} value={c.id}>{c.nombre}</option>)}
               </select>
               <button style={styles.btnRegistrar} onClick={() => setMostrarModal(true)}>
@@ -221,20 +391,38 @@ export default function Movimiento({ usuario = 'Empleado', onLogout, onNavegar }
             <h2 style={styles.subtitulo}>Historial de movimientos</h2>
             <div style={{ width: '100%', maxWidth: 1300 }}>
               <List
-                data={historialMock}
+                data={historialFiltrado}
                 columns={[
                   { key: 'fecha', label: 'Fecha' },
                   { key: 'cuentaOrigen', label: 'Cuenta origen' },
                   { key: 'cuentaDestino', label: 'Cuenta destino' },
                   { key: 'tipo', label: 'Tipo' },
                   { key: 'monto', label: 'Monto', render: item => formatearGs(item.monto) },
+                  {
+                    key: 'estado',
+                    label: 'Estado',
+                    render: item => {
+                      const colores = { 'Pendiente': '#FF0000', 'Conciliado': '#22C55E', 'Completado': '#22C55E' };
+                      return <span style={{ color: colores[item.estado] || '#000', fontWeight: 700 }}>{item.estado}</span>;
+                    }
+                  },
+                  {
+                    label: 'Acciones',
+                    render: item => {
+                      const esChequeConEstado = (item.estado === 'Pendiente' || item.estado === 'Conciliado') && item.depositos_bancarios?.some(d => d.tipo_deposito === 'Cheque Terceros');
+                      return esChequeConEstado ? (
+                        <button style={styles.btnAccion} onClick={() => abrirModalConciliacion(item)}>
+                          {item.estado === 'Pendiente' ? 'Conciliar' : 'Ver'}
+                        </button>
+                      ) : null;
+                    }
+                  }
                 ]}
               />
             </div>
           </div>
         </section>
 
-        {/* ── Modal movimiento ── */}
         {mostrarModal && (
           <div style={styles.modalOverlay}>
             <div style={styles.modal}>
@@ -245,12 +433,15 @@ export default function Movimiento({ usuario = 'Empleado', onLogout, onNavegar }
 
               <div style={styles.modalSeccion}>
                 <h3 style={styles.modalSubtitulo}>Cuenta origen</h3>
-                <SearchbarLocal data={cuentas} value={cuentaOrigen} onSelect={setCuentaOrigen} placeholder="Buscar cuenta origen..." />
+                <select value={cuentaOrigenId} onChange={e => setCuentaOrigenId(e.target.value)} style={styles.input}>
+                  <option value="">Seleccionar cuenta...</option>
+                  {cuentas.map(c => <option key={c.id} value={c.id}>{c.nombre}</option>)}
+                </select>
               </div>
 
               <div style={styles.modalSeccion}>
                 <h3 style={styles.modalSubtitulo}>Cuenta destino</h3>
-                <SearchbarLocal data={cuentas} value={cuentaDestino} onSelect={setCuentaDestino} placeholder="Buscar cuenta destino..." />
+                <SearchbarLocal data={cuentasDestino} value={cuentaDestino} onSelect={setCuentaDestino} placeholder="Buscar cuenta destino..." />
                 <button style={styles.btnAgregarCuenta} onClick={() => setMostrarModalCuenta(true)}>
                   + Agregar cuenta nueva
                 </button>
@@ -272,22 +463,34 @@ export default function Movimiento({ usuario = 'Empleado', onLogout, onNavegar }
                 <textarea placeholder="Concepto" value={concepto} onChange={e => setConcepto(e.target.value)} style={styles.textarea} />
               </div>
 
+              {error && <p style={{ color: 'red', margin: 0, fontSize: 13 }}>{error}</p>}
+
               <div style={styles.modalFooter}>
-                <button style={styles.btnCancelar} onClick={cerrarModal}>Cancelar</button>
-                <button style={styles.btnRegistrar} onClick={handleGuardarMovimiento}>Guardar movimiento</button>
+                <button style={styles.btnCancelar} onClick={cerrarModal} disabled={guardando}>Cancelar</button>
+                <button style={{ ...styles.btnRegistrar, opacity: guardando ? 0.6 : 1 }} onClick={handleGuardarMovimiento} disabled={guardando}>
+                  {guardando ? 'Guardando...' : 'Guardar movimiento'}
+                </button>
               </div>
             </div>
           </div>
         )}
 
-        {/* ── Modal cuenta nueva ── */}
         {mostrarModalCuenta && (
           <ModalCuentaNueva
+            bancosDisponibles={bancosDisponibles}
             onCerrar={() => setMostrarModalCuenta(false)}
             onGuardar={handleGuardarCuentaNueva}
           />
         )}
 
+        {mostrarModalConciliacion && movimientoSeleccionado && (
+          <ModalConciliacion
+            movimiento={movimientoSeleccionado}
+            onCerrar={cerrarModalConciliacion}
+            onConciliar={handleConciliarMovimiento}
+            modo={movimientoSeleccionado.estado === 'Pendiente' ? 'conciliar' : 'ver_detalles'}
+          />
+        )}
       </main>
     </div>
   );
@@ -326,4 +529,5 @@ const styles = {
   searchRoot: { position: 'relative', width: '100%' },
   dropdown: { position: 'absolute', top: 'calc(100% + 2px)', left: 0, right: 0, background: '#FFF', border: '1px solid #DDD', borderRadius: '0 0 8px 8px', boxShadow: '0 6px 16px rgba(0,0,0,0.12)', zIndex: 1000, maxHeight: 220, overflowY: 'auto' },
   dropdownItem: { padding: '10px 14px', cursor: 'pointer', fontSize: 14, borderBottom: '1px solid #F0F0F0' },
+  btnAccion: { background: getColor('amarillo'), color: '#000', border: 'none', padding: '6px 12px', borderRadius: 6, fontWeight: 700, fontSize: 12, cursor: 'pointer' },
 };

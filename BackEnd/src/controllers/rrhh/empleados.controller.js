@@ -60,12 +60,22 @@ const getEmpleadoByRuc = async (req, res) => {
 
 const postEmpleado = async (req, res) => {
     try {
-        const { ci, nombre, apellido, ruc, direccion, telefono, correo, tipo_persona, fecha_nacimiento } = req.body
+        const {
+            ci, conyugue, nro_hijos, hijos_menores,
+            nombre, apellido, ruc, direccion, telefono, correo,
+            tipo_persona, fecha_nacimiento,
+            id_cargo, id_estado, fecha_inicio
+        } = req.body
 
         if (!ci || !nombre)
             return res.status(400).json({ message: 'CI y nombre requeridos' })
 
-        const empleado = await empleadosService.postEmpleado(ci, nombre, apellido, ruc, direccion, telefono, correo, tipo_persona, fecha_nacimiento)
+        const empleado = await empleadosService.postEmpleado(
+            ci, conyugue, nro_hijos, hijos_menores,
+            nombre, apellido, ruc, direccion, telefono, correo,
+            tipo_persona, fecha_nacimiento,
+            id_cargo, id_estado, fecha_inicio
+        )
         res.status(201).json(empleado)
     } catch (error) {
         res.status(400).json({ message: error.message })
@@ -95,4 +105,13 @@ const deleteEmpleado = async (req, res) => {
     }
 }
 
-export default { getAllEmpleados, getTableEmpleado, getEmpleado, getEmpleadoByNombre, getEmpleadoByCi, getEmpleadoByRuc, postEmpleado, updateEmpleado, deleteEmpleado }
+const getAllCargos = async (req, res) => {
+    try {
+        const cargos = await empleadosService.getAllCargos()
+        res.status(200).json(cargos)
+    } catch (error) {
+        res.status(400).json({ message: error.message })
+    }
+}
+
+export default { getAllEmpleados, getTableEmpleado, getEmpleado, getEmpleadoByNombre, getEmpleadoByCi, getEmpleadoByRuc, postEmpleado, updateEmpleado, deleteEmpleado, getAllCargos }

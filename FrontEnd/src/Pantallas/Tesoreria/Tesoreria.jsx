@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import Sidebar from "../../components/Sidebar";
 import List from '../../components/Lista';
 import { useNavigate } from 'react-router-dom';
+import fetchConToken from '../../token'
 
 import {
     IconoPedidos,
@@ -10,8 +11,7 @@ import {
     IconoTesoreria
 } from "../../components/Icons";
 
-const SUPABASE_URL = "https://ufpvebypnhcbvgyrkzrw.supabase.co";
-const SUPABASE_KEY = "sb_publishable_3zNPvTHmiYmwG-BMVDDk9g_KZ_li66L";
+const API_BASE = "http://localhost:9128/api"
 
 const columns = [
     { key: 'fecha', label: 'Fecha' },
@@ -48,32 +48,26 @@ export default function Tesoreria({ usuario = 'Empleado', onLogout, onNavegar })
     }
 
     useEffect(() => {
-        const cargarFacturas = async () => {
-            const res = await fetch(
-                `${SUPABASE_URL}/rest/v1/facturas_ventas?select=id_factura,nro_factura,importe_total,fecha_emision,clientes(personas(nombre))&order=id_factura.desc`,
-                {
-                    headers: {
-                        apikey: SUPABASE_KEY,
-                        Authorization: `Bearer ${SUPABASE_KEY}`,
-                    },
-                }
-            );
+        const cargarMovimientos = async () => {
+            try {
+                const res = await fetchConToken(`${API_BASE}/tesoreria/movimientos/tabla`)
+                const data = await res.json()
+                const formateados = data.map((item) => ({
+                    id: item.id_movimiento,
+                    fecha: item.fecha ? new Date(item.fecha).toLocaleDateString('es-ES') : '—',
+                    cuenta: `${item.cuenta_origen?.bancos?.nombre ?? '—'} - ${item.cuenta_origen?.tipo_cuenta ?? '—'}`,
+                    concepto: item.tipos_movimiento_bancario?.nombre ?? '—',
+                    tipo: item.tipo ?? '—',
+                    total: `${Number(item.monto ?? 0).toLocaleString('es-PY')} Gs.`,
+                }))
 
-            const data = await res.json();
-
-            const formateadas = data.map((item) => ({
-                id: item.id_factura,
-                codigo: item.codigo_factura ? item.codigo_factura : `FAC-${String(item.id_factura).padStart(6, '0')}`,
-                cliente: item.clientes?.personas ? [item.clientes.personas.nombre, item.clientes.personas.apellido].filter(Boolean).join(' ') : 'Agregar en BD',
-                total: `${Number(item.importe_total ?? 0).toLocaleString('es-PY')} Gs.`,
-                fecha: item.fecha_emision ? new Date(item.fecha_emision).toLocaleDateString('es-ES') : 'Agregar en BD',
-            }));
-
-            setFacturas(formateadas);
-        };
-
-        cargarFacturas();
-    }, []);
+                setFacturas(formateados)
+            } catch (err) {
+                console.error('Error cargando movimientos:', err)
+            }
+        }
+        cargarMovimientos()
+    }, [])
 
     const movimientosFiltrados = facturas.filter((f) =>
         Object.values(f).some((v) =>

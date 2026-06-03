@@ -1,16 +1,55 @@
 import React, { useState, useEffect } from 'react';
 import Sidebar from "../../components/Sidebar";
 import { Button } from '../../components/Buttons';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import fetchConToken from '../../token';
- 
+function InputSugerencias({ value, onChange, opciones, placeholder }) {
+  const [mostrar, setMostrar] = useState(false)
+
+  const sugerencias = opciones.filter(op =>
+    op.toLowerCase().includes(value.toLowerCase()) && value.trim()
+  )
+
+  return (
+    <div style={{ position: 'relative' }}>
+      <input
+        value={value}
+        onChange={(e) => { onChange(e.target.value); setMostrar(true) }}
+        onBlur={() => setTimeout(() => setMostrar(false), 150)}
+        placeholder={placeholder}
+        style={{ padding: '8px 10px', borderRadius: 8, border: '1px solid #ccc', width: '100%', boxSizing: 'border-box' }}
+      />
+
+      {mostrar && sugerencias.length > 0 && (
+        <div style={{
+          position: 'absolute', top: '100%', left: 0, right: 0,
+          background: '#fff', border: '1px solid #ddd', borderRadius: '0 0 8px 8px',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.1)', zIndex: 100, maxHeight: 200, overflowY: 'auto'
+        }}>
+          {sugerencias.map((op, i) => (
+            <div
+              key={i}
+              onMouseDown={() => { onChange(op); setMostrar(false) }}
+              style={{ padding: '8px 12px', cursor: 'pointer', fontSize: 14, borderBottom: '1px solid #f0f0f0' }}
+              onMouseEnter={e => e.target.style.background = '#fff9e6'}
+              onMouseLeave={e => e.target.style.background = '#fff'}
+            >
+              {op}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 function Field({ label, name, value, onChange, editando, error }) {
   return (
     <>
       <label style={{ fontWeight: error ? 700 : undefined, color: error ? '#dc2626' : undefined }}>
         {label}{error ? ' *' : ''}
       </label>
- 
+
       {editando ? (
         <div>
           <input
@@ -34,7 +73,7 @@ function Field({ label, name, value, onChange, editando, error }) {
     </>
   );
 }
- 
+
 // Campos que no pueden estar vacíos al crear o editar
 const CAMPOS_REQUERIDOS = {
   nombre: "Nombre",
@@ -44,64 +83,78 @@ const CAMPOS_REQUERIDOS = {
   fecha_inicio: "Fecha de inicio",
   cargo: "Cargo",
 };
- 
+
 export default function GestionPersonal({ usuario, onLogout, onNavegar, onGuardado }) {
   const { id } = useParams();
-  const modoCrear = !id;
- 
+  const modoCrear = !id || id === '-1';
+
   const [editando, setEditando] = useState(modoCrear);
   const [cargando, setCargando] = useState(!modoCrear);
   const [errores, setErrores] = useState({});
   const [errorGeneral, setErrorGeneral] = useState("");
- 
+  const [cargo, setCargo] = useState('')
+  const [cargosDisponibles, setCargosDisponibles] = useState([])
+  const estadosDisponibles = ['Confirmado', 'Anulado']
+  const navigate = useNavigate();
+
+
   const [form, setForm] = useState({
-    nombre: "", apellido: "", CI: "", ciudad: "", direccion: "",
+    nombre: "", apellido: "", CI: "", //ciudad: "",
+    direccion: "",
     correo_electronico: "", fecha_inicio: "", cargo: "", estado: "",
     conyugue: "", hijos: "", hijos_menores: ""
   });
- 
+
   const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:9128/api";
- 
+
   useEffect(() => {
     if (modoCrear) return;
     const cargarEmpleado = async () => {
       try {
         const res = await fetchConToken(`${API_BASE}/rrhh/empleados/${id}`);
         const data = await res.json();
-        const familiares = data.familiares || [];
-        const hijos = familiares.filter(f => ['hijo', 'hija'].includes((f.relacion || '').toLowerCase()));
-        const hijos_menores = familiares.filter(h => {
-          const edad = new Date().getFullYear() - new Date(h.personas.fecha_nacimiento).getFullYear();
-          return edad < 18;
-        });
-        const conyugue = familiares.find(f => (f.relacion || '').toLowerCase() === 'conyugue');
         setForm({
           nombre: data.personas?.nombre || "",
           apellido: data.personas?.apellido || "",
           CI: data.ci || "",
-          ciudad: data.ciudad || "",
+          //ciudad: data.ciudad || "",
           direccion: data.personas?.direccion || "",
           correo_electronico: data.personas?.correo || "",
           fecha_inicio: data.personas_horario_cargo?.[0]?.fecha_inicio || "",
           cargo: data.personas_horario_cargo?.[0]?.cargo?.nombre || "",
           estado: data.personas_horario_cargo?.[0]?.estados?.nombre || "",
-          conyugue: conyugue ? `${conyugue.personas?.nombre || ""} ${conyugue.personas?.apellido || ""}` : "",
-          hijos: hijos.length,
-          hijos_menores: hijos_menores.length
+          conyugue: data.conyugue || "",
+          hijos: data.nro_hijos || 0,
+          hijos_menores: data.hijos_menores || 0
         });
+
       } finally {
         setCargando(false);
       }
     };
     cargarEmpleado();
   }, [id]);
- 
+
+  useEffect(() => {
+    const cargarCargos = async () => {
+      try {
+        const res = await fetchConToken(`${API_BASE}/rrhh/empleados/cargos`)
+        const data = await res.json()
+        if (Array.isArray(data))
+          setCargosDisponibles(data.map(c => ({ id_cargo: c.id_cargo, nombre: c.nombre })))
+      } catch (err) {
+        console.error('Error cargando cargos:', err)
+      }
+    }
+    cargarCargos()
+  }, [])
+
   const handleChange = (key, value) => {
     setForm(prev => ({ ...prev, [key]: value }));
     // Limpiar error del campo al escribir
     if (errores[key]) setErrores(prev => ({ ...prev, [key]: "" }));
   };
- 
+
   const validar = () => {
     const nuevosErrores = {};
     Object.entries(CAMPOS_REQUERIDOS).forEach(([campo, label]) => {
@@ -112,15 +165,25 @@ export default function GestionPersonal({ usuario, onLogout, onNavegar, onGuarda
     setErrores(nuevosErrores);
     return Object.keys(nuevosErrores).length === 0;
   };
- 
+
   const editEmpleado = async () => {
     if (!validar()) return;
     try {
+      const id_cargo = cargosDisponibles.find(c => c.nombre === form.cargo)?.id_cargo
+      const estado = form.estado === 'Confirmado' ? 1 : form.estado === 'Anulado' ? 3 : null;
       const payload = {
-        ci: form.CI, nombre: form.nombre, apellido: form.apellido,
-        direccion: form.direccion, correo: form.correo_electronico,
+        ci: form.CI,
+        nombre: form.nombre,
+        apellido: form.apellido,
+        direccion: form.direccion,
+        correo: form.correo_electronico,
+        conyugue: form.conyugue ?? "",
+        nro_hijos: form.hijos !== "" ? Number(form.hijos) : null,       // ← null si vacío
+        hijos_menores: form.hijos_menores !== "" ? Number(form.hijos_menores) : null,
         fecha_inicio: form.fecha_inicio,
-      };
+        id_cargo,
+        id_estado: estado ?? null
+      }
       const res = await fetchConToken(`${API_BASE}/rrhh/empleados/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
@@ -135,33 +198,63 @@ export default function GestionPersonal({ usuario, onLogout, onNavegar, onGuarda
       setErrorGeneral(err.message || "Error al guardar empleado");
     }
   };
- 
-  const crearEmpleado = () => {
+
+  const crearEmpleado = async () => {
     if (!validar()) return;
-    console.log("CREAR:", form);
-  };
- 
+    try {
+      const id_cargo = cargosDisponibles.find(c => c.nombre === form.cargo)?.id_cargo
+      const estado = form.estado === 'Confirmado' ? 1 : form.estado === 'Anulado' ? 3 : null;
+      const payload = {
+        ci: form.CI,
+        nombre: form.nombre,
+        apellido: form.apellido,
+        direccion: form.direccion,
+        correo: form.correo_electronico,
+        conyugue: form.conyugue ?? "",
+        nro_hijos: form.hijos !== "" ? Number(form.hijos) : null,       // ← null si vacío
+        hijos_menores: form.hijos_menores !== "" ? Number(form.hijos_menores) : null,
+        fecha_inicio: form.fecha_inicio,
+        id_cargo,
+        id_estado: estado ?? null
+      }
+
+      const res = await fetchConToken(`${API_BASE}/rrhh/empleados/`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      })
+
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.message || "Error al crear el empleado")
+      if (onGuardado) onGuardado(data)
+      setErrorGeneral("")
+      navigate("/rrhh")
+    } catch (err) {
+      setErrorGeneral(err.message || "Error al crear empleado")
+    }
+  }
+
   const cancelarEdicion = () => {
     setEditando(false);
     setErrores({});
     setErrorGeneral("");
   };
- 
+
   if (cargando) return <div>Cargando...</div>;
- 
+
   return (
     <div style={styles.pagina}>
       <Sidebar usuario={usuario} onLogout={onLogout} onNavegar={onNavegar} />
- 
+
       <main style={styles.contenido}>
         <div style={styles.wrapper}>
- 
+
           <h1 style={styles.titulo}>
             {modoCrear ? "Crear Empleado" : "Gestión de Personal"}
           </h1>
- 
+
           <div style={styles.grid}>
- 
+
             {/* IZQUIERDA */}
             <div style={styles.card}>
               <h3>Datos personales</h3>
@@ -169,23 +262,44 @@ export default function GestionPersonal({ usuario, onLogout, onNavegar, onGuarda
                 <Field label="Nombre" name="nombre" value={form.nombre} onChange={handleChange} editando={editando} error={errores.nombre} />
                 <Field label="Apellido" name="apellido" value={form.apellido} onChange={handleChange} editando={editando} error={errores.apellido} />
                 <Field label="CI" name="CI" value={form.CI} onChange={handleChange} editando={editando} error={errores.CI} />
-                <Field label="Ciudad" name="ciudad" value={form.ciudad} onChange={handleChange} editando={editando} />
                 <Field label="Dirección" name="direccion" value={form.direccion} onChange={handleChange} editando={editando} />
                 <Field label="Correo" name="correo_electronico" value={form.correo_electronico} onChange={handleChange} editando={editando} error={errores.correo_electronico} />
               </div>
             </div>
- 
+
             {/* DERECHA */}
             <div style={styles.right}>
               <div style={styles.card}>
                 <h3>Datos empresariales</h3>
                 <div style={styles.form}>
                   <Field label="Fecha inicio" name="fecha_inicio" value={form.fecha_inicio} onChange={handleChange} editando={editando} error={errores.fecha_inicio} />
-                  <Field label="Cargo" name="cargo" value={form.cargo} onChange={handleChange} editando={editando} error={errores.cargo} />
-                  <Field label="Estado" name="estado" value={form.estado} onChange={handleChange} editando={editando} />
+                  {!editando ? (
+                    <>
+                      <Field label="Cargo" name="cargo" value={form.cargo} onChange={handleChange} editando={editando} error={errores.cargo} />
+                      <Field label="Estado" name="estado" value={form.estado} onChange={handleChange} editando={editando} />
+                    </>
+
+                  ) : (
+                    <>
+                      <p>Cargo:</p>
+                      <InputSugerencias
+                        value={form.cargo}
+                        onChange={(val) => handleChange('cargo', val)}
+                        opciones={cargosDisponibles.map(c => c.nombre)}
+                        placeholder="Cargo..."
+                      />
+                      <p>Estado:</p>
+                      <InputSugerencias
+                        value={form.estado}
+                        onChange={(val) => handleChange('estado', val)}
+                        opciones={estadosDisponibles}
+                        placeholder="Estado..."
+                      />
+                    </>
+                  )}
                 </div>
               </div>
- 
+
               <div style={styles.card}>
                 <h3>Datos familiares</h3>
                 <div style={styles.form}>
@@ -195,37 +309,35 @@ export default function GestionPersonal({ usuario, onLogout, onNavegar, onGuarda
                 </div>
               </div>
             </div>
- 
+
           </div>
- 
+
           {/* Error general */}
           {errorGeneral && (
             <p style={styles.errorGeneral}>{errorGeneral}</p>
           )}
- 
+
           {/* Aviso de campos requeridos si hay errores */}
           {Object.keys(errores).length > 0 && (
             <p style={styles.errorGeneral}>Completá los campos obligatorios antes de continuar.</p>
           )}
- 
+
           {/* BOTONES */}
           <div style={styles.footer}>
-            {modoCrear ? (
+            {!modoCrear && !editando && (
+              <Button label="Editar" variant="amarillo" onClick={() => setEditando(true)} />
+            )}
+            {!modoCrear && editando && (
+              <Button label="Cancelar" variant="gris" onClick={cancelarEdicion} />
+            )}
+            {modoCrear && (
               <Button label="Crear empleado" variant="amarillo" onClick={crearEmpleado} />
-            ) : (
-              <>
-                {!editando ? (
-                  <Button label="Editar" variant="amarillo" onClick={() => setEditando(true)} />
-                ) : (
-                  <>
-                    <Button label="Cancelar" variant="gris" onClick={cancelarEdicion} />
-                    <Button label="Guardar" variant="amarillo" onClick={editEmpleado} />
-                  </>
-                )}
-              </>
+            )}
+            {!modoCrear && editando && (
+              <Button label="Guardar" variant="amarillo" onClick={editEmpleado} />
             )}
           </div>
- 
+
         </div>
       </main>
     </div>

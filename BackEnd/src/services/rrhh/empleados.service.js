@@ -1,6 +1,6 @@
 import supabase from '../../config/supabase.js'
-const SELECT_ALL = `*, personas(*), personas_horario_cargo(*,cargo(*), estados(*)),familiares(*, personas(*))`
-const SELECT_SINGLE = `*, personas(*), personas_horario_cargo(*,cargo(*), estados(nombre)),familiares(relacion, personas(nombre, apellido, fecha_nacimiento))`
+const SELECT_ALL = `*, personas(*), personas_horario_cargo(*,cargo(*), estados(*)))`
+const SELECT_SINGLE = `*, personas(*), personas_horario_cargo(*,cargo(*), estados(nombre)))`
 const getAllEmpleados = async () => {
     const { data, error } = await supabase
         .from('empleados')
@@ -57,7 +57,8 @@ const getEmpleadoByRuc = async (ruc) => {
     return data
 }
 
-const postEmpleado = async (ci, nombre, apellido, ruc, direccion, telefono, correo, tipo_persona, fecha_nacimiento) => {
+const postEmpleado = async (ci, conyugue, nro_hijos, hijos_menores, nombre, apellido, ruc, direccion, telefono, correo, tipo_persona, fecha_nacimiento, id_cargo, id_estado, fecha_inicio) => {
+
     const { data: persona, error: errorPer } = await supabase
         .from('personas')
         .insert({ nombre, apellido, ruc, direccion, telefono, correo, tipo_persona, fecha_nacimiento })
@@ -65,17 +66,26 @@ const postEmpleado = async (ci, nombre, apellido, ruc, direccion, telefono, corr
         .single()
     if (errorPer) throw new Error(errorPer.message)
 
+
     const { data: empleado, error: errorEmp } = await supabase
         .from('empleados')
-        .insert({ ci, id_persona: persona.id_persona })
+        .insert({ ci, conyugue, nro_hijos, hijos_menores, id_persona: persona.id_persona })
         .select()
         .single()
     if (errorEmp) throw new Error(errorEmp.message)
-    return empleado
+
+    const { data: phc, error: errorPhc } = await supabase
+        .from('personas_horario_cargo')
+        .insert({ id_empleado: empleado.id_empleado, id_cargo, id_estado, fecha_inicio })
+        .select()
+        .single()
+    if (errorPhc) throw new Error(errorPhc.message)
+
+    return { persona, empleado, phc }
 }
 
 const updateEmpleado = async (id, data) => {
-    const { ci, fecha_inicio, ...datosPersona } = data
+    const { ci, conyugue, nro_hijos, hijos_menores, fecha_inicio, id_cargo, id_estado, ...datosPersona } = data
 
     const { data: empExistente, error: errorBuscar } = await supabase
         .from('empleados')
@@ -97,7 +107,6 @@ const updateEmpleado = async (id, data) => {
     const actualizarPersona = Object.fromEntries(
         Object.entries(datosPersona).filter(([_, v]) => v !== undefined && v !== '')
     )
-
     const { data: persona, error: errorPer } = await supabase
         .from('personas')
         .update(actualizarPersona)
@@ -107,7 +116,7 @@ const updateEmpleado = async (id, data) => {
     if (errorPer) throw new Error(errorPer.message)
 
     const actualizarEmpleado = Object.fromEntries(
-        Object.entries({ ci }).filter(([_, v]) => v !== undefined && v !== '')
+        Object.entries({ ci, conyugue, nro_hijos, hijos_menores }).filter(([_, v]) => v !== undefined)
     )
     const { data: empleado, error: errorEmp } = await supabase
         .from('empleados')
@@ -118,7 +127,7 @@ const updateEmpleado = async (id, data) => {
     if (errorEmp) throw new Error(errorEmp.message)
 
     const actualizarPhc = Object.fromEntries(
-        Object.entries({ fecha_inicio }).filter(([_, v]) => v !== undefined && v !== '')
+        Object.entries({ fecha_inicio, id_cargo, id_estado }).filter(([_, v]) => v !== undefined && v !== '')
     )
     const { data: phc, error: errorPhc } = await supabase
         .from('personas_horario_cargo')
@@ -156,4 +165,13 @@ const deleteEmpleado = async (id) => {
     return { message: 'Empleado eliminado correctamente' }
 }
 
-export default { getAllEmpleados, getTableEmpleado, getEmpleado, getEmpleadoByNombre, getEmpleadoByCi, getEmpleadoByRuc, postEmpleado, updateEmpleado, deleteEmpleado }
+const getAllCargos = async () => {
+    const { data, error } = await supabase
+        .from('cargo')
+        .select('*')
+        .order('nombre', { ascending: true })
+    if (error) throw new Error(error.message)
+    return data
+}
+
+export default { getAllEmpleados, getTableEmpleado, getEmpleado, getEmpleadoByNombre, getEmpleadoByCi, getEmpleadoByRuc, postEmpleado, updateEmpleado, deleteEmpleado, getAllCargos }

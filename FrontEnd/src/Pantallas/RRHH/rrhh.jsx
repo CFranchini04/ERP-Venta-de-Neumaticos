@@ -33,7 +33,7 @@ export default function RRHH({ usuario = "Empleado", onLogout, onNavegar }) {
   };
 
   function handleNuevo() {
-    navigate("/rrhh/nuevo-empleado");
+    navigate("/rrhh/gestion-de-empleado/-1");
   }
 
   const cargos = [...new Set(empleados.map((emp) => emp.cargo))];
@@ -54,8 +54,6 @@ export default function RRHH({ usuario = "Empleado", onLogout, onNavegar }) {
         );
 
         const data = await respuesta.json();
-
-        console.log(JSON.stringify(data, null, 2));
 
         if (!Array.isArray(data)) {
           console.error("Supabase devolvió un error:", data);
@@ -85,10 +83,6 @@ export default function RRHH({ usuario = "Empleado", onLogout, onNavegar }) {
 
     cargarEmpleados();
   }, []);
-
-  function handleNuevo() {
-    handleNavegar("crear-empleado");
-  }
 
   const empleadosFiltrados = empleados
     .filter((emp) => {
