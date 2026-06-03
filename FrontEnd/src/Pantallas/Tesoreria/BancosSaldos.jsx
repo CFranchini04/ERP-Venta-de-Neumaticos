@@ -59,19 +59,25 @@ export default function BancosSaldos({ usuario = 'Empleado', onLogout, onNavegar
   const [bancosDisponibles, setBancosDisponibles] = useState([]);
   const [modalAbierto, setModalAbierto] = useState(false);
   const [form, setForm] = useState(camposVacios);
+  const [filtroEstado, setFiltroEstado] = useState('');
+  const [estadosMovimientos, setEstadosMovimientos] = useState([]);
 
   const navigate = useNavigate();
 
   useEffect(() => {
     const cargarCuentas = async () => {
       try {
-        const res = await fetchConToken(`${API_BASE}/tesoreria/movimientos/cuentas`);
-        const data = await res.json();
-        const formateados = data.filter(c => c.tipo_cuenta.toLowerCase() != 'ajena').map((item) => ({
-          id: item.id_cuenta_bancaria,
-          cuenta: `${item.bancos?.nombre ?? '—'} - ${item.tipo_cuenta ?? '—'}`,
-          saldo: item.saldo_disponible ?? 0,
-        }));
+        const resCuentas = await fetchConToken(`${API_BASE}/tesoreria/movimientos/cuentas`);
+        
+        const dataCuentas = await resCuentas.json();
+        
+        const formateados = dataCuentas
+          .filter(c => c.tipo_cuenta?.toLowerCase() !== 'ajena')
+          .map((item) => ({
+            id: item.id_cuenta_bancaria,
+            cuenta: `${item.bancos?.nombre ?? '—'} - ${item.tipo_cuenta ?? '—'}`,
+            saldo: item.saldo_disponible ?? 0,
+          }));
         setBancos(formateados);
       } catch (err) {
         console.error('Error cargando cuentas:', err);

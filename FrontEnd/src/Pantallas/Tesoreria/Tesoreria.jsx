@@ -50,12 +50,12 @@ export default function Tesoreria({ usuario = 'Empleado', onLogout, onNavegar })
     useEffect(() => {
         const cargarMovimientos = async () => {
             try {
-                const res = await fetchConToken(`${API_BASE}/tesoreria/movimientos`)
+                const res = await fetchConToken(`${API_BASE}/tesoreria/movimientos/tabla`)
                 const data = await res.json()
                 const formateados = data.map((item) => ({
                     id: item.id_movimiento,
                     fecha: item.fecha ? new Date(item.fecha).toLocaleDateString('es-ES') : '—',
-                    cuenta: item.cuentas_bancarias?.titular ?? '—',
+                    cuenta: `${item.cuenta_origen?.bancos?.nombre ?? '—'} - ${item.cuenta_origen?.tipo_cuenta ?? '—'}`,
                     concepto: item.tipos_movimiento_bancario?.nombre ?? '—',
                     tipo: item.tipo ?? '—',
                     total: `${Number(item.monto ?? 0).toLocaleString('es-PY')} Gs.`,

@@ -5,6 +5,7 @@ import List from '../../components/Lista';
 import { IconoMas } from '../../components/Icons';
 import { getColor } from '../../components/Colors';
 import fetchConToken from '../../token';
+import ModalConciliacion from './ModalConciliacion';
 
 const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:9128/api';
 
@@ -18,13 +19,15 @@ export default function Cuenta({ usuario = 'Empleado', onLogout, onNavegar }) {
     const [cargando, setCargando] = useState(true);
     const [busqueda, setBusqueda] = useState('');
     const [filtroTipo, setFiltroTipo] = useState('');
+    const [mostrarModalConciliacion, setMostrarModalConciliacion] = useState(false);
+    const [movimientoSeleccionado, setMovimientoSeleccionado] = useState(null);
 
     useEffect(() => {
         const cargar = async () => {
             try {
                 const [resCuenta, resMov] = await Promise.all([
                     fetchConToken(`${API_BASE}/tesoreria/movimientos/cuentas/${id}`),
-                    fetchConToken(`${API_BASE}/tesoreria/movimientos/tabla`),
+                    fetchConToken(`${API_BASE}/tesoreria/movimientos/cuenta/${id}`),
                 ]);
 
                 const dataCuenta = await resCuenta.json();
@@ -38,32 +41,30 @@ export default function Cuenta({ usuario = 'Empleado', onLogout, onNavegar }) {
                     pendientes: (dataCuenta.saldo_contable ?? 0) - (dataCuenta.saldo_disponible ?? 0),
                 });
 
-                const movCuenta = dataMov
-                    .filter(m => m.cuentas_bancarias?.id_cuenta_bancaria === Number(id))
-                    .sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
-
-
                 const saldoActual = dataCuenta.saldo_disponible ?? 0;
-                const conSaldo = movCuenta.map((mov, i) => {
+                const conSaldo = dataMov.reduce((acc, mov, i) => {
                     let saldoAcumulado;
                     if (i === 0) {
                         saldoAcumulado = saldoActual;
                     } else {
-                        const anterior = movCuenta[i - 1];
+                        const anterior = dataMov[i - 1];
                         const esIngreso = anterior.tipos_movimiento_bancario?.naturaleza === 'Ingreso' || anterior.tipo === 'Ingreso';
                         saldoAcumulado = esIngreso
-                            ? conSaldo[i - 1].saldo - (anterior.monto ?? 0)
-                            : conSaldo[i - 1].saldo + (anterior.monto ?? 0);
+                            ? acc[i - 1].saldo - (anterior.monto ?? 0)
+                            : acc[i - 1].saldo + (anterior.monto ?? 0);
                     }
-                    return {
+                    acc.push({
                         id: mov.id_movimiento,
                         fecha: mov.fecha ? new Date(mov.fecha).toLocaleDateString('es-ES') : '—',
                         concepto: mov.tipos_movimiento_bancario?.nombre ?? '—',
                         tipo: mov.tipos_movimiento_bancario?.naturaleza ?? mov.tipo ?? '—',
                         total: mov.monto ?? 0,
                         saldo: saldoAcumulado,
-                    };
-                });
+                        estado: mov.estados?.nombre ?? '—',
+                        ...mov,
+                    });
+                    return acc;
+                }, []);
 
                 setMovimientos(conSaldo);
             } catch (err) {
@@ -82,6 +83,21 @@ export default function Cuenta({ usuario = 'Empleado', onLogout, onNavegar }) {
             return;
         }
         if (onNavegar) onNavegar(moduloId);
+    }
+
+    function abrirModalConciliacion(movimiento) {
+        setMovimientoSeleccionado(movimiento);
+        setMostrarModalConciliacion(true);
+    }
+
+    function cerrarModalConciliacion() {
+        setMostrarModalConciliacion(false);
+        setMovimientoSeleccionado(null);
+    }
+
+    function handleConciliarMovimiento(movimientoActualizado) {
+        setMovimientos(prev => prev.map(m => m.id === movimientoActualizado.id_movimiento ? { ...m, estado: movimientoActualizado.estados?.nombre } : m));
+        cerrarModalConciliacion();
     }
 
     if (cargando) return <div>Cargando...</div>;
@@ -154,11 +170,25 @@ export default function Cuenta({ usuario = 'Empleado', onLogout, onNavegar }) {
                                 render: (item) => `Gs. ${item.saldo.toLocaleString('es-PY')}`
                             },
                             {
+                                key: 'estado',
+                                label: 'Estado',
+                                width: '1fr',
+                                render: (item) => {
+                                    const colores = { 'Pendiente': '#FF0000', 'Conciliado': '#22C55E', 'Completado': '#22C55E' };
+                                    return <span style={{ color: colores[item.estado] || '#000', fontWeight: 700 }}>{item.estado}</span>;
+                                }
+                            },
+                            {
                                 label: 'Acciones',
                                 width: '0.8fr',
-                                render: () => (
-                                    <button style={styles.botonMas}><IconoMas /></button>
-                                )
+                                render: (item) => {
+                                    const esChequeConEstado = (item.estado === 'Pendiente' || item.estado === 'Conciliado') && item.depositos_bancarios?.some(d => d.tipo_deposito === 'Cheque Terceros');
+                                    return esChequeConEstado ? (
+                                        <button style={styles.botonAccion} onClick={() => abrirModalConciliacion(item)}>
+                                            {item.estado === 'Pendiente' ? 'Conciliar' : 'Ver'}
+                                        </button>
+                                    ) : null;
+                                }
                             }
                         ]}
                         controls={[
@@ -183,6 +213,15 @@ export default function Cuenta({ usuario = 'Empleado', onLogout, onNavegar }) {
                 </div>
 
             </main>
+
+            {mostrarModalConciliacion && movimientoSeleccionado && (
+                <ModalConciliacion
+                    movimiento={movimientoSeleccionado}
+                    onCerrar={cerrarModalConciliacion}
+                    onConciliar={handleConciliarMovimiento}
+                    modo={movimientoSeleccionado.estado === 'Pendiente' ? 'conciliar' : 'ver_detalles'}
+                />
+            )}
         </div>
     );
 }
@@ -201,4 +240,5 @@ const styles = {
     botonAccion: { padding: '10px 18px', borderRadius: 8, border: 'none', background: getColor('amarillo'), color: getColor('negro'), fontWeight: 700, cursor: 'pointer', fontSize: 14 },
     historialContainer: { width: '100%', display: 'flex', flexDirection: 'column', gap: 12 },
     botonMas: { width: 30, height: 30, borderRadius: '20%', border: 'none', background: getColor('amarillo'), color: getColor('negro'), cursor: 'pointer', fontWeight: 700, fontSize: 18 },
+    botonAccionesTabla: { background: '#3B82F6', color: '#FFF', border: 'none', padding: '6px 12px', borderRadius: 6, fontWeight: 700, fontSize: 12, cursor: 'pointer' },
 };

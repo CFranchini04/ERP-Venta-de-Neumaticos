@@ -20,9 +20,12 @@ router.delete('/cuentas/:id', movimientosController.deleteCuenta)
 // Movimientos
 router.get('/', movimientosController.getAllMovimientos)
 router.get('/tabla', movimientosController.getTableMovimientos)
+router.get('/estados', movimientosController.getEstados)
+router.get('/cuenta/:id', movimientosController.getMovimientosByCuenta)
 router.get('/:id', movimientosController.getMovimiento)
 router.post('/', movimientosController.postMovimiento)
 router.put('/:id', movimientosController.updateMovimiento)
+router.put('/:id/conciliar', movimientosController.updateConciliacion)
 router.patch('/:id/estado', movimientosController.updateEstadoMovimiento)
 router.delete('/:id', movimientosController.deleteMovimiento)
 

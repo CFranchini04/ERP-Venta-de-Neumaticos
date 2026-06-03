@@ -54,18 +54,18 @@ export default function Deposito({ usuario = 'Empleado', onLogout, onNavegar }) 
         const depositos = dataMov
           .filter(m => {
             const esDeposito = IDS_DEPOSITO.includes(Number(m.id_tipo_movimiento)); 
-            const noEsAjena = m.cuentas_bancarias?.tipo_cuenta?.toLowerCase() !== 'ajena';
+            const noEsAjena = m.cuenta_origen?.tipo_cuenta?.toLowerCase() !== 'ajena';
             const esDeLaCuenta = cuentaInicial?.id
-              ? m.cuentas_bancarias?.id_cuenta_bancaria === Number(cuentaInicial.id)
+              ? m.cuenta_origen?.id_cuenta_bancaria === Number(cuentaInicial.id)
               : true;
             return esDeposito && noEsAjena && esDeLaCuenta;
           })
           .map(m => ({
             id: m.id_movimiento,
-            idCuenta: m.cuentas_bancarias?.id_cuenta_bancaria,
+            idCuenta: m.cuenta_origen?.id_cuenta_bancaria,
             fecha: m.fecha ? new Date(m.fecha).toLocaleDateString('es-ES') : '—',
-            cuenta: m.cuentas_bancarias?.bancos?.nombre
-              ? `${m.cuentas_bancarias.bancos.nombre} - ${m.cuentas_bancarias.tipo_cuenta ?? '—'}`
+            cuenta: m.cuenta_origen?.bancos?.nombre
+              ? `${m.cuenta_origen.bancos.nombre} - ${m.cuenta_origen.tipo_cuenta ?? '—'}`
               : '—',
             concepto: m.tipos_movimiento_bancario?.nombre ?? '—',
             total: m.monto ?? 0,
@@ -107,14 +107,14 @@ export default function Deposito({ usuario = 'Empleado', onLogout, onNavegar }) 
     if (!tipoDeposito) { setError('Seleccione el tipo de depósito.'); return; }
     if (!monto) { setError('Ingrese el monto.'); return; }
 
-    const esCheque = tipoDeposito === 'Cheque propio' || tipoDeposito === 'Cheque terceros';
+    const esCheque = tipoDeposito === 'Cheque Propio' || tipoDeposito === 'Cheque Terceros';
     const id_tipo_movimiento = esCheque ? 6 : 1;
 
     const observacionFinal = [
       concepto,
       esCheque && numeroCheque ? `Cheque N°: ${numeroCheque}` : '',
       esCheque && bancoCheque ? `Banco: ${bancoCheque}` : '',
-      tipoDeposito === 'Cheque terceros' && titularCheque ? `Titular: ${titularCheque}` : '',
+        tipoDeposito === 'Cheque Terceros' && titularCheque ? `Titular: ${titularCheque}` : '',
       observacion,
     ].filter(Boolean).join(' | ');
 
@@ -131,7 +131,10 @@ export default function Deposito({ usuario = 'Empleado', onLogout, onNavegar }) 
           monto: Number(monto),
           id_tipo_movimiento,
           observacion: observacionFinal,
-          id_estado: 1,
+          tipoDeposito,
+          nroCheque: (tipoDeposito === 'Cheque Propio' || tipoDeposito === 'Cheque Terceros') ? numeroCheque : null,
+          bancoCheque: (tipoDeposito === 'Cheque Propio' || tipoDeposito === 'Cheque Terceros') ? bancoCheque : null,
+          titularCheque: tipoDeposito === 'Cheque Terceros' ? titularCheque : null,
         }),
       });
 
@@ -165,7 +168,11 @@ export default function Deposito({ usuario = 'Empleado', onLogout, onNavegar }) 
 
       <main style={styles.contenido}>
         <header style={styles.encabezado}>
-          <h1 style={styles.titulo}>Depósitos</h1>
+          <h1 style={styles.titulo}>
+            {cuentaId && cuentas.find(c => c.id === Number(cuentaId))
+              ? `${cuentas.find(c => c.id === Number(cuentaId)).nombre} - Depósitos`
+              : 'Depósitos'}
+          </h1>
           <div style={styles.separador} />
         </header>
 
@@ -222,7 +229,7 @@ export default function Deposito({ usuario = 'Empleado', onLogout, onNavegar }) 
               <div style={styles.modalSeccion}>
                 <h3 style={styles.modalSubtitulo}>Tipo de depósito</h3>
                 <div style={styles.tipoDepositoBox}>
-                  {['Efectivo', 'Cheque propio', 'Cheque terceros'].map(tipo => (
+                  {['Efectivo', 'Cheque Propio', 'Cheque Terceros'].map(tipo => (
                     <button
                       key={tipo}
                       type="button"
@@ -245,12 +252,12 @@ export default function Deposito({ usuario = 'Empleado', onLogout, onNavegar }) 
                 {monto && <span style={styles.montoFormateado}>{formatearGs(monto)}</span>}
               </div>
 
-              {(tipoDeposito === 'Cheque propio' || tipoDeposito === 'Cheque terceros') && (
+              {(tipoDeposito === 'Cheque Propio' || tipoDeposito === 'Cheque Terceros') && (
                 <div style={styles.modalSeccion}>
                   <h3 style={styles.modalSubtitulo}>Datos del cheque</h3>
                   <input placeholder="Número de cheque" value={numeroCheque} onChange={e => setNumeroCheque(e.target.value)} style={styles.input} />
                   <input placeholder="Banco del cheque" value={bancoCheque} onChange={e => setBancoCheque(e.target.value)} style={styles.input} />
-                  {tipoDeposito === 'Cheque terceros' && (
+                  {tipoDeposito === 'Cheque Terceros' && (
                     <input placeholder="Titular del cheque" value={titularCheque} onChange={e => setTitularCheque(e.target.value)} style={styles.input} />
                   )}
                 </div>
