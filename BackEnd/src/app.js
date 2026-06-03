@@ -13,9 +13,16 @@ import pedidosRoutes from './routes/compras/pedidos.routes.js'
 import facturasRoutes from './routes/compras/facturas.routes.js'
 import cotizacionesRoutes from './routes/compras/cotizaciones.routes.js'
 
+//MISC
+import productosRoutes from './routes/misc/productos.routes.js'
+
 //RRHH
 import empleadosRoutes from './routes/rrhh/empleados.routes.js'
 import salariosRoutes from './routes/rrhh/salarios.routes.js'
+
+//CONTABILIDAD
+import asientosRoutes from './routes/contabilidad/asientos.routes.js'
+import ceuntasRoutes from './routes/contabilidad/cuentas.routes.js'
 
 //TESORERIA
 import movimientosRoutes from './routes/tesoreria/movimientos.routes.js'
@@ -55,6 +62,9 @@ app.use('/api/rrhh/', soloRol('admin', 'rrhh'))
 app.use('/api/contabilidad/', soloRol('admin', 'contabilidad'))
 app.use('/api/tesoreria/', soloRol('admin', 'tesoreria'))
 
+//MISC
+app.use('/api/misc/productos', productosRoutes)
+
 //COMPRAS
 app.use('/api/compras/proveedores', proveedoresRoutes)
 app.use('/api/compras/ordenes-compra', ordenesCompraRoutes)
@@ -66,6 +76,10 @@ app.use('/api/compras/cotizaciones', cotizacionesRoutes)
 //RRHH
 app.use('/api/rrhh/empleados', empleadosRoutes)
 app.use('/api/rrhh/salarios', salariosRoutes)
+
+//CONTABILIDAD
+app.use('/api/contabilidad/asientos', asientosRoutes)
+app.use('/api/contabilidad/cuentas', ceuntasRoutes)
 
 //TESORERIA
 app.use('/api/tesoreria/movimientos', movimientosRoutes)

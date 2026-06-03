@@ -17,6 +17,20 @@ const getProveedores = async (id) => {
     return data
 }
 
+const searchProveedores = async (search = '') => {
+    let query = supabase
+        .from('proveedores')
+        .select('*, personas(*)')
+
+    if (search && search.trim()) {
+        query = query.ilike('personas.nombre', `%${search.trim()}%`)
+    }
+
+    const { data, error } = await query.limit(10)
+    if (error) throw new Error(error.message)
+    return data.filter(p => p.personas !== null)
+}
+
 const getProveedorByNombre = async (nombre) => {
     const { data, error } = await supabase
         .from('proveedores')
@@ -114,4 +128,4 @@ const deleteProveedor = async (id) => {
     return { message: 'Proveedor eliminado correctamente' }
 }
 
-export default { getAllProveedores, getProveedores, getProveedorByNombre, getProveedorByRuc, postProveedor, updateProveedor, deleteProveedor }
+export default { getAllProveedores, getProveedores, searchProveedores, getProveedorByNombre, getProveedorByRuc, postProveedor, updateProveedor, deleteProveedor }

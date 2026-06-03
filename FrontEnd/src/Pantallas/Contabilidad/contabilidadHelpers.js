@@ -1,9 +1,15 @@
+<<<<<<< HEAD
 export const API = "http://localhost:3000/api/contabilidad";
 
 const authHeaders = () => ({
   "Content-Type": "application/json",
   Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
 });
+=======
+import fetchConToken from "../../token";
+
+export const API = "http://localhost:9128/api";
+>>>>>>> 1d247877beac191966728741ff995beabbcbcf39
 
 export const fmt = (n) =>
   `Gs. ${(n ?? 0).toLocaleString("es-PY", { maximumFractionDigits: 0 })}`;
@@ -25,18 +31,27 @@ export const esDeudora = (codigo) => {
 
 // === Fetchers ===
 export const fetchCuentas = () =>
+<<<<<<< HEAD
   fetch(`${API}/cuentas`, { headers: authHeaders() }).then((r) => r.json());
+=======
+  fetchConToken(`${API}/contabilidad/cuentas/`).then((r) => r.json());
+>>>>>>> 1d247877beac191966728741ff995beabbcbcf39
 
 export const fetchAsientos = (desde, hasta) => {
   const qs = new URLSearchParams();
   if (desde) qs.set("desde", desde);
   if (hasta) qs.set("hasta", hasta);
+<<<<<<< HEAD
   const url = `${API}/asientos${qs.toString() ? `?${qs}` : ""}`;
   return fetch(url, { headers: authHeaders() }).then((r) => r.json());
+=======
+  const url = `${API}/contabilidad/asientos${qs.toString() ? `?${qs}` : ""}`;
+  return fetchConToken(url).then((r) => r.json());
+>>>>>>> 1d247877beac191966728741ff995beabbcbcf39
 };
 
 export const crearAsientoAPI = (asiento) =>
-  fetch(`${API}/asientos`, {
+  fetchConToken(`${API}/contabilidad/asientos`, {
     method: "POST",
     headers: authHeaders(),
     body: JSON.stringify(asiento),
@@ -46,7 +61,7 @@ export const crearAsientoAPI = (asiento) =>
   });
 
 export const crearCuentaAPI = (cuenta) =>
-  fetch(`${API}/cuentas`, {
+  fetchConToken(`${API}/contabilidad/cuentas`, {
     method: "POST",
     headers: authHeaders(),
     body: JSON.stringify(cuenta),
@@ -56,7 +71,7 @@ export const crearCuentaAPI = (cuenta) =>
   });
 
 export const actualizarCuentaAPI = (codigo, cambios) =>
-  fetch(`${API}/cuentas/${encodeURIComponent(codigo)}`, {
+  fetchConToken(`${API}/contabilidad/cuentas/${encodeURIComponent(codigo)}`, {
     method: "PUT",
     headers: authHeaders(),
     body: JSON.stringify(cambios),

@@ -5,6 +5,7 @@ import PublicRoute from "./PublicRoute";
 import Login from "./Pantallas/Login/Login";
 import HomePage from "./Pantallas/Main/HomePage";
 import { RRHH, GestionPersonal, GestionSalarial } from "./Pantallas/RRHH";
+import NotFound from './Pantallas/NotFound';
 import {
   Compras,
   Pedidos,
@@ -24,10 +25,12 @@ import {
   Presupuestos,
   NuevosPresupuestos,
   DetallePresupuesto,
+  DetalleNotaCredito,
   Facturas as FacturasVentas,
   DetalleFactura,
   NuevaFactura,
   NotasCredito,
+  NuevaNotaCredito,
   VentaDirecta
 } from "./Pantallas/Ventas";
 import {
@@ -46,22 +49,6 @@ import BalanceGeneral from "./Pantallas/Contabilidad/BalanceGeneral";
 import BalanceSumasSaldos from "./Pantallas/Contabilidad/BalanceSumasSaldos";
 import BalanceResultados from "./Pantallas/Contabilidad/BalanceResultados";
 import RoleRoute from './RoleRoute';
-
-function Redirect404() {
-  useEffect(() => {
-    window.location.href = "https://http.cat/404";
-  }, []);
-
-  return null;
-}
-
-function Redirect501() {
-  useEffect(() => {
-    window.location.href = "https://http.cat/images/501.jpg";
-  }, []);
-
-  return null;
-}
 
 export default function App() {
 
@@ -91,6 +78,8 @@ export default function App() {
             <Route path="/ventas/facturas" element={<FacturasVentas />} />
             <Route path="/ventas/facturas/:id" element={<DetalleFactura />} />
             <Route path="/ventas/notas-credito" element={<NotasCredito />} />
+            <Route path="/ventas/notas-credito/:id" element={<DetalleNotaCredito />} />
+            <Route path="/ventas/facturas/:id/nota-credito" element={<NuevaNotaCredito />} />
             <Route path="/ventas/venta-directa" element={<VentaDirecta />} />
             <Route path="/compras" element={<Compras />} />
             <Route path="/compras/pedidos" element={<Pedidos />} />
@@ -118,7 +107,7 @@ export default function App() {
             <Route path="/contabilidad/balance-resultados" element={<BalanceResultados />} />
           </Route>
 
-          <Route path="*" element={<Redirect404 />} />
+          <Route path="*" element={<NotFound />} />
 
         </Routes>
       </BrowserRouter>

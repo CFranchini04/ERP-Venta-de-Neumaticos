@@ -14,8 +14,7 @@ const SELECT_SINGLE_PAGO = `
     *,
     personas(nombre, apellido, ruc, direccion, telefono, correo),
     personas_horario_cargo(
-      salario,
-      cargo(nombre),
+      cargo(nombre, salario),
       horarios(*),
       estados(nombre)
     )
@@ -45,10 +44,22 @@ const getProceso = async (id) => {
     return data
 }
 
-const postProceso = async (mes_año, tipo_proceso, fecha_alta, id_estado) => {
+const getUltimoProceso = async () => {
     const { data, error } = await supabase
         .from('procesos_de_pago')
-        .insert({ mes_año, tipo_proceso, fecha_alta, id_estado })
+        .select('*, estados(nombre)')
+        .order('id_pdp', { ascending: false })
+        .limit(1)
+        .single()
+    if (error) throw new Error(error.message)
+    return data
+}
+
+const postProceso = async (tipo_proceso, fecha_inicio, fecha_fin, id_estado) => {
+    const fecha_alta = new Date().toISOString().split('T')[0]
+    const { data, error } = await supabase
+        .from('procesos_de_pago')
+        .insert({ tipo_proceso, fecha_inicio, fecha_fin, fecha_alta, id_estado })
         .select()
         .single()
     if (error) throw new Error(error.message)
@@ -108,21 +119,20 @@ const getTablePagos = async () => {
     const { data, error } = await supabase
         .from('pagos_empleados')
         .select(`
-      id_pago,
-      fecha_pago,
-      total_ingresos,
-      total_deducciones,
-      neto_pagado,
-      empleados(personas(nombre, apellido)),
-      procesos_de_pago(mes_año, tipo_proceso),
-      estados(nombre)
-    `)
+            id_pago,
+            fecha_pago,
+            total_ingresos,
+            total_deducciones,
+            neto_pagado,
+            empleados(personas(nombre, apellido)),
+            procesos_de_pago(fecha_inicio, fecha_fin, tipo_proceso),
+            estados(nombre)
+        `)
     if (error) throw new Error(error.message)
     return data
 }
 
 const postPago = async (id_pdp, id_empleado, total_ingresos, total_deducciones, neto_pagado, fecha_pago, id_estado, detalles) => {
-    // 1. Crear el pago
     const { data: pago, error } = await supabase
         .from('pagos_empleados')
         .insert({ id_pdp, id_empleado, total_ingresos, total_deducciones, neto_pagado, fecha_pago, id_estado })
@@ -130,12 +140,12 @@ const postPago = async (id_pdp, id_empleado, total_ingresos, total_deducciones, 
         .single()
     if (error) throw new Error(error.message)
 
-    // 2. Crear los conceptos detalle
     const detallesConId = detalles.map(d => ({
-        id_novedad: d.id_novedad,
-        monto: d.monto,
-        observacion: d.observacion,
-        id_pago: pago.id_pago
+        id_novedad:   d.id_novedad ?? null,
+        monto:        d.monto,
+        observacion:  d.observacion ?? '',
+        tipo_novedad: d.tipo_novedad ?? null,
+        id_pago:      pago.id_pago
     }))
 
     const { data: detallesCreados, error: errorDetalles } = await supabase
@@ -205,19 +215,97 @@ const deletePago = async (id) => {
 // ─── PHC ────────────────────────────────────────────────────────
 
 const getSalarioEmpleado = async (id_empleado) => {
+    const confirmado = 2
     const { data, error } = await supabase
         .from('personas_horario_cargo')
         .select(`
-      salario,
-      fecha_inicio,
-      fecha_fin,
-      estados(nombre),
-      cargo(nombre),
-      horarios(*)
-    `)
+            estados(nombre),
+            cargo(nombre, salario),
+            horarios(*)
+        `)
         .eq('id_empleado', id_empleado)
+        .eq('id_estado', confirmado)
+        .single()
     if (error) throw new Error(error.message)
     return data
 }
 
-export default { getAllProcesos, getProceso, postProceso, updateEstadoProceso, getAllPagos, getPago, getPagosByEmpleado, getPagosByProceso, getTablePagos, postPago, updatePago, updateEstadoPago, deletePago, getSalarioEmpleado }
+// ─── NOVEDADES ──────────────────────────────────────────────────
+
+const getAllNovedades = async () => {
+    const { data, error } = await supabase
+        .from('novedades')
+        .select('*, estados(nombre)')
+    if (error) throw new Error(error.message)
+    return data
+}
+
+const searchNovedades = async (search = '', tipo_novedad = '') => {
+    let query = supabase
+        .from('novedades')
+        .select('*, estados(nombre)')
+
+    if (search && search.trim()) {
+        query = query.ilike('nombre', `%${search.trim()}%`)
+    }
+
+    if (tipo_novedad && tipo_novedad.trim()) {
+        query = query.eq('tipo_novedad', tipo_novedad.trim())
+    }
+
+    const { data, error } = await query.limit(10).order('nombre', { ascending: true })
+    if (error) throw new Error(error.message)
+    return data
+}
+
+const getNovedad = async (id) => {
+    const { data, error } = await supabase
+        .from('novedades')
+        .select('*, estados(nombre)')
+        .eq('id_novedad', id)
+        .single()
+    if (error) throw new Error(error.message)
+    return data
+}
+
+const postNovedad = async (nombre, tipo_novedad, formula, clase, es_fijo, id_estado) => {
+    const { data, error } = await supabase
+        .from('novedades')
+        .insert({ nombre, tipo_novedad, formula, clase, es_fijo, id_estado })
+        .select()
+        .single()
+    if (error) throw new Error(error.message)
+    return data
+}
+
+const updateNovedad = async (id, datos) => {
+    const actualizar = Object.fromEntries(
+        Object.entries(datos).filter(([_, v]) => v !== undefined && v !== '')
+    )
+    const { data, error } = await supabase
+        .from('novedades')
+        .update(actualizar)
+        .eq('id_novedad', id)
+        .select()
+        .single()
+    if (error) throw new Error(error.message)
+    return data
+}
+
+const updateEstadoNovedad = async (id, id_estado) => {
+    const { data, error } = await supabase
+        .from('novedades')
+        .update({ id_estado })
+        .eq('id_novedad', id)
+        .select()
+        .single()
+    if (error) throw new Error(error.message)
+    return data
+}
+
+export default {
+    getAllProcesos, getProceso, getUltimoProceso, postProceso, updateEstadoProceso,
+    getAllPagos, getPago, getPagosByEmpleado, getPagosByProceso, getTablePagos, postPago, updatePago, updateEstadoPago, deletePago,
+    getSalarioEmpleado,
+    getAllNovedades, searchNovedades, getNovedad, postNovedad, updateNovedad, updateEstadoNovedad
+}

@@ -1,10 +1,15 @@
+<<<<<<< HEAD
 // Servicio de Asientos del Libro Diario (in-memory).
 import asientosIniciales from './Pantallas/Contabilidad/asientosMock.json' with { type: 'json' };
+=======
+import asientosIniciales from '../../data/contabilidad/asientosMock.json' with { type: 'json' };
+>>>>>>> 1d247877beac191966728741ff995beabbcbcf39
 
 
 let asientos = asientosIniciales.map(a => ({ ...a, lineas: a.lineas.map(l => ({ ...l })) }));
 let proximoId = asientos.reduce((m, a) => Math.max(m, a.id || 0), 0) + 1;
 let proximoNumero = asientos.reduce((m, a) => Math.max(m, a.numero || 0), 0) + 1;
+
 
 const validarBalanceado = (lineas) => {
   const totD = lineas.reduce((s, l) => s + Number(l.debe || 0), 0);
@@ -12,23 +17,31 @@ const validarBalanceado = (lineas) => {
   return totD === totH && totD > 0;
 };
 
-export const listarAsientos = ({ desde, hasta } = {}) => {
+const listarAsientos = async (filtros = {}) => {
+  const { desde, hasta } = filtros;
   return [...asientos]
     .filter(a => (!desde || a.fecha >= desde) && (!hasta || a.fecha <= hasta))
     .sort((a, b) => a.fecha.localeCompare(b.fecha) || a.numero - b.numero);
 };
 
-export const obtenerAsiento = (id) =>
-  asientos.find(a => a.id === Number(id)) || null;
+const obtenerAsiento = async (id) => {
+  const asiento = asientos.find(a => a.id === Number(id));
+  return asiento ?? null;
+};
 
-export const crearAsiento = ({ fecha, concepto, lineas }) => {
-  if (!fecha || !concepto) throw new Error('fecha y concepto son obligatorios');
+const crearAsiento = async (datos) => {
+  const { fecha, concepto, lineas } = datos;
+
+  if (!fecha || !concepto) {
+    throw new Error('Fecha y concepto son obligatorios');
+  }
   if (!Array.isArray(lineas) || lineas.length < 2) {
-    throw new Error('Se requieren al menos 2 líneas');
+    throw new Error('Se requieren al menos 2 líneas para el asiento');
   }
   if (!validarBalanceado(lineas)) {
     throw new Error('El asiento no está balanceado (Debe ≠ Haber)');
   }
+
   const nuevo = {
     id: proximoId++,
     numero: proximoNumero++,
@@ -41,24 +54,52 @@ export const crearAsiento = ({ fecha, concepto, lineas }) => {
       haber: Number(l.haber) || 0,
     })),
   };
+
   asientos.push(nuevo);
   return nuevo;
 };
 
-export const actualizarAsiento = (id, cambios) => {
+const actualizarAsiento = async (id, cambios) => {
   const idx = asientos.findIndex(a => a.id === Number(id));
   if (idx === -1) throw new Error(`Asiento ${id} no encontrado`);
-  const merged = { ...asientos[idx], ...cambios, id: asientos[idx].id, numero: asientos[idx].numero };
+
+  const { id: _, numero: __, ...datosAActualizar } = cambios;
+
+  const datosLimpios = Object.fromEntries(
+    Object.entries(datosAActualizar).filter(([_, v]) => v !== undefined && v !== '')
+  );
+
+  const merged = { 
+    ...asientos[idx], 
+    ...datosLimpios, 
+    id: asientos[idx].id, 
+    numero: asientos[idx].numero 
+  };
+
   if (merged.lineas && !validarBalanceado(merged.lineas)) {
     throw new Error('El asiento no está balanceado (Debe ≠ Haber)');
   }
+
   asientos[idx] = merged;
   return merged;
 };
 
-export const eliminarAsiento = (id) => {
-  const len = asientos.length;
+const eliminarAsiento = async (id) => {
+  const longitudInicial = asientos.length;
   asientos = asientos.filter(a => a.id !== Number(id));
-  if (asientos.length === len) throw new Error(`Asiento ${id} no encontrado`);
-  return { id: Number(id) };
+
+  if (asientos.length === longitudInicial) {
+    throw new Error(`Asiento ${id} no encontrado`);
+  }
+
+  return { id: Number(id), message: 'Asiento eliminado correctamente' };
+};
+
+
+export default {
+  listarAsientos,
+  obtenerAsiento,
+  crearAsiento,
+  actualizarAsiento,
+  eliminarAsiento
 };

@@ -17,14 +17,16 @@ import fetchConToken from "../../../token";
 
 const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:9128/api";
 
+// productos.services.js devuelve inventarios[] con { cantidad, stock_minimo, stock_maximo }
+// No existe stock_actual ni stock_minimo en la tabla productos directamente
 const mapProductoFromAPI = (p) => ({
   id:               p.id_producto,
   nombre:           p.nombre          || "",
   categoria:        p.categorias_productos?.nombre || "",
   marca:            p.marcas?.nombre   || "",
-  inventario:       p.stock_actual     ?? 0,
-  inventarioMinimo: p.stock_minimo     ?? 0,
-  inventarioMaximo: null,
+  inventario:       p.inventarios?.[0]?.cantidad    ?? 0,
+  inventarioMinimo: p.inventarios?.[0]?.stock_minimo ?? 0,
+  inventarioMaximo: p.inventarios?.[0]?.stock_maximo ?? null,
   precio:           Number(p.precio_compra ?? 0),
 });
 
@@ -40,7 +42,6 @@ export default function NuevosPedidos({ usuario, onNavegar, onLogout }) {
   const [mostrarModalProducto, setMostrarModalProducto] = useState(false);
   const [guardando, setGuardando] = useState(false);
   const [errorGuardar, setErrorGuardar] = useState("");
-  // Forzar re-render del SearchBar para recargar lista tras crear producto
   const [searchKey, setSearchKey] = useState(0);
 
   useEffect(() => {
@@ -138,6 +139,18 @@ export default function NuevosPedidos({ usuario, onNavegar, onLogout }) {
         throw new Error(dataDetalles?.message || "Error al guardar los detalles");
       }
 
+      // 3. Crear una cabecera de cotizacion vacía vinculada al pedido
+      try {
+        await fetchConToken(`${API_BASE}/compras/pedidos/${idPedido}/cotizaciones`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({}),
+        });
+      } catch (errCot) {
+        // No bloqueamos: el pedido ya fue creado. Solo logueamos.
+        console.warn("Cotizacion no generada:", errCot.message);
+      }
+
       setMostrarModalConfirmar(false);
       navigate("/compras/pedidos");
 
@@ -149,11 +162,19 @@ export default function NuevosPedidos({ usuario, onNavegar, onLogout }) {
     }
   };
 
-  // Al crear un producto nuevo, refrescar el SearchBar y seleccionarlo
-  const handleProductoCreado = (nuevoProducto) => {
-    const mapeado = mapProductoFromAPI(nuevoProducto);
+  // postProducto devuelve { producto, stock } → desenvuelve y agrega directamente a la orden
+  const handleProductoCreado = (respuesta) => {
+    const raw = respuesta?.producto ?? respuesta;
+    const mapeado = mapProductoFromAPI(raw);
     setProductoSeleccionado(mapeado);
-    setSearchKey((k) => k + 1); // fuerza remount del SearchBar para recargar
+    setSearchKey((k) => k + 1);
+
+    // Agregar automáticamente a la orden con cantidad 1
+    const subtotal = mapeado.precio * 1;
+    setOrdenCompra((prev) => [
+      ...prev,
+      { ...mapeado, cantidad: 1, subtotal, _uid: Date.now() + Math.random() }
+    ]);
   };
 
   const columns = [
@@ -201,7 +222,6 @@ export default function NuevosPedidos({ usuario, onNavegar, onLogout }) {
 
       <main style={styles.contenido}>
 
-        {/* HEADER */}
         <header style={styles.encabezado}>
           <button
             onClick={() => navigate("/compras/pedidos")}
@@ -216,7 +236,6 @@ export default function NuevosPedidos({ usuario, onNavegar, onLogout }) {
           </div>
         </header>
 
-        {/* CARD AGREGAR PRODUCTO */}
         <div style={styles.card}>
           <div style={styles.cardTitulo}>
             <IconoMas />
@@ -224,6 +243,7 @@ export default function NuevosPedidos({ usuario, onNavegar, onLogout }) {
           </div>
 
           <div style={styles.controles}>
+            {/* SearchBar usa /api/misc/productos que devuelve inventarios[] */}
             <SearchBar
               key={searchKey}
               apiUrl={`${API_BASE}/misc/productos`}
@@ -239,7 +259,7 @@ export default function NuevosPedidos({ usuario, onNavegar, onLogout }) {
                   <span style={{ fontSize: 12, color: "#888" }}>
                     {item.categorias_productos?.nombre ?? "—"}
                     {" · "}{item.marcas?.nombre ?? "—"}
-                    {" · Stock: "}{item.stock_actual ?? 0}
+                    {" · Stock: "}{item.inventarios?.[0]?.cantidad ?? 0}
                   </span>
                 </div>
               )}
@@ -288,7 +308,6 @@ export default function NuevosPedidos({ usuario, onNavegar, onLogout }) {
           </div>
         </div>
 
-        {/* ORDEN DE COMPRA */}
         <div style={styles.cardTabla}>
           <h2 style={styles.subtitulo}>Orden de Compra</h2>
 
@@ -323,7 +342,6 @@ export default function NuevosPedidos({ usuario, onNavegar, onLogout }) {
           </div>
         </div>
 
-        {/* ── MODAL CONFIRMACIÓN GUARDAR ── */}
         {mostrarModalConfirmar && (
           <div style={styles.modalOverlay}>
             <div style={styles.modalConfirmar}>
@@ -362,7 +380,6 @@ export default function NuevosPedidos({ usuario, onNavegar, onLogout }) {
           </div>
         )}
 
-        {/* ── MODAL NUEVO PRODUCTO ── */}
         <NuevoProductoModal
           open={mostrarModalProducto}
           onClose={() => setMostrarModalProducto(false)}
@@ -425,10 +442,6 @@ const styles = {
     fontFamily: "Lato, sans-serif", fontSize: 14,
   },
   accionesCell: { display: "flex", gap: 6, justifyContent: "center", alignItems: "center" },
-  iconButton: {
-    border: "none", background: getColor("amarillo"), borderRadius: 6,
-    cursor: "pointer", padding: 5, display: "flex", alignItems: "center", justifyContent: "center",
-  },
   iconButtonRojo: {
     border: "none", background: getColor("negro"), borderRadius: 6,
     cursor: "pointer", padding: 5, display: "flex", alignItems: "center",

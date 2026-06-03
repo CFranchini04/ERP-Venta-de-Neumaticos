@@ -14,6 +14,8 @@ export default function NuevosPresupuestos({ usuario, onNavegar, onLogout }) {
 
   const [idCliente, setIdCliente] = useState("");
   const [clientesDisponibles, setClientesDisponibles] = useState([]);
+  const [busquedaCliente, setBusquedaCliente] = useState("");
+  const [mostrarListaClientes, setMostrarListaClientes] = useState(false);
 
   const [productos, setProductos] = useState([]);
   const [productosDisponibles, setProductosDisponibles] = useState([]);
@@ -23,23 +25,39 @@ export default function NuevosPresupuestos({ usuario, onNavegar, onLogout }) {
   useEffect(() => {
     const cargarDatos = async () => {
       try {
-        const resProductos = await fetchConToken(`${API_BASE}/ventas/presupuestos/productos/search`);
+        const resProductos = await fetchConToken(
+          `${API_BASE}/ventas/presupuestos/productos/search`,
+        );
         if (resProductos.ok) {
           const dataProductos = await resProductos.json();
-          setProductosDisponibles(Array.isArray(dataProductos) ? dataProductos : []);
+          setProductosDisponibles(
+            Array.isArray(dataProductos) ? dataProductos : [],
+          );
         } else {
-          console.error("Error productos:", resProductos.status, resProductos.statusText);
+          console.error(
+            "Error productos:",
+            resProductos.status,
+            resProductos.statusText,
+          );
         }
 
-const resClientes = await fetchConToken(`${API_BASE}/ventas/presupuestos/clientes/all`);
-if (resClientes.ok) {
-  const dataClientes = await resClientes.json();
-  console.log("STATUS:", resClientes.status);
-  console.log("CLIENTES:", dataClientes);
-  setClientesDisponibles(Array.isArray(dataClientes) ? dataClientes : []);
-} else {
-  console.error("Error clientes:", resClientes.status, resClientes.statusText);
-}
+        const resClientes = await fetchConToken(
+          `${API_BASE}/ventas/presupuestos/clientes/all`,
+        );
+        if (resClientes.ok) {
+          const dataClientes = await resClientes.json();
+          console.log("STATUS:", resClientes.status);
+          console.log("CLIENTES:", dataClientes);
+          setClientesDisponibles(
+            Array.isArray(dataClientes) ? dataClientes : [],
+          );
+        } else {
+          console.error(
+            "Error clientes:",
+            resClientes.status,
+            resClientes.statusText,
+          );
+        }
       } catch (err) {
         console.error("Error cargando datos:", err);
       }
@@ -50,7 +68,9 @@ if (resClientes.ok) {
   const handleAgregarProducto = () => {
     if (cantidad < 1 || !productoSeleccionado) return;
 
-    const p = productosDisponibles.find((x) => x.id_producto === parseInt(productoSeleccionado));
+    const p = productosDisponibles.find(
+      (x) => x.id_producto === parseInt(productoSeleccionado),
+    );
     if (!p) return;
 
     const precioUnitario = p.precio_venta || 0;
@@ -62,7 +82,7 @@ if (resClientes.ok) {
       cantidad,
       precio_unitario: precioUnitario,
       subtotal,
-      _uid: Date.now() + Math.random()
+      _uid: Date.now() + Math.random(),
     };
 
     setProductos((prev) => [...prev, prod]);
@@ -80,9 +100,22 @@ if (resClientes.ok) {
 
   const hoy = new Date();
   const fechaHoy = hoy.toISOString().split("T")[0];
-  const fechaValida = new Date(hoy.setDate(hoy.getDate() + 10)).toISOString().split("T")[0];
+  const fechaValida = new Date(hoy.setDate(hoy.getDate() + 10))
+    .toISOString()
+    .split("T")[0];
 
-  const clienteSeleccionado = clientesDisponibles.find(c => c.id_cliente === parseInt(idCliente));
+  const clienteSeleccionado = clientesDisponibles.find(
+    (c) => c.id_cliente === parseInt(idCliente),
+  );
+
+  const clientesFiltrados = clientesDisponibles.filter((c) => {
+    const q = busquedaCliente.trim().toLowerCase();
+    if (!q) return true;
+    const nombreCompleto =
+      `${c.nombre || ""} ${c.apellido || ""}`.toLowerCase();
+    const ci = (c.ci || "").toString().toLowerCase();
+    return nombreCompleto.includes(q) || ci.includes(q);
+  });
 
   const handleGuardar = async () => {
     if (!idCliente) {
@@ -100,14 +133,17 @@ if (resClientes.ok) {
     try {
       const fechaHoy = new Date().toISOString().split("T")[0];
 
-      const resPresupuesto = await fetchConToken(`${API_BASE}/ventas/presupuestos`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          id_cliente: parseInt(idCliente),
-          fecha_creacion: fechaHoy
-        })
-      });
+      const resPresupuesto = await fetchConToken(
+        `${API_BASE}/ventas/presupuestos`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            id_cliente: parseInt(idCliente),
+            fecha_creacion: fechaHoy,
+          }),
+        },
+      );
 
       if (!resPresupuesto.ok) {
         const errorData = await resPresupuesto.json();
@@ -117,18 +153,21 @@ if (resClientes.ok) {
       const dataPresupuesto = await resPresupuesto.json();
       const idPresupuesto = dataPresupuesto.id_presupuesto;
 
-      const detallesPayload = productos.map(p => ({
+      const detallesPayload = productos.map((p) => ({
         id_presupuesto: idPresupuesto,
         id_producto: p.id_producto,
         cantidad: p.cantidad,
-        precio_unitario: p.precio_unitario
+        precio_unitario: p.precio_unitario,
       }));
 
-      const resDetalles = await fetchConToken(`${API_BASE}/ventas/presupuestos/detalle`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(detallesPayload)
-      });
+      const resDetalles = await fetchConToken(
+        `${API_BASE}/ventas/presupuestos/detalle`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(detallesPayload),
+        },
+      );
 
       if (!resDetalles.ok) {
         const errorData = await resDetalles.json();
@@ -161,25 +200,71 @@ if (resClientes.ok) {
 
                 <div style={styles.grupoInput}>
                   <label style={styles.label}>Cliente *</label>
-                  <select
-                    value={idCliente}
-                    onChange={(e) => setIdCliente(e.target.value)}
-                    style={styles.selectProducto}
-                  >
-                    <option value="">-- Seleccionar Cliente --</option>
-                    {clientesDisponibles.map((c) => (
-                      <option key={c.id_cliente} value={c.id_cliente}>
-                        {`${c.nombre || ""} ${c.apellido || ""}`.trim() || `ID ${c.id_cliente}`}
-                      </option>
-                    ))}
-                  </select>
+                  <div style={{ position: "relative" }}>
+                    <input
+                      type="text"
+                      value={busquedaCliente}
+                      onChange={(e) => {
+                        setBusquedaCliente(e.target.value);
+                        setMostrarListaClientes(true);
+                        if (idCliente) setIdCliente("");
+                      }}
+                      onFocus={() => setMostrarListaClientes(true)}
+                      onBlur={() =>
+                        setTimeout(() => setMostrarListaClientes(false), 150)
+                      }
+                      placeholder="Buscar por nombre o CI/RUC..."
+                      style={styles.buscadorCliente}
+                    />
+                    {mostrarListaClientes && clientesFiltrados.length > 0 && (
+                      <div style={styles.listaDropdown}>
+                        {clientesFiltrados.slice(0, 50).map((c) => {
+                          const nombre =
+                            `${c.nombre || ""} ${c.apellido || ""}`.trim() ||
+                            `ID ${c.id_cliente}`;
+                          return (
+                            <div
+                              key={c.id_cliente}
+                              onMouseDown={() => {
+                                setIdCliente(String(c.id_cliente));
+                                setBusquedaCliente(nombre);
+                                setMostrarListaClientes(false);
+                              }}
+                              style={styles.listaItem}
+                            >
+                              <span>{nombre}</span>
+                              {c.ci && (
+                                <span style={{ color: "#666", fontSize: 12 }}>
+                                  CI: {c.ci}
+                                </span>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                    {mostrarListaClientes && clientesFiltrados.length === 0 && (
+                      <div style={styles.listaDropdown}>
+                        <div
+                          style={{
+                            ...styles.listaItem,
+                            color: "#999",
+                            cursor: "default",
+                          }}
+                        >
+                          Sin resultados
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 {clienteSeleccionado && (
                   <div style={styles.cardInfo}>
                     <strong>Información del Cliente</strong>
                     <p style={{ margin: "8px 0 0 0", fontSize: 12 }}>
-                      {`${clienteSeleccionado.nombre || ""} ${clienteSeleccionado.apellido || ""}`.trim()} — CI/RUC: {clienteSeleccionado.ci || "N/A"}
+                      {`${clienteSeleccionado.nombre || ""} ${clienteSeleccionado.apellido || ""}`.trim()}{" "}
+                      — CI/RUC: {clienteSeleccionado.ci || "N/A"}
                     </p>
                   </div>
                 )}
@@ -212,7 +297,9 @@ if (resClientes.ok) {
                     <input
                       type="number"
                       value={cantidad}
-                      onChange={(e) => setCantidad(Math.max(1, parseInt(e.target.value) || 1))}
+                      onChange={(e) =>
+                        setCantidad(Math.max(1, parseInt(e.target.value) || 1))
+                      }
                       style={styles.inputNumerico}
                       min="1"
                     />
@@ -224,7 +311,10 @@ if (resClientes.ok) {
                     </button>
                   </div>
 
-                  <button onClick={handleAgregarProducto} style={styles.botonMas}>
+                  <button
+                    onClick={handleAgregarProducto}
+                    style={styles.botonMas}
+                  >
                     +
                   </button>
                 </div>
@@ -233,27 +323,42 @@ if (resClientes.ok) {
                   <div style={styles.tablaHeaderProducto}>
                     <div style={{ flex: 2 }}>Producto</div>
                     <div style={{ flex: 1, textAlign: "center" }}>Cantidad</div>
-                    <div style={{ flex: 1, textAlign: "right" }}>Precio Unit.</div>
+                    <div style={{ flex: 1, textAlign: "right" }}>
+                      Precio Unit.
+                    </div>
                     <div style={{ flex: 1, textAlign: "right" }}>Subtotal</div>
                     <div style={{ width: 40 }}></div>
                   </div>
                   {productos.length === 0 ? (
-                    <div style={styles.tablaVacia}>No hay productos seleccionados...</div>
+                    <div style={styles.tablaVacia}>
+                      No hay productos seleccionados...
+                    </div>
                   ) : (
                     productos.map((p, idx) => (
                       <div
                         key={p._uid}
                         style={{
                           ...styles.tablaFilaProducto,
-                          background: idx % 2 === 0 ? "#F9F9F9" : "#FFFFFF"
+                          background: idx % 2 === 0 ? "#F9F9F9" : "#FFFFFF",
                         }}
                       >
                         <div style={{ flex: 2 }}>{p.nombre}</div>
-                        <div style={{ flex: 1, textAlign: "center" }}>{p.cantidad}</div>
-                        <div style={{ flex: 1, textAlign: "right" }}>
-                          {Number(p.precio_unitario || 0).toLocaleString("es-PY")} Gs.
+                        <div style={{ flex: 1, textAlign: "center" }}>
+                          {p.cantidad}
                         </div>
-                        <div style={{ flex: 1, textAlign: "right", fontWeight: "600" }}>
+                        <div style={{ flex: 1, textAlign: "right" }}>
+                          {Number(p.precio_unitario || 0).toLocaleString(
+                            "es-PY",
+                          )}{" "}
+                          Gs.
+                        </div>
+                        <div
+                          style={{
+                            flex: 1,
+                            textAlign: "right",
+                            fontWeight: "600",
+                          }}
+                        >
                           {Number(p.subtotal || 0).toLocaleString("es-PY")} Gs.
                         </div>
                         <button
@@ -305,7 +410,8 @@ if (resClientes.ok) {
                 <div style={styles.cardInfo}>
                   <strong>Información</strong>
                   <p style={{ margin: "8px 0 0 0", fontSize: 12 }}>
-                    El presupuesto tendrá una validez de 10 días hábiles desde su creación.
+                    El presupuesto tendrá una validez de 10 días hábiles desde
+                    su creación.
                   </p>
                 </div>
 
@@ -316,7 +422,7 @@ if (resClientes.ok) {
                   disabled={loading}
                   style={{
                     ...styles.botonGuardar,
-                    opacity: loading ? 0.6 : 1
+                    opacity: loading ? 0.6 : 1,
                   }}
                 >
                   {loading ? "Guardando..." : "Guardar Presupuesto"}
@@ -334,7 +440,7 @@ const styles = {
   pagina: {
     display: "flex",
     minHeight: "100vh",
-    background: "#F5F5F5"
+    background: "#F5F5F5",
   },
   contenido: {
     flex: 1,
@@ -342,7 +448,7 @@ const styles = {
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
-    overflowY: "auto"
+    overflowY: "auto",
   },
   encabezado: {
     width: "100%",
@@ -351,7 +457,7 @@ const styles = {
     alignItems: "center",
     gap: 10,
     padding: "21px 0",
-    marginBottom: 20
+    marginBottom: 20,
   },
   titulo: {
     color: "#000000",
@@ -360,38 +466,38 @@ const styles = {
     fontWeight: 700,
     lineHeight: 1.2,
     margin: 0,
-    textAlign: "center"
+    textAlign: "center",
   },
   separador: {
     width: "min(1100px, 80%)",
     height: 4,
-    background: "#000000"
+    background: "#000000",
   },
   contenedorForm: {
     width: "100%",
-    maxWidth: 1200
+    maxWidth: 1200,
   },
   doColumnas: {
     display: "grid",
     gridTemplateColumns: "1fr 380px",
-    gap: 20
+    gap: 20,
   },
   columnaIzq: {
     display: "flex",
     flexDirection: "column",
-    gap: 20
+    gap: 20,
   },
   columnaDer: {
     display: "flex",
     flexDirection: "column",
-    gap: 20
+    gap: 20,
   },
   card: {
     background: "#FFFFFF",
     borderRadius: 16,
     padding: 20,
     border: "1px solid #CCCCCC",
-    boxShadow: "0px 2px 8px rgba(0, 0, 0, 0.08)"
+    boxShadow: "0px 2px 8px rgba(0, 0, 0, 0.08)",
   },
   cardTitulo: {
     fontSize: 15,
@@ -400,23 +506,34 @@ const styles = {
     margin: "0 0 15px 0",
     textAlign: "center",
     borderBottom: "2px solid #E0E0E0",
-    paddingBottom: 10
+    paddingBottom: 10,
   },
   grupoInput: {
     display: "flex",
     flexDirection: "column",
-    gap: 5
+    gap: 5,
+    width: "100%",
   },
   label: {
     fontSize: 12,
     fontWeight: "700",
-    color: "#333333"
+    color: "#333333",
   },
   selectoresProducto: {
     display: "flex",
     gap: 10,
     alignItems: "center",
-    marginBottom: 15
+    marginBottom: 15,
+  },
+  buscadorCliente: {
+    width: "100%",
+    padding: "12px",
+    border: "1px solid #CCCCCC",
+    borderRadius: 6,
+    fontSize: 15,
+    fontFamily: "Lato, sans-serif",
+    outline: "none",
+    background: "#FAFAFA",
   },
   selectProducto: {
     flex: 1,
@@ -426,7 +543,7 @@ const styles = {
     fontSize: 14,
     fontFamily: "Lato, sans-serif",
     outline: "none",
-    background: "#FAFAFA"
+    background: "#FAFAFA",
   },
   grupoNumerico: {
     display: "flex",
@@ -435,7 +552,7 @@ const styles = {
     background: "#FAFAFA",
     borderRadius: 6,
     border: "1px solid #CCCCCC",
-    padding: "2px"
+    padding: "2px",
   },
   botonNumerico: {
     width: 30,
@@ -446,7 +563,7 @@ const styles = {
     cursor: "pointer",
     fontSize: 16,
     fontWeight: "700",
-    color: "#000000"
+    color: "#000000",
   },
   inputNumerico: {
     width: 50,
@@ -456,7 +573,7 @@ const styles = {
     textAlign: "center",
     fontSize: 14,
     outline: "none",
-    background: "transparent"
+    background: "transparent",
   },
   botonMas: {
     width: 30,
@@ -467,14 +584,14 @@ const styles = {
     cursor: "pointer",
     fontSize: 16,
     fontWeight: "700",
-    color: "#000000"
+    color: "#000000",
   },
   tablaProductos: {
     display: "flex",
     flexDirection: "column",
     border: "1px solid #E0E0E0",
     borderRadius: 8,
-    overflow: "hidden"
+    overflow: "hidden",
   },
   tablaHeaderProducto: {
     display: "flex",
@@ -483,7 +600,7 @@ const styles = {
     fontWeight: "700",
     fontSize: 13,
     color: "#000000",
-    borderBottom: "1px solid #D0D0D0"
+    borderBottom: "1px solid #D0D0D0",
   },
   tablaFilaProducto: {
     display: "flex",
@@ -491,13 +608,13 @@ const styles = {
     borderBottom: "1px solid #E0E0E0",
     fontSize: 13,
     color: "#333333",
-    alignItems: "center"
+    alignItems: "center",
   },
   tablaVacia: {
     padding: "20px",
     textAlign: "center",
     color: "#999999",
-    fontSize: 13
+    fontSize: 13,
   },
   botonEliminar: {
     background: "none",
@@ -507,14 +624,14 @@ const styles = {
     color: "#666666",
     padding: 4,
     display: "flex",
-    alignItems: "center"
+    alignItems: "center",
   },
   filaResumen: {
     display: "flex",
     justifyContent: "space-between",
     padding: "8px 0",
     borderBottom: "1px solid #E0E0E0",
-    fontSize: 14
+    fontSize: 14,
   },
   filaResumenTotal: {
     display: "flex",
@@ -524,7 +641,7 @@ const styles = {
     borderBottom: "2px solid #333333",
     fontSize: 16,
     fontWeight: "700",
-    marginBottom: 15
+    marginBottom: 15,
   },
   cardInfo: {
     background: getColor("amarillo"),
@@ -532,7 +649,7 @@ const styles = {
     borderRadius: 8,
     marginBottom: 15,
     fontSize: 12,
-    lineHeight: 1.5
+    lineHeight: 1.5,
   },
   errorMsg: {
     background: "#FFE0E0",
@@ -541,7 +658,30 @@ const styles = {
     borderRadius: 6,
     marginBottom: 15,
     fontSize: 13,
-    fontWeight: "700"
+    fontWeight: "700",
+  },
+  listaDropdown: {
+    position: "absolute",
+    top: "calc(100% + 4px)",
+    left: 0,
+    right: 0,
+    background: "#FFFFFF",
+    border: "1px solid #CCCCCC",
+    borderRadius: 6,
+    maxHeight: 240,
+    overflowY: "auto",
+    zIndex: 10,
+    boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.1)",
+  },
+  listaItem: {
+    padding: "10px 12px",
+    cursor: "pointer",
+    fontSize: 13,
+    borderBottom: "1px solid #F0F0F0",
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    gap: 10,
   },
   botonGuardar: {
     width: "100%",
@@ -552,6 +692,6 @@ const styles = {
     fontSize: 14,
     fontWeight: "700",
     cursor: "pointer",
-    color: "#000000"
-  }
+    color: "#000000",
+  },
 };

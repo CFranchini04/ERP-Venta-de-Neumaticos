@@ -1,19 +1,13 @@
 // Rutas Express para Asientos del Libro Diario.
 import { Router } from 'express';
-import {
-  getAsientos,
-  getAsiento,
-  postAsiento,
-  putAsiento,
-  deleteAsiento,
-} from '../../controllers/contabilidad/asientos.controller.js';
+import asientosController from '../../controllers/contabilidad/asientos.controller.js';
 
 const router = Router();
 
-router.get('/',     getAsientos);   // GET    /api/asientos?desde=&hasta=
-router.get('/:id',  getAsiento);    // GET    /api/asientos/:id
-router.post('/',    postAsiento);   // POST   /api/asientos
-router.put('/:id',  putAsiento);    // PUT    /api/asientos/:id
-router.delete('/:id', deleteAsiento); // DELETE /api/asientos/:id
+router.get('/',       asientosController.getAsientos);     // GET    /api/asientos?desde=&hasta=
+router.get('/:id',    asientosController.getAsiento);      
+router.post('/',      asientosController.postAsiento);     
+router.put('/:id',    asientosController.putAsiento);      
+router.delete('/:id', asientosController.deleteAsiento);   
 
 export default router;

@@ -9,5 +9,6 @@ router.get('/:id/completo', pedidosController.getPedidoCompleto)
 router.get('/:id', pedidosController.getPedidos)
 router.post('/', pedidosController.postPedido)
 router.post('/detalle', pedidosController.postDetallePedido)
+router.post('/:id/cotizaciones', pedidosController.crearCotizacionPedido)
 
 export default router

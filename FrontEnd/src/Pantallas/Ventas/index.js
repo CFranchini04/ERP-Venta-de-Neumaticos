@@ -6,4 +6,6 @@ export { default as Facturas } from './Facturas/Facturas';
 export { default as DetalleFactura } from './Facturas/DetalleFactura';
 export { default as NuevaFactura } from './Facturas/NuevaFactura';
 export { default as NotasCredito } from './NotasCredito/NotasCredito';
+export { default as NuevaNotaCredito } from './NotasCredito/NuevaNotaCredito';
+export { default as DetalleNotaCredito } from './NotasCredito/DetalleNotaCredito';
 export { default as VentaDirecta } from './VentaDirecta/VentaDirecta';

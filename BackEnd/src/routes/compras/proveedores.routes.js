@@ -3,9 +3,10 @@ import proveedoresController from '../../controllers/compras/proveedores.control
 
 const router = Router()
 
-router.get('/', proveedoresController.getAllProveedores)
+router.get('/search', proveedoresController.searchProveedores)
 router.get('/nombre/:nombre', proveedoresController.getProveedorByNombre)
 router.get('/ruc/:ruc', proveedoresController.getProveedorByRuc)
+router.get('/', proveedoresController.getAllProveedores)
 router.get('/:id', proveedoresController.getProveedores)
 router.post('/', proveedoresController.postProveedor)
 router.put('/:id', proveedoresController.updateProveedor)

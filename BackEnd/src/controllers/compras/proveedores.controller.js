@@ -19,6 +19,16 @@ const getProveedores = async (req, res) => {
   }
 }
 
+const searchProveedores = async (req, res) => {
+  try {
+    const { search } = req.query
+    const proveedores = await proveedoresService.searchProveedores(search)
+    res.status(200).json(proveedores)
+  } catch (error) {
+    res.status(400).json({ message: error.message })
+  }
+}
+
 const getProveedorByNombre = async (req, res) => {
   try {
     const { nombre } = req.params
@@ -42,10 +52,8 @@ const getProveedorByRuc = async (req, res) => {
 const postProveedor = async (req, res) => {
   try {
     const { plazo, nombre, apellido, ruc, direccion, telefono, correo, tipo_persona, fecha_nacimiento } = req.body
-
     if (!nombre || !ruc)
       return res.status(400).json({ message: 'Nombre y RUC requeridos' })
-
     const proveedor = await proveedoresService.postProveedor(plazo, nombre, apellido, ruc, direccion, telefono, correo, tipo_persona, fecha_nacimiento)
     res.status(201).json(proveedor)
   } catch (error) {
@@ -76,4 +84,4 @@ const deleteProveedor = async (req, res) => {
   }
 }
 
-export default { getAllProveedores, getProveedores, getProveedorByNombre, getProveedorByRuc, postProveedor, updateProveedor, deleteProveedor }
+export default { getAllProveedores, getProveedores, searchProveedores, getProveedorByNombre, getProveedorByRuc, postProveedor, updateProveedor, deleteProveedor }

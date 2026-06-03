@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import Sidebar from "../../components/Sidebar";
 import List from '../../components/Lista';
 import { useNavigate } from 'react-router-dom';
+import fetchConToken from '../../token'
 
 import {
     IconoPedidos,
@@ -10,8 +11,7 @@ import {
     IconoTesoreria
 } from "../../components/Icons";
 
-const SUPABASE_URL = "https://ufpvebypnhcbvgyrkzrw.supabase.co";
-const SUPABASE_KEY = "sb_publishable_3zNPvTHmiYmwG-BMVDDk9g_KZ_li66L";
+const API_BASE = "http://localhost:9128/api"
 
 const columns = [
     { key: 'fecha', label: 'Fecha' },
@@ -39,7 +39,7 @@ export default function Tesoreria({ usuario = 'Empleado', onLogout, onNavegar })
             return;
         }
 
-        if(moduloId === 'movimiento'){
+        if (moduloId === 'movimiento') {
             navigate('/tesoreria/movimiento');
             return;
         }
@@ -48,38 +48,51 @@ export default function Tesoreria({ usuario = 'Empleado', onLogout, onNavegar })
     }
 
     useEffect(() => {
-        const cargarFacturas = async () => {
-            const res = await fetch(
-                `${SUPABASE_URL}/rest/v1/facturas_ventas?select=id_factura,nro_factura,importe_total,fecha_emision,clientes(personas(nombre))&order=id_factura.desc`,
-                {
-                    headers: {
-                        apikey: SUPABASE_KEY,
-                        Authorization: `Bearer ${SUPABASE_KEY}`,
-                    },
-                }
-            );
+        const cargarMovimientos = async () => {
+            try {
+                const res = await fetchConToken(`${API_BASE}/tesoreria/movimientos/tabla`)
+                const data = await res.json()
+                const formateados = data.map((item) => ({
+                    id: item.id_movimiento,
+                    fecha: item.fecha ? new Date(item.fecha).toLocaleDateString('es-ES') : '—',
+                    cuenta: `${item.cuenta_origen?.bancos?.nombre ?? '—'} - ${item.cuenta_origen?.tipo_cuenta ?? '—'}`,
+                    concepto: item.tipos_movimiento_bancario?.nombre ?? '—',
+                    tipo: item.tipo ?? '—',
+                    total: `${Number(item.monto ?? 0).toLocaleString('es-PY')} Gs.`,
+                }))
 
-            const data = await res.json();
-
-            const formateadas = data.map((item) => ({
-                id: item.id_factura,
-                codigo: item.codigo_factura ? item.codigo_factura : `FAC-${String(item.id_factura).padStart(6, '0')}`,
-                cliente: item.clientes?.personas ? [item.clientes.personas.nombre, item.clientes.personas.apellido].filter(Boolean).join(' ') : 'Agregar en BD',
-                total: `${Number(item.importe_total ?? 0).toLocaleString('es-PY')} Gs.`,
-                fecha: item.fecha_emision ? new Date(item.fecha_emision).toLocaleDateString('es-ES') : 'Agregar en BD',
-            }));
-
-            setFacturas(formateadas);
-        };
-
-        cargarFacturas();
-    }, []);
+                setFacturas(formateados)
+            } catch (err) {
+                console.error('Error cargando movimientos:', err)
+            }
+        }
+        cargarMovimientos()
+    }, [])
 
     const movimientosFiltrados = facturas.filter((f) =>
         Object.values(f).some((v) =>
             String(v).toLowerCase().includes(busqueda.toLowerCase())
         )
     );
+
+    const movimientosOrdenados = [...movimientosFiltrados].sort((a, b) => {
+        if (!orderBy) return 0;
+
+        const valorA = a[orderBy];
+        const valorB = b[orderBy];
+
+        if (orderBy === 'total') {
+            const numA = Number(String(valorA).replace(/\D/g, '')) || 0;
+            const numB = Number(String(valorB).replace(/\D/g, '')) || 0;
+            return numB - numA;
+        }
+
+        if (orderBy === 'fecha') {
+            return new Date(b.fecha) - new Date(a.fecha);
+        }
+
+        return String(valorA).localeCompare(String(valorB), 'es-PY');
+    });
 
     return (
         <div style={styles.pagina}>
@@ -97,7 +110,7 @@ export default function Tesoreria({ usuario = 'Empleado', onLogout, onNavegar })
                         { label: 'Bancos y Saldos', icon: <IconoTesoreria size={36} />, id: 'bancos-saldos' },
                         { label: 'Depositos', icon: <IconoFactura size={36} />, id: 'deposito' },
                         { label: 'Movimientos', icon: <IconoMovimiento size={36} />, id: 'movimiento' },
-                        { label: 'Conciliación', icon: <IconoPedidos size={36} />, id: 'venta_directa' },
+
                     ].map((item) => (
                         <button
                             key={item.id}
@@ -113,7 +126,7 @@ export default function Tesoreria({ usuario = 'Empleado', onLogout, onNavegar })
                 <section style={styles.listaFacturas}>
                     <h3 style={styles.subtitulo}>Movimientos</h3>
                     <List
-                        data={movimientosFiltrados}
+                        data={movimientosOrdenados}
                         columns={columns}
                         controls={[
                             {
@@ -125,6 +138,7 @@ export default function Tesoreria({ usuario = 'Empleado', onLogout, onNavegar })
                             {
                                 type: "select",
                                 options: columns,
+                                label: "Ordenar",
                                 placeholder: "Ordenar por...",
                                 value: orderBy,
                                 onChange: (e) => setOrderBy(e.target.value)
