@@ -16,6 +16,42 @@ const getRol = async (token) => {
     return user.user_metadata.rol
 }
 
+const getUsuarios = async () => {
+    const { data, error } = await supabase.auth.admin.listUsers()
+    if (error) throw new Error(error.message)
+    return data.users.map(u => ({
+        id: u.id,
+        email: u.email,
+        nombre: u.user_metadata?.nombre || u.user_metadata?.full_name || u.email,
+        rol: u.user_metadata?.rol || 'sin rol',
+        rutas: u.user_metadata?.rutas ?? [],
+    }))
+}
+
+const updatePermisos = async (id, rutas) => {
+    const { data, error } = await supabase.auth.admin.updateUserById(id, {
+        user_metadata: { rutas }
+    })
+    if (error) throw new Error(error.message)
+    return data.user
+}
+
+const deleteUsuario = async (id) => {
+    const { error } = await supabase.auth.admin.deleteUser(id)
+    if (error) throw new Error(error.message)
+}
+
+const createUsuario = async (email, password, nombre, rutas) => {
+    const { data, error } = await supabase.auth.admin.createUser({
+        email,
+        password,
+        user_metadata: { nombre, rutas, rol: 'sin rol' },
+        email_confirm: true,
+    })
+    if (error) throw new Error(error.message)
+    return { id: data.user.id, email: data.user.email, nombre, rol: 'sin rol', rutas }
+}
+
 const refresh = async (refresh_token) => {
     const { data, error } = await supabase.auth.refreshSession({ refresh_token })
     if (error) throw new Error(error.message)
@@ -25,4 +61,4 @@ const refresh = async (refresh_token) => {
     }
 }
 
-export default { login, getRol, refresh }
+export default { login, getRol, refresh, getUsuarios, updatePermisos, deleteUsuario, createUsuario }
