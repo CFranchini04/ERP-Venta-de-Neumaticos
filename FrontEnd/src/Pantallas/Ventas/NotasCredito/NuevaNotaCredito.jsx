@@ -4,88 +4,63 @@ import Sidebar from "../../../components/Sidebar";
 import { IconoMenos, IconoSalir } from "../../../components/Icons";
 import { getColor } from "../../../components/Colors";
 import fetchConToken from "../../../token";
+import { crearAsientoAPI, fetchCuentas } from '../../../Pantallas/Contabilidad/contabilidadHelpers';
 
 const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:9128/api";
 
 export default function NuevaNotaCredito({ usuario, onNavegar, onLogout }) {
   const navigate = useNavigate();
-  const { id } = useParams(); // id de la factura original
+  const { id } = useParams();
 
   const [loading, setLoading] = useState(true);
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState("");
   const [factura, setFactura] = useState(null);
-
-  // Items de la NC: se pre-cargan desde la factura, el usuario puede ajustar cantidades o eliminar
   const [items, setItems] = useState([]);
   const [motivo, setMotivo] = useState("");
-
-  // Campos requeridos por el backend
   const [nroNotaCredito, setNroNotaCredito] = useState("");
   const [timbrado, setTimbrado] = useState("");
-  // id_estado 1 = Emitida (ajustá según tus estados en BD)
   const ID_ESTADO_EMITIDA = 1;
 
-  // Cargar la factura original
   useEffect(() => {
     const cargarFactura = async () => {
       try {
         setLoading(true);
         setError("");
-
         const res = await fetchConToken(`${API_BASE}/ventas/facturas/${id}`);
-
         if (!res.ok) {
-          if (res.status === 404) {
-            setError("Factura no encontrada.");
-          } else {
-            const data = await res.json().catch(() => ({}));
-            throw new Error(data.message || "No se pudo cargar la factura.");
-          }
-          return;
+          if (res.status === 404) { setError("Factura no encontrada."); return; }
+          const data = await res.json().catch(() => ({}));
+          throw new Error(data.message || "No se pudo cargar la factura.");
         }
-
         const data = await res.json();
         const facturaData = data.factura || data;
         setFactura(facturaData);
-
-        // Pre-poblar los items desde los detalles de la factura
         const detalles = facturaData.detalles_facturas_ventas || [];
-        setItems(
-          detalles.map((d) => ({
-            id_producto: d.productos?.id_producto || d.id_producto,
-            nombre: d.productos?.nombre || "-",
-            cantidadOriginal: Number(d.cantidad || 0),
-            cantidad: Number(d.cantidad || 0),
-            precio_unitario: Number(d.precio_unitario || 0),
-            subtotal: Number(d.precio_unitario || 0) * Number(d.cantidad || 0),
-            _uid: `${d.id_producto || d.id_detalle}-${Math.random()}`,
-          }))
-        );
+        setItems(detalles.map((d) => ({
+          id_producto: d.productos?.id_producto || d.id_producto,
+          nombre: d.productos?.nombre || "-",
+          cantidadOriginal: Number(d.cantidad || 0),
+          cantidad: Number(d.cantidad || 0),
+          precio_unitario: Number(d.precio_unitario || 0),
+          subtotal: Number(d.precio_unitario || 0) * Number(d.cantidad || 0),
+          _uid: `${d.id_producto || d.id_detalle}-${Math.random()}`,
+        })));
       } catch (err) {
-        console.error("Error cargando factura:", err);
         setError(err.message || "Error al cargar la factura.");
       } finally {
         setLoading(false);
       }
     };
-
     if (id) cargarFactura();
   }, [id]);
 
-  // Ajustar cantidad de un item (no puede superar la original)
   const handleCantidad = (uid, nuevaCantidad) => {
-    setItems((prev) =>
-      prev.map((item) => {
-        if (item._uid !== uid) return item;
-        const cant = Math.max(1, Math.min(nuevaCantidad, item.cantidadOriginal));
-        return {
-          ...item,
-          cantidad: cant,
-          subtotal: cant * item.precio_unitario,
-        };
-      })
-    );
+    setItems((prev) => prev.map((item) => {
+      if (item._uid !== uid) return item;
+      const cant = Math.max(1, Math.min(nuevaCantidad, item.cantidadOriginal));
+      return { ...item, cantidad: cant, subtotal: cant * item.precio_unitario };
+    }));
   };
 
   const handleEliminarItem = (uid) => {
@@ -95,36 +70,56 @@ export default function NuevaNotaCredito({ usuario, onNavegar, onLogout }) {
   const subtotal = items.reduce((acc, i) => acc + i.subtotal, 0);
   const iva = subtotal * 0.1;
   const total = subtotal + iva;
-
   const fechaHoy = new Date().toISOString().split("T")[0];
 
   const clienteNombre = factura?.clientes?.personas
     ? `${factura.clientes.personas.nombre || ""} ${factura.clientes.personas.apellido || ""}`.trim()
     : "-";
-  const clienteCI =
-    factura?.clientes?.personas?.ruc ||
-    factura?.clientes?.ci ||
-    "-";
+  const clienteCI = factura?.clientes?.personas?.ruc || factura?.clientes?.ci || "-";
+
+  const generarAsientoNC = async (fechaEmision, subtotalNC, ivaNC, totalNC, nroNC) => {
+    try {
+      const todasCuentas = await fetchCuentas()
+      const buscarPorCodigo = (codigo) => todasCuentas.find(c => c.codigo == codigo)
+
+      // NC de venta — asiento inverso a la venta
+      const cuentaDeudores = buscarPorCodigo('1.1.3.1.01') // Deudores por ventas
+      const cuentaVentas = buscarPorCodigo('4.1.1.1.01') // Ventas
+      const cuentaIVA = buscarPorCodigo('2.1.1.4.01') // IVA Débito Fiscal
+
+      if (!cuentaDeudores) throw new Error('No se encontró cuenta Deudores por ventas (1.1.3.1.01)')
+      if (!cuentaVentas) throw new Error('No se encontró cuenta Ventas (4.1.1.1.01)')
+      if (!cuentaIVA) throw new Error('No se encontró cuenta IVA Débito Fiscal (2.1.1.4.01)')
+
+      await crearAsientoAPI({
+        fecha: fechaEmision,
+        concepto: `Nota de Crédito ${nroNC} - Ref. Factura ${factura?.codigo_factura || id}`,
+        lineas: [
+          // DEBE — ventas se reduce (inverso a la venta)
+          { id_cuenta: cuentaVentas.id_cuentas, debe: subtotalNC, haber: 0 },
+          // DEBE — IVA débito se reduce
+          { id_cuenta: cuentaIVA.id_cuentas, debe: ivaNC, haber: 0 },
+          // HABER — deudores se reduce
+          { id_cuenta: cuentaDeudores.id_cuentas, debe: 0, haber: totalNC },
+        ],
+        id_periodo_fiscal: null,
+        id_estado: 1,
+      })
+    } catch (err) {
+      throw new Error(`Error generando asiento: ${err.message}`)
+    }
+  }
 
   const handleGuardar = async () => {
-    if (!nroNotaCredito.trim()) {
-      setError("Ingresá el número de nota de crédito.");
-      return;
-    }
-    if (!timbrado.trim()) {
-      setError("Ingresá el timbrado.");
-      return;
-    }
-    if (items.length === 0) {
-      setError("Agregá al menos un ítem a la nota de crédito.");
-      return;
-    }
+    if (!nroNotaCredito.trim()) { setError("Ingresá el número de nota de crédito."); return; }
+    if (!timbrado.trim()) { setError("Ingresá el timbrado."); return; }
+    if (items.length === 0) { setError("Agregá al menos un ítem a la nota de crédito."); return; }
 
     setGuardando(true);
     setError("");
 
     try {
-      const montoTotal = Math.round(total); // total calculado del resumen
+      const montoTotal = Math.round(total);
 
       const payload = {
         id_factura_venta: parseInt(id),
@@ -135,15 +130,9 @@ export default function NuevaNotaCredito({ usuario, onNavegar, onLogout }) {
         motivo: motivo.trim() || null,
         id_estado: ID_ESTADO_EMITIDA,
         detalles: items.map((i) => {
-          const subtotal = i.cantidad * i.precio_unitario;
-          const monto_iva = Math.round(subtotal * 0.1);
-          return {
-            id_producto: i.id_producto,
-            cantidad: i.cantidad,
-            precio_unitario: i.precio_unitario,
-            subtotal,
-            monto_iva,
-          };
+          const subtotalItem = i.cantidad * i.precio_unitario;
+          const monto_iva = Math.round(subtotalItem * 0.1);
+          return { id_producto: i.id_producto, cantidad: i.cantidad, precio_unitario: i.precio_unitario, subtotal: subtotalItem, monto_iva };
         }),
       };
 
@@ -159,8 +148,11 @@ export default function NuevaNotaCredito({ usuario, onNavegar, onLogout }) {
       }
 
       const data = await res.json();
-      const idNC = data.nc?.id_nota_credito_venta;
 
+      // Generar asiento contable
+      await generarAsientoNC(fechaHoy, subtotal, Math.round(iva), montoTotal, nroNotaCredito.trim())
+
+      const idNC = data.nc?.id_nota_credito_venta;
       if (idNC) {
         navigate(`/ventas/notas-credito/${idNC}`);
       } else {
@@ -180,10 +172,7 @@ export default function NuevaNotaCredito({ usuario, onNavegar, onLogout }) {
       <main style={styles.contenido}>
         <header style={styles.encabezado}>
           <div style={styles.headerTop}>
-            <button
-              onClick={() => navigate(`/ventas/facturas/${id}`)}
-              style={styles.botonVolver}
-            >
+            <button onClick={() => navigate(`/ventas/facturas/${id}`)} style={styles.botonVolver}>
               <IconoSalir />
             </button>
             <h1 style={styles.titulo}>Nueva Nota de Crédito</h1>
@@ -192,35 +181,24 @@ export default function NuevaNotaCredito({ usuario, onNavegar, onLogout }) {
           <div style={styles.separador} />
         </header>
 
-        {loading && (
-          <div style={styles.estadoTexto}>Cargando datos de la factura...</div>
-        )}
-
-        {!loading && error && !factura && (
-          <div style={styles.errorMsg}>{error}</div>
-        )}
+        {loading && <div style={styles.estadoTexto}>Cargando datos de la factura...</div>}
+        {!loading && error && !factura && <div style={styles.errorMsg}>{error}</div>}
 
         {!loading && factura && (
           <div style={styles.contenedorForm}>
             <div style={styles.doColumnas}>
-              {/* ── Columna izquierda ── */}
               <div style={styles.columnaIzq}>
 
-                {/* Referencia a la factura original */}
                 <div style={styles.card}>
                   <h3 style={styles.cardTitulo}>Factura de Referencia</h3>
                   <div style={styles.infoFactura}>
                     <div style={styles.infoGrupo}>
                       <span style={styles.infoLabel}>Código</span>
-                      <span style={styles.infoValor}>
-                        {factura.codigo_factura || "-"}
-                      </span>
+                      <span style={styles.infoValor}>{factura.codigo_factura || "-"}</span>
                     </div>
                     <div style={styles.infoGrupo}>
                       <span style={styles.infoLabel}>N° Factura</span>
-                      <span style={styles.infoValor}>
-                        {factura.nro_factura || "-"}
-                      </span>
+                      <span style={styles.infoValor}>{factura.nro_factura || "-"}</span>
                     </div>
                     <div style={styles.infoGrupo}>
                       <span style={styles.infoLabel}>Cliente</span>
@@ -233,159 +211,61 @@ export default function NuevaNotaCredito({ usuario, onNavegar, onLogout }) {
                     <div style={styles.infoGrupo}>
                       <span style={styles.infoLabel}>Fecha Emisión</span>
                       <span style={styles.infoValor}>
-                        {factura.fecha_emision
-                          ? new Date(factura.fecha_emision).toLocaleDateString("es-ES")
-                          : "-"}
+                        {factura.fecha_emision ? new Date(factura.fecha_emision).toLocaleDateString("es-ES") : "-"}
                       </span>
                     </div>
                   </div>
                 </div>
 
-                {/* Datos del documento */}
                 <div style={styles.card}>
                   <h3 style={styles.cardTitulo}>Datos del Documento</h3>
-
                   <div style={styles.dosCampos}>
                     <div style={styles.grupoInput}>
                       <label style={styles.label}>N° Nota de Crédito *</label>
-                      <input
-                        type="text"
-                        value={nroNotaCredito}
-                        onChange={(e) => setNroNotaCredito(e.target.value)}
-                        placeholder="Ej: 001-001-0000001"
-                        style={styles.inputTexto}
-                      />
+                      <input type="text" value={nroNotaCredito} onChange={(e) => setNroNotaCredito(e.target.value)} placeholder="Ej: 001-001-0000001" style={styles.inputTexto} />
                     </div>
-
                     <div style={styles.grupoInput}>
                       <label style={styles.label}>Timbrado *</label>
-                      <input
-                        type="text"
-                        value={timbrado}
-                        onChange={(e) => setTimbrado(e.target.value)}
-                        placeholder="Ej: 12345678"
-                        style={styles.inputTexto}
-                      />
+                      <input type="text" value={timbrado} onChange={(e) => setTimbrado(e.target.value)} placeholder="Ej: 12345678" style={styles.inputTexto} />
                     </div>
                   </div>
-
                   <div style={{ marginTop: 14 }}>
                     <div style={styles.grupoInput}>
                       <label style={styles.label}>Motivo</label>
-                      <textarea
-                        value={motivo}
-                        onChange={(e) => setMotivo(e.target.value)}
-                        placeholder="Ej: Devolución de mercadería, error en precio, producto defectuoso..."
-                        style={styles.textarea}
-                        rows={3}
-                      />
+                      <textarea value={motivo} onChange={(e) => setMotivo(e.target.value)} placeholder="Ej: Devolución de mercadería, error en precio, producto defectuoso..." style={styles.textarea} rows={3} />
                     </div>
                   </div>
                 </div>
 
-                {/* Items a acreditar */}
                 <div style={styles.card}>
                   <h3 style={styles.cardTitulo}>Ítems a Acreditar</h3>
-                  <p style={styles.ayuda}>
-                    Podés ajustar la cantidad o eliminar ítems. La cantidad no
-                    puede superar la de la factura original.
-                  </p>
-
+                  <p style={styles.ayuda}>Podés ajustar la cantidad o eliminar ítems. La cantidad no puede superar la de la factura original.</p>
                   <div style={styles.tablaProductos}>
                     <div style={styles.tablaHeader}>
                       <div style={{ flex: 2 }}>Producto</div>
-                      <div style={{ flex: 1, textAlign: "center" }}>
-                        Cant. (orig.)
-                      </div>
-                      <div style={{ flex: 1, textAlign: "center" }}>
-                        Cant. NC
-                      </div>
-                      <div style={{ flex: 1, textAlign: "right" }}>
-                        Precio Unit.
-                      </div>
-                      <div style={{ flex: 1, textAlign: "right" }}>
-                        Subtotal
-                      </div>
+                      <div style={{ flex: 1, textAlign: "center" }}>Cant. (orig.)</div>
+                      <div style={{ flex: 1, textAlign: "center" }}>Cant. NC</div>
+                      <div style={{ flex: 1, textAlign: "right" }}>Precio Unit.</div>
+                      <div style={{ flex: 1, textAlign: "right" }}>Subtotal</div>
                       <div style={{ width: 40 }} />
                     </div>
-
                     {items.length === 0 ? (
-                      <div style={styles.tablaVacia}>
-                        No quedan ítems en la nota de crédito.
-                      </div>
+                      <div style={styles.tablaVacia}>No quedan ítems en la nota de crédito.</div>
                     ) : (
                       items.map((item, idx) => (
-                        <div
-                          key={item._uid}
-                          style={{
-                            ...styles.tablaFila,
-                            background: idx % 2 === 0 ? "#F9F9F9" : "#FFFFFF",
-                          }}
-                        >
+                        <div key={item._uid} style={{ ...styles.tablaFila, background: idx % 2 === 0 ? "#F9F9F9" : "#FFFFFF" }}>
                           <div style={{ flex: 2 }}>{item.nombre}</div>
-                          <div
-                            style={{
-                              flex: 1,
-                              textAlign: "center",
-                              color: "#999",
-                              fontSize: 12,
-                            }}
-                          >
-                            {item.cantidadOriginal}
-                          </div>
+                          <div style={{ flex: 1, textAlign: "center", color: "#999", fontSize: 12 }}>{item.cantidadOriginal}</div>
                           <div style={{ flex: 1, textAlign: "center" }}>
                             <div style={styles.grupoNumerico}>
-                              <button
-                                onClick={() =>
-                                  handleCantidad(item._uid, item.cantidad - 1)
-                                }
-                                style={styles.botonNumerico}
-                              >
-                                −
-                              </button>
-                              <input
-                                type="number"
-                                value={item.cantidad}
-                                onChange={(e) =>
-                                  handleCantidad(
-                                    item._uid,
-                                    parseInt(e.target.value) || 1
-                                  )
-                                }
-                                style={styles.inputNumerico}
-                                min="1"
-                                max={item.cantidadOriginal}
-                              />
-                              <button
-                                onClick={() =>
-                                  handleCantidad(item._uid, item.cantidad + 1)
-                                }
-                                style={styles.botonNumerico}
-                              >
-                                +
-                              </button>
+                              <button onClick={() => handleCantidad(item._uid, item.cantidad - 1)} style={styles.botonNumerico}>−</button>
+                              <input type="number" value={item.cantidad} onChange={(e) => handleCantidad(item._uid, parseInt(e.target.value) || 1)} style={styles.inputNumerico} min="1" max={item.cantidadOriginal} />
+                              <button onClick={() => handleCantidad(item._uid, item.cantidad + 1)} style={styles.botonNumerico}>+</button>
                             </div>
                           </div>
-                          <div style={{ flex: 1, textAlign: "right" }}>
-                            {Number(item.precio_unitario).toLocaleString("es-PY")}{" "}
-                            Gs.
-                          </div>
-                          <div
-                            style={{
-                              flex: 1,
-                              textAlign: "right",
-                              fontWeight: "600",
-                            }}
-                          >
-                            {Number(item.subtotal).toLocaleString("es-PY")} Gs.
-                          </div>
-                          <button
-                            onClick={() => handleEliminarItem(item._uid)}
-                            style={styles.botonEliminar}
-                            title="Quitar ítem"
-                          >
-                            <IconoMenos />
-                          </button>
+                          <div style={{ flex: 1, textAlign: "right" }}>{Number(item.precio_unitario).toLocaleString("es-PY")} Gs.</div>
+                          <div style={{ flex: 1, textAlign: "right", fontWeight: "600" }}>{Number(item.subtotal).toLocaleString("es-PY")} Gs.</div>
+                          <button onClick={() => handleEliminarItem(item._uid)} style={styles.botonEliminar} title="Quitar ítem"><IconoMenos /></button>
                         </div>
                       ))
                     )}
@@ -393,73 +273,38 @@ export default function NuevaNotaCredito({ usuario, onNavegar, onLogout }) {
                 </div>
               </div>
 
-              {/* ── Columna derecha ── */}
               <div style={styles.columnaDer}>
                 <div style={styles.card}>
                   <h3 style={styles.cardTitulo}>Resumen:</h3>
-
                   <div style={styles.filaResumen}>
                     <span>Fecha:</span>
                     <span style={{ fontWeight: "600" }}>{fechaHoy}</span>
                   </div>
-
                   <div style={styles.filaResumen}>
                     <span>Factura Ref.:</span>
-                    <span style={{ fontWeight: "600" }}>
-                      {factura.codigo_factura || `#${id}`}
-                    </span>
+                    <span style={{ fontWeight: "600" }}>{factura.codigo_factura || `#${id}`}</span>
                   </div>
-
                   <div style={styles.filaResumen}>
                     <span>Subtotal:</span>
-                    <span style={{ fontWeight: "600" }}>
-                      {Number(subtotal).toLocaleString("es-PY")} Gs.
-                    </span>
+                    <span style={{ fontWeight: "600" }}>{Number(subtotal).toLocaleString("es-PY")} Gs.</span>
                   </div>
-
                   <div style={styles.filaResumen}>
                     <span>IVA (10%):</span>
-                    <span style={{ fontWeight: "600" }}>
-                      {Number(iva).toLocaleString("es-PY")} Gs.
-                    </span>
+                    <span style={{ fontWeight: "600" }}>{Number(iva).toLocaleString("es-PY")} Gs.</span>
                   </div>
-
                   <div style={styles.filaResumenTotal}>
                     <span>Total a acreditar:</span>
                     <span>{Number(total).toLocaleString("es-PY")} Gs.</span>
                   </div>
-
                   <div style={styles.cardInfoNC}>
                     <strong>¿Qué es una Nota de Crédito?</strong>
-                    <p style={{ margin: "8px 0 0 0", fontSize: 12 }}>
-                      Documento que reduce el importe de la factura original.
-                      Puede ser total o parcial según los ítems seleccionados.
-                    </p>
+                    <p style={{ margin: "8px 0 0 0", fontSize: 12 }}>Documento que reduce el importe de la factura original. Puede ser total o parcial según los ítems seleccionados.</p>
                   </div>
-
                   {error && <div style={styles.errorMsg}>{error}</div>}
-
-                  <button
-                    onClick={handleGuardar}
-                    disabled={guardando || items.length === 0}
-                    style={{
-                      ...styles.botonGuardar,
-                      opacity: guardando || items.length === 0 ? 0.6 : 1,
-                      cursor:
-                        guardando || items.length === 0
-                          ? "not-allowed"
-                          : "pointer",
-                    }}
-                  >
+                  <button onClick={handleGuardar} disabled={guardando || items.length === 0} style={{ ...styles.botonGuardar, opacity: guardando || items.length === 0 ? 0.6 : 1, cursor: guardando || items.length === 0 ? "not-allowed" : "pointer" }}>
                     {guardando ? "Guardando..." : "Emitir Nota de Crédito"}
                   </button>
-
-                  <button
-                    onClick={() => navigate(`/ventas/facturas/${id}`)}
-                    style={styles.botonCancelar}
-                  >
-                    Cancelar
-                  </button>
+                  <button onClick={() => navigate(`/ventas/facturas/${id}`)} style={styles.botonCancelar}>Cancelar</button>
                 </div>
               </div>
             </div>
