@@ -215,13 +215,34 @@ export default function GestionSalarial({ usuario, onLogout, onNavegar }) {
       }
 
       const lineas = [
-        { id_cuenta: cuentaSueldos.id_cuentas, debe: totalIngresos, haber: 0 },
-        { id_cuenta: cuentaIPS.id_cuentas, debe: 0, haber: ips },
-        { id_cuenta: cuentaSueldosPag.id_cuentas, debe: 0, haber: salarioFinal },
-      ];
+        // DEBE — gasto de sueldos
+        {
+          codigo: '4.1.1.4.1.01',
+          cuenta: "SUELDOS Y CARGAS SOCIALES - ADM.-",
+          debe: totalIngresos,
+          haber: 0,
+        },
+        // HABER — IPS retenido
+        {
+          codigo: '2.1.1.3.02',
+          cuenta: "RETENCIONES A DEPOSITAR",
+          debe: 0,
+          haber: ips,
+        },
+        // HABER — neto a pagar al empleado
+        {
+          codigo: '2.1.1.3.01',
+          cuenta: "SUELDOS A PAGAR",
+          debe: 0,
+          haber: salarioFinal,
+        },
+      ]
 
       if (totalDeducciones > 0) {
-        const cuentaOtrasDed = buscar("2.1.1.3.03");
+        const cuentaOtrasDed = {
+          codigo: "2.1.1.3.03",
+          cuenta: "CONTRIBUCIONES PATRONALES A PAGAR"
+        }
         if (cuentaOtrasDed) {
           lineas[1].haber += totalDeducciones;
         }
@@ -271,13 +292,13 @@ export default function GestionSalarial({ usuario, onLogout, onNavegar }) {
         // Subsidio familiar (si aplica)
         ...(subsidioFamiliar > 0
           ? [
-              {
-                id_novedad: null,
-                monto: subsidioFamiliar,
-                observacion: `Subsidio familiar (${hijosMenores} hijo${hijosMenores > 1 ? "s" : ""} menor${hijosMenores > 1 ? "es" : ""})`,
-                tipo_novedad: "Ingreso",
-              },
-            ]
+            {
+              id_novedad: null,
+              monto: subsidioFamiliar,
+              observacion: `Subsidio familiar (${hijosMenores} hijo${hijosMenores > 1 ? "s" : ""} menor${hijosMenores > 1 ? "es" : ""})`,
+              tipo_novedad: "Ingreso",
+            },
+          ]
           : []),
         ...bonificaciones.map((b) => ({
           id_novedad: b.id_novedad ?? null,
@@ -299,23 +320,23 @@ export default function GestionSalarial({ usuario, onLogout, onNavegar }) {
         },
         ...(descuentoAusencias > 0
           ? [
-              {
-                id_novedad: null,
-                monto: descuentoAusencias,
-                observacion: `Ausencias (${ausencias} dias)`,
-                tipo_novedad: "Egreso",
-              },
-            ]
+            {
+              id_novedad: null,
+              monto: descuentoAusencias,
+              observacion: `Ausencias (${ausencias} dias)`,
+              tipo_novedad: "Egreso",
+            },
+          ]
           : []),
         ...(pagoHorasExtras > 0
           ? [
-              {
-                id_novedad: null,
-                monto: pagoHorasExtras,
-                observacion: `Horas extras (${horasExtras}h)`,
-                tipo_novedad: "Ingreso",
-              },
-            ]
+            {
+              id_novedad: null,
+              monto: pagoHorasExtras,
+              observacion: `Horas extras (${horasExtras}h)`,
+              tipo_novedad: "Ingreso",
+            },
+          ]
           : []),
       ];
 

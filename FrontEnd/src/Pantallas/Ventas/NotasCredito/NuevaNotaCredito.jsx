@@ -96,11 +96,20 @@ export default function NuevaNotaCredito({ usuario, onNavegar, onLogout }) {
         concepto: `Nota de Crédito ${nroNC} - Ref. Factura ${factura?.codigo_factura || id}`,
         lineas: [
           // DEBE — ventas se reduce (inverso a la venta)
-          { id_cuenta: cuentaVentas.id_cuentas, debe: subtotalNC, haber: 0 },
+          {
+            codigo: "1.1.4.1.01",
+            cuenta: "MERCADERIAS DE REVENTA", debe: subtotalNC, haber: 0
+          },
           // DEBE — IVA débito se reduce
-          { id_cuenta: cuentaIVA.id_cuentas, debe: ivaNC, haber: 0 },
+          {
+            codigo: "2.1.1.4.01",
+            cuenta: "I.V.A. DEBITO FISCAL", debe: ivaNC, haber: 0
+          },
           // HABER — deudores se reduce
-          { id_cuenta: cuentaDeudores.id_cuentas, debe: 0, haber: totalNC },
+          {
+            codigo: "1.1.1.1.01",
+            cuenta: "CAJA EN MONEDA NACIONAL", debe: 0, haber: totalNC
+          },
         ],
         id_periodo_fiscal: null,
         id_estado: 1,
