@@ -1,173 +1,70 @@
-import supabase from '../../config/supabase.js'
+import { readFile, writeFile } from 'fs/promises'
+import { fileURLToPath } from 'url'
+import path from 'path'
+import periodosService from './periodos.service.js'
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
+const FILE = path.resolve(__dirname, '../../data/contabilidad/asientosMock.json')
+
+const leer = async () => JSON.parse(await readFile(FILE, 'utf8'))
+const escribir = (d) => writeFile(FILE, JSON.stringify(d, null, 2), 'utf8')
 
 const validarBalanceado = (lineas) => {
-  const totD = lineas.reduce((s, l) => s + Number(l.debe || 0), 0);
-  const totH = lineas.reduce((s, l) => s + Number(l.haber || 0), 0);
-  return totD === totH && totD > 0;
-};
+  const debe  = lineas.reduce((s, l) => s + (Number(l.debe)  || 0), 0)
+  const haber = lineas.reduce((s, l) => s + (Number(l.haber) || 0), 0)
+  if (Math.abs(debe - haber) > 0.01) throw new Error('El asiento no está balanceado (Σdebe ≠ Σhaber)')
+  if (debe === 0) throw new Error('El asiento no puede tener importes en cero')
+}
 
-const listarAsientos = async (filtros = {}) => {
-  const { desde, hasta } = filtros;
-
-  let query = supabase
-    .from('asientos_cabecera')
-    .select(`
-      id_asiento,
-      fecha,
-      descripcion,
-      asientos_detalle (
-        id_asientos_detalle,
-        debe,
-        haber,
-        item,
-        cuentas ( id_cuentas, codigo, nombre )
-      )
-    `)
-    .order('fecha', { ascending: true })
-    .order('id_asiento', { ascending: true });
-
-  if (desde) query = query.gte('fecha', desde);
-  if (hasta) query = query.lte('fecha', hasta);
-
-  const { data, error } = await query;
-  if (error) throw new Error(error.message);
-
-  return data.map(mapAsiento);
-};
+const listarAsientos = async (desde, hasta) => {
+  const asientos = await leer()
+  return asientos
+    .filter(a => (!desde || a.fecha >= desde) && (!hasta || a.fecha <= hasta))
+    .sort((a, b) => a.fecha.localeCompare(b.fecha) || a.numero - b.numero)
+}
 
 const obtenerAsiento = async (id) => {
-  const { data, error } = await supabase
-    .from('asientos_cabecera')
-    .select(`
-      id_asiento,
-      fecha,
-      descripcion,
-      asientos_detalle (
-        id_asientos_detalle,
-        debe,
-        haber,
-        item,
-        cuentas ( id_cuentas, codigo, nombre )
-      )
-    `)
-    .eq('id_asiento', id)
-    .single();
+  const asientos = await leer()
+  return asientos.find(a => a.id === Number(id)) ?? null
+}
 
-  if (error) throw new Error(error.message);
-  return mapAsiento(data);
-};
+const crearAsiento = async ({ fecha, concepto, lineas, origen = null }) => {
+  if (!fecha || !concepto || !Array.isArray(lineas) || lineas.length < 2)
+    throw new Error('fecha, concepto y al menos 2 líneas son obligatorios')
+  validarBalanceado(lineas)
+  await periodosService.validarPeriodoAbierto(fecha)
 
-const crearAsiento = async (datos) => {
-  const { fecha, concepto, lineas, id_periodo_fiscal, id_estado } = datos;
+  const asientos = await leer()
+  const id     = asientos.length ? Math.max(...asientos.map(a => a.id)) + 1 : 1
+  const numero = asientos.length ? Math.max(...asientos.map(a => a.numero)) + 1 : 1
 
-  if (!fecha || !concepto) throw new Error('Fecha y concepto son obligatorios');
-  if (!Array.isArray(lineas) || lineas.length < 2) throw new Error('Se requieren al menos 2 líneas para el asiento');
-  if (!validarBalanceado(lineas)) throw new Error('El asiento no está balanceado (Debe ≠ Haber)');
-
-  const { data: cabecera, error: errCab } = await supabase
-    .from('asientos_cabecera')
-    .insert({
-      fecha,
-      descripcion: concepto,
-      id_estado: id_estado ?? null,
-      id_periodo_fiscal: id_periodo_fiscal ?? null,
-    })
-    .select()
-    .single();
-
-  if (errCab) throw new Error(errCab.message);
-
-  const detalles = lineas.map((l, i) => ({
-    id_asiento: cabecera.id_asiento,
-    id_cuenta: l.id_cuenta ?? null,
-    debe: Number(l.debe) || 0,
-    haber: Number(l.haber) || 0,
-    item: i + 1,
-    es_manual: true,
-  }));
-
-  const { error: errDet } = await supabase
-    .from('asientos_detalle')
-    .insert(detalles);
-
-  if (errDet) throw new Error(errDet.message);
-
-  return obtenerAsiento(cabecera.id_asiento);
-};
+  const nuevo = { id, numero, fecha, concepto, lineas, origen }
+  asientos.push(nuevo)
+  await escribir(asientos)
+  return nuevo
+}
 
 const actualizarAsiento = async (id, cambios) => {
-  const { fecha, concepto, lineas } = cambios;
-
-  if (lineas && !validarBalanceado(lineas)) throw new Error('El asiento no está balanceado (Debe ≠ Haber)');
-
-  const updates = {};
-  if (fecha)   updates.fecha       = fecha;
-  if (concepto) updates.descripcion = concepto;
-
-  if (Object.keys(updates).length > 0) {
-    const { error } = await supabase
-      .from('asientos_cabecera')
-      .update(updates)
-      .eq('id_asiento', id);
-    if (error) throw new Error(error.message);
-  }
-
-  if (lineas) {
-    const { error: errDel } = await supabase
-      .from('asientos_detalle')
-      .delete()
-      .eq('id_asiento', id);
-    if (errDel) throw new Error(errDel.message);
-
-    const detalles = lineas.map((l, i) => ({
-      id_asiento: Number(id),
-      id_cuenta: l.id_cuenta ?? null,
-      debe: Number(l.debe) || 0,
-      haber: Number(l.haber) || 0,
-      item: i + 1,
-      es_manual: true,
-    }));
-
-    const { error: errIns } = await supabase
-      .from('asientos_detalle')
-      .insert(detalles);
-    if (errIns) throw new Error(errIns.message);
-  }
-
-  return obtenerAsiento(id);
-};
+  const asientos = await leer()
+  const idx = asientos.findIndex(a => a.id === Number(id))
+  if (idx === -1) throw new Error(`Asiento ${id} no encontrado`)
+  if (cambios.lineas) validarBalanceado(cambios.lineas)
+  const fechaFinal = cambios.fecha ?? asientos[idx].fecha
+  await periodosService.validarPeriodoAbierto(fechaFinal)
+  asientos[idx] = { ...asientos[idx], ...cambios, id: asientos[idx].id }
+  await escribir(asientos)
+  return asientos[idx]
+}
 
 const eliminarAsiento = async (id) => {
-  const { error: errDet } = await supabase
-    .from('asientos_detalle')
-    .delete()
-    .eq('id_asiento', id);
-  if (errDet) throw new Error(errDet.message);
-
-  const { error } = await supabase
-    .from('asientos_cabecera')
-    .delete()
-    .eq('id_asiento', id);
-  if (error) throw new Error(error.message);
-
-  return { id: Number(id), message: 'Asiento eliminado correctamente' };
-};
-
-// Mapea el formato de supabase al formato que usa el frontend
-const mapAsiento = (a) => ({
-  id: a.id_asiento,
-  numero: a.id_asiento,
-  fecha: a.fecha,
-  concepto: a.descripcion,
-  lineas: (a.asientos_detalle ?? []).map(d => ({
-    id_asientos_detalle: d.id_asientos_detalle,
-    codigo: d.cuentas?.codigo ?? '',
-    cuenta: d.cuentas?.nombre ?? '',
-    id_cuenta: d.id_cuenta,
-    debe: d.debe ?? 0,
-    haber: d.haber ?? 0,
-  })),
-});
+  const asientos = await leer()
+  const a = asientos.find(x => x.id === Number(id))
+  if (!a) throw new Error(`Asiento ${id} no encontrado`)
+  await periodosService.validarPeriodoAbierto(a.fecha)
+  const filtrados = asientos.filter(x => x.id !== Number(id))
+  await escribir(filtrados)
+  return { id: Number(id) }
+}
 
 export default {
   listarAsientos,
@@ -175,4 +72,4 @@ export default {
   crearAsiento,
   actualizarAsiento,
   eliminarAsiento,
-};
+}
