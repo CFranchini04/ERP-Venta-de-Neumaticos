@@ -14,8 +14,7 @@ import facturasRoutes from './routes/compras/facturas.routes.js'
 import cotizacionesRoutes from './routes/compras/cotizaciones.routes.js'
 import notasCreditoRoutes from './routes/compras/notasCredito.routes.js'
 import metodosPagoRouter from './routes/compras/metodosPago.routes.js'
-import notasCreditoRoutes from './routes/compras/notasCredito.routes.js'
-import metodosPagoRouter from './routes/compras/metodosPago.routes.js'
+
 
 //MISC
 import productosRoutes from './routes/misc/productos.routes.js'
@@ -92,8 +91,5 @@ app.use('/api/tesoreria/movimientos', movimientosRoutes)
 app.use('/api/ventas/facturas', facturasVentasRoutes)
 app.use('/api/ventas/presupuestos', presupuestosRoutes)
 app.use('/api/ventas/notas-credito', notasCreditoVentasRoutes)
-
-
-
 
 export default app
