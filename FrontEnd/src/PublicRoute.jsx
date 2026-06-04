@@ -1,7 +1,7 @@
 import { Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from './AuthContext';
 
-const rutas = {
+const rutasFijas = {
   admin: '/home',
   rrhh: '/rrhh',
   compras: '/compras',
@@ -15,5 +15,10 @@ export default function PublicRoute() {
 
   if (!usuario) return <Outlet />;
 
-  return <Navigate to={rutas[usuario.rol] ?? '/home'} replace />;
+  const rol = usuario.rol || usuario.user_metadata?.rol;
+  const destino = rutasFijas[rol] ?? usuario.user_metadata?.rutas?.[0];
+
+  if (!destino) return <Outlet />;
+
+  return <Navigate to={destino} replace />;
 }
