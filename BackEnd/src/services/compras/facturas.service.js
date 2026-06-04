@@ -342,7 +342,42 @@ const confirmarFacturaPlaceholder = async (id, {
     if (errorDetNuevo) throw new Error(`Error creando detalles del nuevo placeholder: ${errorDetNuevo.message}`)
   }
 
-  return { factura, detalles: detallesCreados, todosEntregados }
+    const { data: estadoEspera } = await supabase
+      .from('estados')
+      .select('id_estado')
+      .ilike('nombre', 'pendiente')
+      .maybeSingle()
+
+    const codigoOrdenPago = `OP-${new Date().getFullYear()}-${Date.now().toString().slice(-6)}`
+
+    const { data: ordenPago, error: errorOrdenPago } = await supabase
+      .from('ordenes_pago')
+      .insert({
+        fecha_creacion: new Date().toISOString().split('T')[0],
+        monto_total:    importe_total,
+        id_proveedor:   id_proveedor,
+        codigo_orden_pago: codigoOrdenPago,
+        id_estado:      estadoEspera?.id_estado ?? null,
+      })
+      .select()
+      .single()
+
+    if (errorOrdenPago) throw new Error(`Error creando orden de pago: ${errorOrdenPago.message}`)
+
+    const { error: errorDetallePago } = await supabase
+      .from('detalles_orden_pago')
+      .insert({
+        id_factura_compra: id,              // id_factura_compra confirmada
+        id_metodo_pago:   null,            // se asignará al momento de pagar
+        monto:            importe_total,
+        id_orden_pago:    ordenPago.id_orden_pago,
+      })
+
+    if (errorDetallePago) throw new Error(`Error creando detalle de orden de pago: ${errorDetallePago.message}`)
+
+
+  return { factura, detalles: detallesCreados, todosEntregados, ordenPago }
+
 }
 
 const deleteFactura = async (id) => {

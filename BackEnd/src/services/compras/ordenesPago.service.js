@@ -37,27 +37,88 @@ const getTableOrdPago = async () => {
 }
 
 const postOrdPago = async (fecha_creacion, monto_total, id_proveedor, codigo_orden_pago, id_estado, detalles) => {
-    const { data: orden, error: errorOrden } = await supabase
-        .from('ordenes_pago')
-        .insert({ fecha_creacion, monto_total, id_proveedor, codigo_orden_pago, id_estado })
-        .select()
-        .single()
-    if (errorOrden) throw new Error(errorOrden.message)
 
-    const detallesConId = detalles.map(d => ({
-        id_factura_compa: d.id_factura_compa,
-        id_metodo_pago: d.id_metodo_pago,
-        monto: d.monto,
-        id_orden_pago: orden.id_orden_pago
-    }))
+    // Mapa para rastrear qué id_orden_pago se usó por cada detalle
+    const ordenesAfectadas = new Set()
 
-    const { data: detallesCreados, error: errorDetalles } = await supabase
-        .from('detalles_orden_pago')
-        .insert(detallesConId)
-        .select()
-    if (errorDetalles) throw new Error(errorDetalles.message)
+    for (const d of detalles) {
+        const { data: detalleExistente } = await supabase
+            .from('detalles_orden_pago')
+            .select('*, ordenes_pago(*)')
+            .eq('id_factura_compra', d.id_factura_compra)
+            .maybeSingle()
 
-    return { orden, detalles: detallesCreados }
+        if (detalleExistente) {
+            await supabase
+                .from('detalles_orden_pago')
+                .update({
+                    id_metodo_pago: d.id_metodo_pago,
+                    monto: d.monto,
+                })
+                .eq('id_d_orden_pago', detalleExistente.id_d_orden_pago)
+
+            await supabase
+                .from('ordenes_pago')
+                .update({ monto_total, id_estado })
+                .eq('id_orden_pago', detalleExistente.id_orden_pago)
+
+            // ✅ registrar orden afectada
+            ordenesAfectadas.add(detalleExistente.id_orden_pago)
+
+        } else {
+            const { data: orden, error: errorOrden } = await supabase
+                .from('ordenes_pago')
+                .insert({ fecha_creacion, monto_total, id_proveedor, codigo_orden_pago, id_estado })
+                .select()
+                .single()
+            if (errorOrden) throw new Error(errorOrden.message)
+
+            const { error: errorDetalle } = await supabase
+                .from('detalles_orden_pago')
+                .insert({
+                    id_factura_compra: d.id_factura_compra,
+                    id_metodo_pago: d.id_metodo_pago,
+                    monto: d.monto,
+                    id_orden_pago: orden.id_orden_pago
+                })
+            if (errorDetalle) throw new Error(errorDetalle.message)
+
+            // ✅ registrar orden afectada
+            ordenesAfectadas.add(orden.id_orden_pago)
+        }
+
+        // Marcar factura como pagada (id_estado = 0)
+        const { error: errorFactura } = await supabase
+            .from('facturas_compras')
+            .update({ id_estado: 0 })
+            .eq('id_factura_compra', d.id_factura_compra)
+        if (errorFactura) throw new Error(errorFactura.message)
+    }
+
+    // ✅ NUEVO: verificar cada orden afectada y actualizarla a pagada si todas sus facturas lo están
+    for (const id_orden_pago of ordenesAfectadas) {
+        // Traer todos los detalles de esta orden con el estado de su factura
+        const { data: detallesOrden, error: errorDetalles } = await supabase
+            .from('detalles_orden_pago')
+            .select('id_factura_compra, facturas_compras(id_estado)')
+            .eq('id_orden_pago', id_orden_pago)
+
+        if (errorDetalles) throw new Error(errorDetalles.message)
+
+        const todasPagadas = detallesOrden.every(
+            (d) => d.facturas_compras?.id_estado === 0
+        )
+
+        if (todasPagadas) {
+            const { error: errorOrdenFinal } = await supabase
+                .from('ordenes_pago')
+                .update({ id_estado: 0 })   // 0 = Pagado
+                .eq('id_orden_pago', id_orden_pago)
+            if (errorOrdenFinal) throw new Error(errorOrdenFinal.message)
+        }
+    }
+
+    return { message: 'Orden de pago procesada correctamente' }
 }
 
 const updateOrdPago = async (id, data) => {

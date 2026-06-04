@@ -13,6 +13,8 @@ import pedidosRoutes from './routes/compras/pedidos.routes.js'
 import facturasRoutes from './routes/compras/facturas.routes.js'
 import cotizacionesRoutes from './routes/compras/cotizaciones.routes.js'
 import notasCreditoRoutes from './routes/compras/notasCredito.routes.js'
+import metodosPagoRouter from './routes/compras/metodosPago.routes.js'
+
 //MISC
 import productosRoutes from './routes/misc/productos.routes.js'
 
@@ -68,6 +70,7 @@ app.use('/api/compras/pedidos', pedidosRoutes)
 app.use('/api/compras/facturas', facturasRoutes)
 app.use('/api/compras/cotizaciones', cotizacionesRoutes)
 app.use('/api/compras/notas-credito', notasCreditoRoutes)
+app.use('/api/compras/metodos-pago', metodosPagoRouter)
 //RRHH
 app.use('/api/rrhh/empleados', empleadosRoutes)
 app.use('/api/rrhh/salarios', salariosRoutes)

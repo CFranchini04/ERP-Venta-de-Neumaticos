@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Button } from "../../../components/Buttons";
 import { getColor } from "../../../components/Colors";
 import fetchConToken from "../../../token";
-
+import { useNavigate } from "react-router-dom";
 const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:9128/api";
 
 export default function ModalPagoFacturas({ proveedor, facturas, onClose, onConfirmar }) {
@@ -11,14 +11,14 @@ export default function ModalPagoFacturas({ proveedor, facturas, onClose, onConf
     const [errorMetodos, setErrorMetodos] = useState("");
     const [enviando, setEnviando] = useState(false);
     const [errorEnvio, setErrorEnvio] = useState("");
-
+    const navigate = useNavigate();
     const [filas, setFilas] = useState(
         facturas.map((f) => ({
-            id: f.id,
+            id: Number(f.id),
             codigo: f.codigo,
-            pendiente: f.importe_total ?? 0,
+            pendiente: Number(f.importe_total) || 0,
             id_metodo_pago: "",
-            monto: f.importe_total ?? 0,
+            monto: Number(f.importe_total) || 0,
         }))
     );
 
@@ -27,12 +27,9 @@ export default function ModalPagoFacturas({ proveedor, facturas, onClose, onConf
             try {
                 setLoadingMetodos(true);
                 setErrorMetodos("");
-                console.log("Iniciando carga de métodos de pago...");
                 const res = await fetchConToken(`${API_BASE}/compras/metodos-pago`);
-                console.log("Response status:", res.status);
                 if (!res.ok) throw new Error(`Error ${res.status}`);
                 const data = await res.json();
-                console.log("Métodos de pago recibidos:", data);
                 setMetodosPago(data || []);
                 if (data?.length > 0) {
                     setFilas((prev) =>
@@ -40,7 +37,6 @@ export default function ModalPagoFacturas({ proveedor, facturas, onClose, onConf
                     );
                 }
             } catch (err) {
-                console.error("Error cargando métodos:", err);
                 setErrorMetodos(err.message);
             } finally {
                 setLoadingMetodos(false);
@@ -74,47 +70,43 @@ export default function ModalPagoFacturas({ proveedor, facturas, onClose, onConf
         try {
             setEnviando(true);
             setErrorEnvio("");
-
             const payload = {
                 fecha_creacion: new Date().toISOString().split("T")[0],
                 monto_total: totalAPagar,
-                id_proveedor: proveedor.id_proveedor,
+                id_proveedor: proveedor.id,
                 codigo_orden_pago: generarCodigo(),
-                id_estado: 1, // ajustá al id de estado "Pendiente" en tu tabla estados
+                id_estado: 1,
                 detalles: filas.map((f) => ({
-                    id_factura_compa: f.id,
-                    id_metodo_pago: f.id_metodo_pago,
+                    id_factura_compra: Number(f.id),
+                    id_metodo_pago: parseInt(f.id_metodo_pago),
                     monto: parseFloat(f.monto),
                 })),
             };
-
             const res = await fetchConToken(`${API_BASE}/compras/ordenes-pago`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(payload),
             });
-
             if (!res.ok) {
                 const err = await res.json().catch(() => ({}));
                 throw new Error(err.message || `Error ${res.status}`);
             }
-
             onConfirmar?.();
             onClose();
         } catch (err) {
             setErrorEnvio(err.message);
         } finally {
             setEnviando(false);
+            navigate("/compras/ordenes-de-pago");
         }
     };
 
     return (
         <div style={styles.overlay} onClick={(e) => e.target === e.currentTarget && onClose()}>
             <div style={styles.modal}>
-
                 <div style={styles.header}>
                     <div>
-                        <h2 style={styles.titulo}>Confirmar pago</h2>
+                        <h2 style={styles.titulo}  onClick={() => navigate("/compras/ordenes-de-pago")}>Confirmar pago</h2>
                         <p style={styles.subtitulo}>
                             Proveedor: <strong>{proveedor?.nombre}</strong> &mdash;{" "}
                             {facturas.length} factura{facturas.length !== 1 ? "s" : ""} seleccionada{facturas.length !== 1 ? "s" : ""}
@@ -144,13 +136,11 @@ export default function ModalPagoFacturas({ proveedor, facturas, onClose, onConf
                                         const montoNum = parseFloat(fila.monto) || 0;
                                         const excede = montoNum > fila.pendiente;
                                         const vacio = montoNum <= 0;
-
                                         return (
                                             <tr key={fila.id} style={styles.tr}>
                                                 <td style={styles.td}>
                                                     <span style={styles.codigo}>{fila.codigo}</span>
                                                 </td>
-
                                                 <td style={styles.td}>
                                                     <select
                                                         value={fila.id_metodo_pago}
@@ -165,11 +155,9 @@ export default function ModalPagoFacturas({ proveedor, facturas, onClose, onConf
                                                         ))}
                                                     </select>
                                                 </td>
-
                                                 <td style={{ ...styles.td, ...styles.tdNumero }}>
                                                     ₲ {fila.pendiente.toLocaleString("es-PY")}
                                                 </td>
-
                                                 <td style={styles.td}>
                                                     <input
                                                         type="number"
@@ -199,7 +187,7 @@ export default function ModalPagoFacturas({ proveedor, facturas, onClose, onConf
                         <p style={{ color: "red", margin: 0, fontSize: 14 }}>{errorEnvio}</p>
                     )}
                     <div style={styles.footerCentrado}>
-                         <Button
+                        <Button
                             label="Cancelar"
                             variant="rojo"
                             size="md"
@@ -221,7 +209,6 @@ export default function ModalPagoFacturas({ proveedor, facturas, onClose, onConf
                         />
                     </div>
                 </div>
-
             </div>
         </div>
     );

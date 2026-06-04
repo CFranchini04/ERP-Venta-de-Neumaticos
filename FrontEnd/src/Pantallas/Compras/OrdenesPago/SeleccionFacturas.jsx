@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import Sidebar from "../../../components/Sidebar";
 import List from "../../../components/Lista";
 import { Button } from "../../../components/Buttons";
@@ -7,6 +6,7 @@ import { getColor } from "../../../components/Colors";
 import SearchBar from "../../../components/Searchbar";
 import fetchConToken from "../../../token";
 import ModalPagoFacturas from "./ModalPagoFacturas";
+import { useNavigate, useLocation } from "react-router-dom";
 
 const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:9128/api";
 
@@ -15,15 +15,20 @@ export default function PagoFacturas({ usuario, onNavegar, onLogout }) {
   const [facturasTodas, setFacturasTodas] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
-  const [proveedorSeleccionado, setProveedorSeleccionado] = useState(null)
   const [searchKey, setSearchKey] = useState(0)
   const [busquedaFac, setBusquedaFac] = useState("")
   const [filtroVencimiento, setFiltroVencimiento] = useState("")
   const [ordenFac, setOrdenFac] = useState("")
   const [facturasSeleccionadas, setFacturasSeleccionadas] = useState([])
   const [modalAbierto, setModalAbierto] = useState(false)
+  const location = useLocation()
+  const [proveedorSeleccionado, setProveedorSeleccionado] = useState(() => {
+    const p = location.state?.proveedor
+    return (p?.id && p?.nombre) ? p : null
+  })
 
-  useEffect(() => {
+  useEffect((
+  ) => {
     const cargar = async () => {
       try {
         setLoading(true)
@@ -39,19 +44,26 @@ export default function PagoFacturas({ usuario, onNavegar, onLogout }) {
 
         const data = await response.json()
 
-        setFacturasTodas(
-          (data || []).map((f) => ({
-            id: f.codigo_factura,
-            codigo: f.codigo_factura,
-            fecha_creacion: f.fecha_emision,
-            fecha_limite: f.fecha_vencimiento,
-            orden_compra: f.ordenes_compras?.codigo_orden || "",
-            proveedor_id: f.proveedores?.id_proveedor,
-            proveedor: f.proveedores?.personas?.nombre || "",
-            estado: f.estados?.nombre || "",
-            importe_total: f.importe_total ?? 0,
-          }))
-        )
+setFacturasTodas(
+  (data || [])
+    .filter((f) => {
+      const tieneNro = f.codigo_factura && f.codigo_factura.toString().trim() !== ""
+      const esConfirmado = (f.estados?.nombre || "").toLowerCase() === "confirmado"
+      const noPagada = f.id_estado !== 0  // ✅ NUEVO: excluir facturas pagadas
+      return tieneNro && esConfirmado && noPagada
+    })
+    .map((f) => ({
+      id: Number(f.id_factura_compra),        
+      codigo: f.codigo_factura,      
+      fecha_creacion: f.fecha_emision,
+      fecha_limite: f.fecha_vencimiento,
+      orden_compra: f.ordenes_compras?.codigo_orden || "",
+      proveedor_id: f.proveedores?.id_proveedor,
+      proveedor: f.proveedores?.personas?.nombre || "",
+      estado: f.estados?.nombre || "",
+      importe_total: f.importe_total ?? 0,
+    }))
+)
       } catch (err) {
         setError(err.message)
       } finally {
@@ -127,7 +139,6 @@ export default function PagoFacturas({ usuario, onNavegar, onLogout }) {
       ),
     },
   ]
-
   return (
     <div style={styles.pagina}>
       <Sidebar usuario={usuario} onNavegar={onNavegar} onLogout={onLogout} />
@@ -155,37 +166,38 @@ export default function PagoFacturas({ usuario, onNavegar, onLogout }) {
               </h2>
 
               <SearchBar
-                key={searchKey}
-                apiUrl={`${API_BASE}/compras/proveedores/search`}
-                queryParam="search"
-                placeholder="Buscar proveedor..."
-                fetchOnMount={true}
-                onSelect={(rawItem) => {
-                  setProveedorSeleccionado({
-                    id: rawItem.id_proveedor,
-                    nombre: rawItem.personas?.nombre ?? ''
-                  })
-                  setFacturasSeleccionadas([])
-                }}
-                onClear={() => {
-                  setProveedorSeleccionado(null)
-                  setFacturasSeleccionadas([])
-                }}
-                getLabel={(item) => item?.personas?.nombre || ""}
-                renderOption={(item) => (
-                  <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                    <span style={{ fontWeight: 700, fontSize: 14 }}>
-                      {item.personas?.nombre} {item.personas?.apellido ?? ''}
-                    </span>
-                    <span style={{ fontSize: 12, color: "#888" }}>
-                      RUC: {item.personas?.ruc ?? '—'}
-                      {" · Plazo: "}{item.plazo_entrega ?? '—'} días
-                    </span>
-                  </div>
-                )}
-                style={{ maxWidth: 500 }}
-              />
-            </section>
+  key={searchKey}
+  apiUrl={`${API_BASE}/compras/proveedores/search`}
+  queryParam="search"
+  placeholder="Buscar proveedor..."
+  fetchOnMount={true}
+  initialValue={proveedorSeleccionado?.nombre || ""}   // ✅ NUEVO
+  onSelect={(rawItem) => {
+    setProveedorSeleccionado({
+      id: rawItem.id_proveedor,
+      nombre: rawItem.personas?.nombre ?? ''
+    })
+    setFacturasSeleccionadas([])
+  }}
+  onClear={() => {
+    setProveedorSeleccionado(null)
+    setFacturasSeleccionadas([])
+  }}
+  getLabel={(item) => item?.personas?.nombre || ""}
+  renderOption={(item) => (
+    <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+      <span style={{ fontWeight: 700, fontSize: 14 }}>
+        {item.personas?.nombre} {item.personas?.apellido ?? ''}
+      </span>
+      <span style={{ fontSize: 12, color: "#888" }}>
+        RUC: {item.personas?.ruc ?? '—'}
+        {" · Plazo: "}{item.plazo_entrega ?? '—'} días
+      </span>
+    </div>
+  )}
+  style={{ maxWidth: 500 }}
+/>
+</section>
 
             {/* FACTURAS */}
             {proveedorSeleccionado && (
