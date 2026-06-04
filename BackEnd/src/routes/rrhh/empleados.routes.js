@@ -11,6 +11,7 @@ router.get('/ci/:ci', empleadosController.getEmpleadoByCi)
 router.get('/ruc/:ruc', empleadosController.getEmpleadoByRuc)
 router.get('/:id', empleadosController.getEmpleado)
 router.post('/', empleadosController.postEmpleado)
+router.post('/cargos', empleadosController.postCargo)
 router.put('/:id', empleadosController.updateEmpleado)
 router.delete('/:id', empleadosController.deleteEmpleado)
 

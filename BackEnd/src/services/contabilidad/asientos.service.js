@@ -1,10 +1,4 @@
-import asientosIniciales from '../../data/contabilidad/asientosMock.json' with { type: 'json' };
-
-
-let asientos = asientosIniciales.map(a => ({ ...a, lineas: a.lineas.map(l => ({ ...l })) }));
-let proximoId = asientos.reduce((m, a) => Math.max(m, a.id || 0), 0) + 1;
-let proximoNumero = asientos.reduce((m, a) => Math.max(m, a.numero || 0), 0) + 1;
-
+import supabase from '../../config/supabase.js'
 
 const validarBalanceado = (lineas) => {
   const totD = lineas.reduce((s, l) => s + Number(l.debe || 0), 0);
@@ -14,87 +8,171 @@ const validarBalanceado = (lineas) => {
 
 const listarAsientos = async (filtros = {}) => {
   const { desde, hasta } = filtros;
-  return [...asientos]
-    .filter(a => (!desde || a.fecha >= desde) && (!hasta || a.fecha <= hasta))
-    .sort((a, b) => a.fecha.localeCompare(b.fecha) || a.numero - b.numero);
+
+  let query = supabase
+    .from('asientos_cabecera')
+    .select(`
+      id_asiento,
+      fecha,
+      descripcion,
+      asientos_detalle (
+        id_asientos_detalle,
+        debe,
+        haber,
+        item,
+        cuentas ( id_cuentas, codigo, nombre )
+      )
+    `)
+    .order('fecha', { ascending: true })
+    .order('id_asiento', { ascending: true });
+
+  if (desde) query = query.gte('fecha', desde);
+  if (hasta) query = query.lte('fecha', hasta);
+
+  const { data, error } = await query;
+  if (error) throw new Error(error.message);
+
+  return data.map(mapAsiento);
 };
 
 const obtenerAsiento = async (id) => {
-  const asiento = asientos.find(a => a.id === Number(id));
-  return asiento ?? null;
+  const { data, error } = await supabase
+    .from('asientos_cabecera')
+    .select(`
+      id_asiento,
+      fecha,
+      descripcion,
+      asientos_detalle (
+        id_asientos_detalle,
+        debe,
+        haber,
+        item,
+        cuentas ( id_cuentas, codigo, nombre )
+      )
+    `)
+    .eq('id_asiento', id)
+    .single();
+
+  if (error) throw new Error(error.message);
+  return mapAsiento(data);
 };
 
 const crearAsiento = async (datos) => {
-  const { fecha, concepto, lineas } = datos;
+  const { fecha, concepto, lineas, id_periodo_fiscal, id_estado } = datos;
 
-  if (!fecha || !concepto) {
-    throw new Error('Fecha y concepto son obligatorios');
-  }
-  if (!Array.isArray(lineas) || lineas.length < 2) {
-    throw new Error('Se requieren al menos 2 líneas para el asiento');
-  }
-  if (!validarBalanceado(lineas)) {
-    throw new Error('El asiento no está balanceado (Debe ≠ Haber)');
-  }
+  if (!fecha || !concepto) throw new Error('Fecha y concepto son obligatorios');
+  if (!Array.isArray(lineas) || lineas.length < 2) throw new Error('Se requieren al menos 2 líneas para el asiento');
+  if (!validarBalanceado(lineas)) throw new Error('El asiento no está balanceado (Debe ≠ Haber)');
 
-  const nuevo = {
-    id: proximoId++,
-    numero: proximoNumero++,
-    fecha,
-    concepto,
-    lineas: lineas.map(l => ({
-      codigo: l.codigo,
-      cuenta: l.cuenta || '',
-      debe: Number(l.debe) || 0,
-      haber: Number(l.haber) || 0,
-    })),
-  };
+  const { data: cabecera, error: errCab } = await supabase
+    .from('asientos_cabecera')
+    .insert({
+      fecha,
+      descripcion: concepto,
+      id_estado: id_estado ?? null,
+      id_periodo_fiscal: id_periodo_fiscal ?? null,
+    })
+    .select()
+    .single();
 
-  asientos.push(nuevo);
-  return nuevo;
+  if (errCab) throw new Error(errCab.message);
+
+  const detalles = lineas.map((l, i) => ({
+    id_asiento: cabecera.id_asiento,
+    id_cuenta: l.id_cuenta ?? null,
+    debe: Number(l.debe) || 0,
+    haber: Number(l.haber) || 0,
+    item: i + 1,
+    es_manual: true,
+  }));
+
+  const { error: errDet } = await supabase
+    .from('asientos_detalle')
+    .insert(detalles);
+
+  if (errDet) throw new Error(errDet.message);
+
+  return obtenerAsiento(cabecera.id_asiento);
 };
 
 const actualizarAsiento = async (id, cambios) => {
-  const idx = asientos.findIndex(a => a.id === Number(id));
-  if (idx === -1) throw new Error(`Asiento ${id} no encontrado`);
+  const { fecha, concepto, lineas } = cambios;
 
-  const { id: _, numero: __, ...datosAActualizar } = cambios;
+  if (lineas && !validarBalanceado(lineas)) throw new Error('El asiento no está balanceado (Debe ≠ Haber)');
 
-  const datosLimpios = Object.fromEntries(
-    Object.entries(datosAActualizar).filter(([_, v]) => v !== undefined && v !== '')
-  );
+  const updates = {};
+  if (fecha)   updates.fecha       = fecha;
+  if (concepto) updates.descripcion = concepto;
 
-  const merged = { 
-    ...asientos[idx], 
-    ...datosLimpios, 
-    id: asientos[idx].id, 
-    numero: asientos[idx].numero 
-  };
-
-  if (merged.lineas && !validarBalanceado(merged.lineas)) {
-    throw new Error('El asiento no está balanceado (Debe ≠ Haber)');
+  if (Object.keys(updates).length > 0) {
+    const { error } = await supabase
+      .from('asientos_cabecera')
+      .update(updates)
+      .eq('id_asiento', id);
+    if (error) throw new Error(error.message);
   }
 
-  asientos[idx] = merged;
-  return merged;
+  if (lineas) {
+    const { error: errDel } = await supabase
+      .from('asientos_detalle')
+      .delete()
+      .eq('id_asiento', id);
+    if (errDel) throw new Error(errDel.message);
+
+    const detalles = lineas.map((l, i) => ({
+      id_asiento: Number(id),
+      id_cuenta: l.id_cuenta ?? null,
+      debe: Number(l.debe) || 0,
+      haber: Number(l.haber) || 0,
+      item: i + 1,
+      es_manual: true,
+    }));
+
+    const { error: errIns } = await supabase
+      .from('asientos_detalle')
+      .insert(detalles);
+    if (errIns) throw new Error(errIns.message);
+  }
+
+  return obtenerAsiento(id);
 };
 
 const eliminarAsiento = async (id) => {
-  const longitudInicial = asientos.length;
-  asientos = asientos.filter(a => a.id !== Number(id));
+  const { error: errDet } = await supabase
+    .from('asientos_detalle')
+    .delete()
+    .eq('id_asiento', id);
+  if (errDet) throw new Error(errDet.message);
 
-  if (asientos.length === longitudInicial) {
-    throw new Error(`Asiento ${id} no encontrado`);
-  }
+  const { error } = await supabase
+    .from('asientos_cabecera')
+    .delete()
+    .eq('id_asiento', id);
+  if (error) throw new Error(error.message);
 
   return { id: Number(id), message: 'Asiento eliminado correctamente' };
 };
 
+// Mapea el formato de supabase al formato que usa el frontend
+const mapAsiento = (a) => ({
+  id: a.id_asiento,
+  numero: a.id_asiento,
+  fecha: a.fecha,
+  concepto: a.descripcion,
+  lineas: (a.asientos_detalle ?? []).map(d => ({
+    id_asientos_detalle: d.id_asientos_detalle,
+    codigo: d.cuentas?.codigo ?? '',
+    cuenta: d.cuentas?.nombre ?? '',
+    id_cuenta: d.id_cuenta,
+    debe: d.debe ?? 0,
+    haber: d.haber ?? 0,
+  })),
+});
 
 export default {
   listarAsientos,
   obtenerAsiento,
   crearAsiento,
   actualizarAsiento,
-  eliminarAsiento
+  eliminarAsiento,
 };
