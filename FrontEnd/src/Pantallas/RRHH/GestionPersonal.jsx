@@ -77,7 +77,7 @@ export default function GestionPersonal({ usuario, onLogout, onNavegar, onGuarda
   const [errores, setErrores] = useState({});
   const [errorGeneral, setErrorGeneral] = useState("");
   const [cargosDisponibles, setCargosDisponibles] = useState([]); // [{ id_cargo, nombre, salario }]
-  const estadosDisponibles = ['Confirmado', 'Anulado'];
+  const estadosDisponibles = ['Activo', 'Inactivo'];
   const navigate = useNavigate();
 
   const [form, setForm] = useState({
@@ -122,6 +122,7 @@ export default function GestionPersonal({ usuario, onLogout, onNavegar, onGuarda
         const res = await fetchConToken(`${API_BASE}/rrhh/empleados/cargos`);
         const data = await res.json();
         if (Array.isArray(data)) setCargosDisponibles(data);
+        console.log(data)
       } catch (err) {
         console.error('Error cargando cargos:', err);
       }
@@ -150,13 +151,14 @@ export default function GestionPersonal({ usuario, onLogout, onNavegar, onGuarda
     Object.entries(CAMPOS_REQUERIDOS).forEach(([campo, label]) => {
       if (!form[campo]?.toString().trim()) nuevosErrores[campo] = `${label} es obligatorio`;
     });
+    if(!form.correo_electronico.includes("@")) nuevosErrores.correo_electronico = "Correo no válido"
     setErrores(nuevosErrores);
     return Object.keys(nuevosErrores).length === 0;
   };
 
   const buildPayload = () => {
     const id_cargo = cargosDisponibles.find(c => c.nombre === form.cargo)?.id_cargo;
-    const estado = form.estado === 'Confirmado' ? 1 : form.estado === 'Anulado' ? 3 : null;
+    const estado = form.estado === 'Activo' ? 6 : form.estado === 'Inactivo' ? 7 : null;
     return {
       ci: form.CI, nombre: form.nombre, apellido: form.apellido,
       direccion: form.direccion, correo: form.correo_electronico,
@@ -171,6 +173,7 @@ export default function GestionPersonal({ usuario, onLogout, onNavegar, onGuarda
   const editEmpleado = async () => {
     if (!validar()) return;
     try {
+      await crearCargoInexistente()
       const res = await fetchConToken(`${API_BASE}/rrhh/empleados/${id}`, {
         method: "PUT", headers: { "Content-Type": "application/json" },
         body: JSON.stringify(buildPayload()),
@@ -184,9 +187,36 @@ export default function GestionPersonal({ usuario, onLogout, onNavegar, onGuarda
     }
   };
 
+  const crearCargoInexistente = async () => {
+    try {
+      const existeCargo = cargosDisponibles.some(
+        e => e.nombre?.toLowerCase() === form.cargo.toLowerCase()
+      );
+      if (!existeCargo) {
+        const cargoPayload = {
+          nombre: form.cargo,
+          jefe_inmediato: null,
+          area_superior: "",
+          salario: parseInt(form.salario_base) || 0
+        }
+        console.log("Payload enviado:", JSON.stringify(cargoPayload, null, 2));
+        const resC = await fetchConToken(`${API_BASE}/rrhh/empleados/cargos`, {
+          method: 'POST', headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(cargoPayload)
+        })
+        const dataC = await resC.json()
+        if (!resC.ok) throw new Error(dataC.message)
+        setCargosDisponibles([...cargosDisponibles, dataC]);
+      }
+    }catch (err) {
+      setErrorGeneral(err.message || "Error al crear empleado");
+    }
+  }
+
   const crearEmpleado = async () => {
     if (!validar()) return;
     try {
+      await crearCargoInexistente()
       const res = await fetchConToken(`${API_BASE}/rrhh/empleados/`, {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify(buildPayload()),
@@ -218,11 +248,11 @@ export default function GestionPersonal({ usuario, onLogout, onNavegar, onGuarda
             <div style={styles.card}>
               <h3>Datos personales</h3>
               <div style={styles.form}>
-                <Field label="Nombre"    name="nombre"    value={form.nombre}    onChange={handleChange} editando={editando} error={errores.nombre} />
-                <Field label="Apellido"  name="apellido"  value={form.apellido}  onChange={handleChange} editando={editando} error={errores.apellido} />
-                <Field label="CI"        name="CI"        value={form.CI}        onChange={handleChange} editando={editando} error={errores.CI} />
+                <Field label="Nombre" name="nombre" value={form.nombre} onChange={handleChange} editando={editando} error={errores.nombre} />
+                <Field label="Apellido" name="apellido" value={form.apellido} onChange={handleChange} editando={editando} error={errores.apellido} />
+                <Field label="CI" name="CI" value={form.CI} onChange={handleChange} editando={editando} error={errores.CI} />
                 <Field label="Dirección" name="direccion" value={form.direccion} onChange={handleChange} editando={editando} />
-                <Field label="Correo"    name="correo_electronico" value={form.correo_electronico} onChange={handleChange} editando={editando} error={errores.correo_electronico} />
+                <Field label="Correo" name="correo_electronico" value={form.correo_electronico} onChange={handleChange} editando={editando} error={errores.correo_electronico} />
               </div>
             </div>
 
@@ -248,7 +278,7 @@ export default function GestionPersonal({ usuario, onLogout, onNavegar, onGuarda
                   {/* Cargo y Estado */}
                   {!editando ? (
                     <>
-                      <Field label="Cargo"  name="cargo"  value={form.cargo}  onChange={handleChange} editando={false} error={errores.cargo} />
+                      <Field label="Cargo" name="cargo" value={form.cargo} onChange={handleChange} editando={false} error={errores.cargo} />
                       <Field label="Estado" name="estado" value={form.estado} onChange={handleChange} editando={false} />
                     </>
                   ) : (
@@ -310,8 +340,8 @@ export default function GestionPersonal({ usuario, onLogout, onNavegar, onGuarda
               <div style={styles.card}>
                 <h3>Datos familiares</h3>
                 <div style={styles.form}>
-                  <Field label="Cónyuge"      name="conyugue"      value={form.conyugue}      onChange={handleChange} editando={editando} />
-                  <Field label="Hijos"         name="hijos"         value={form.hijos}         onChange={handleChange} editando={editando} />
+                  <Field label="Cónyuge" name="conyugue" value={form.conyugue} onChange={handleChange} editando={editando} />
+                  <Field label="Hijos" name="hijos" value={form.hijos} onChange={handleChange} editando={editando} />
                   <Field label="Hijos menores" name="hijos_menores" value={form.hijos_menores} onChange={handleChange} editando={editando} />
                 </div>
               </div>
@@ -325,10 +355,10 @@ export default function GestionPersonal({ usuario, onLogout, onNavegar, onGuarda
           )}
 
           <div style={styles.footer}>
-            {!modoCrear && !editando && <Button label="Editar"         variant="amarillo" onClick={() => setEditando(true)} />}
-            {!modoCrear && editando  && <Button label="Cancelar"       variant="gris"     onClick={cancelarEdicion} />}
-            {modoCrear               && <Button label="Crear empleado" variant="amarillo" onClick={crearEmpleado} />}
-            {!modoCrear && editando  && <Button label="Guardar"        variant="amarillo" onClick={editEmpleado} />}
+            {!modoCrear && !editando && <Button label="Editar" variant="amarillo" onClick={() => setEditando(true)} />}
+            {!modoCrear && editando && <Button label="Cancelar" variant="gris" onClick={cancelarEdicion} />}
+            {modoCrear && <Button label="Crear empleado" variant="amarillo" onClick={crearEmpleado} />}
+            {!modoCrear && editando && <Button label="Guardar" variant="amarillo" onClick={editEmpleado} />}
           </div>
 
         </div>
@@ -338,16 +368,16 @@ export default function GestionPersonal({ usuario, onLogout, onNavegar, onGuarda
 }
 
 const styles = {
-  pagina:    { display: "flex", minHeight: "100vh", background: "#F5F5F5" },
+  pagina: { display: "flex", minHeight: "100vh", background: "#F5F5F5" },
   contenido: { flex: 1, display: "flex", justifyContent: "center", alignItems: "flex-start", padding: "40px" },
-  wrapper:   { width: "100%", maxWidth: 1000 },
-  titulo:    { textAlign: "center", fontSize: 30, marginBottom: 30 },
-  grid:      { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 },
-  card:      { background: "#fff", padding: 20, borderRadius: 12, border: "1px solid #ddd" },
-  form:      { display: "grid", gridTemplateColumns: "140px 1fr", gap: 10, alignItems: "center" },
-  right:     { display: "flex", flexDirection: "column", gap: 20 },
-  footer:    { marginTop: 30, display: "flex", justifyContent: "flex-end", gap: 10 },
+  wrapper: { width: "100%", maxWidth: 1000 },
+  titulo: { textAlign: "center", fontSize: 30, marginBottom: 30 },
+  grid: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 },
+  card: { background: "#fff", padding: 20, borderRadius: 12, border: "1px solid #ddd" },
+  form: { display: "grid", gridTemplateColumns: "140px 1fr", gap: 10, alignItems: "center" },
+  right: { display: "flex", flexDirection: "column", gap: 20 },
+  footer: { marginTop: 30, display: "flex", justifyContent: "flex-end", gap: 10 },
   errorGeneral: { marginTop: 12, color: "#dc2626", fontSize: 14, textAlign: "right" },
   salarioWrapper: { display: "flex", alignItems: "center", border: "1px solid #ccc", borderRadius: 8, overflow: "hidden" },
-  salarioPrefix:  { padding: "8px 10px", background: "#f0f0f0", fontSize: 14, color: "#555", borderRight: "1px solid #ccc", whiteSpace: "nowrap" },
+  salarioPrefix: { padding: "8px 10px", background: "#f0f0f0", fontSize: 14, color: "#555", borderRight: "1px solid #ccc", whiteSpace: "nowrap" },
 };

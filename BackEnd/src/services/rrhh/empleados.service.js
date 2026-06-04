@@ -1,6 +1,7 @@
 import supabase from '../../config/supabase.js'
 const SELECT_ALL = `*, personas(*), personas_horario_cargo(*,cargo(*), estados(*)))`
 const SELECT_SINGLE = `*, personas(*), personas_horario_cargo(*,cargo(*), estados(nombre)))`
+
 const getAllEmpleados = async () => {
     const { data, error } = await supabase
         .from('empleados')
@@ -174,4 +175,13 @@ const getAllCargos = async () => {
     return data
 }
 
-export default { getAllEmpleados, getTableEmpleado, getEmpleado, getEmpleadoByNombre, getEmpleadoByCi, getEmpleadoByRuc, postEmpleado, updateEmpleado, deleteEmpleado, getAllCargos }
+const postCargo = async (nombre, jefe_inmediato, area_superior, salario) => {
+    const {data, error} = await supabase
+    .from('cargo')
+    .insert({nombre, jefe_inmediato, area_superior, salario})
+    .select().single()
+    if (error) throw new Error( error.message)
+    return data
+}
+
+export default { getAllEmpleados, getTableEmpleado, getEmpleado, getEmpleadoByNombre, getEmpleadoByCi, getEmpleadoByRuc, postEmpleado, updateEmpleado, deleteEmpleado, getAllCargos, postCargo }
