@@ -37,9 +37,16 @@ export default function Login() {
       const data2 = await response2.json()
       if (!response2.ok) throw new Error(data2.message)
 
-      login({ user: usuario, rol: data2.rol });
+      const rolFinal  = data2.rol ?? data.user?.user_metadata?.rol;
+      const rutasFinal = data2.rutas ?? data.user?.user_metadata?.rutas ?? [];
 
-      const rutas = {
+      login({
+        ...data.user,
+        rol: rolFinal,
+        user_metadata: { ...data.user?.user_metadata, rol: rolFinal, rutas: rutasFinal },
+      });
+
+      const rutasFijas = {
         admin: '/home',
         rrhh: '/rrhh',
         compras: '/compras',
@@ -47,9 +54,15 @@ export default function Login() {
         ventas: '/ventas',
         tesoreria: '/tesoreria',
       };
-      console.log('rol recibido:', data2.rol);
-      console.log('ruta calculada:', rutas[data2.rol]);
-      navigate(rutas[data2.rol] ?? '/home');
+
+      const destino = rutasFijas[rolFinal] ?? rutasFinal[0];
+      if (!destino) {
+        setError('El usuario no tiene rutas asignadas. Contactá al administrador.');
+        localStorage.removeItem('token');
+        localStorage.removeItem('refresh_token');
+        return;
+      }
+      navigate(destino);
 
     } catch (err) {
       setError(err.message)
