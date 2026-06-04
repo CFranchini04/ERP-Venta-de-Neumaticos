@@ -401,5 +401,19 @@ const deleteFactura = async (id) => {
 
     return { message: 'Factura eliminada correctamente' }
 }
-
-export default { getAllFacturas, getFactura, getFacturaByCodigo, getTableFacturas, getNextCodigoFactura, postFactura, updateFactura, updateEstadoFactura, deleteFactura, confirmarFacturaPlaceholder }
+const getFacturasPendientesPago = async () => {
+    const { data, error } = await supabase
+        .from('facturas_compras')
+        .select(`
+            id_factura_compra,
+            codigo_factura,
+            fecha_emision,
+            fecha_vencimiento,
+            proveedores(personas(nombre, apellido)),
+            estados(nombre)
+        `)
+        .eq('id_estado', 2)
+    if (error) throw new Error(error.message)
+    return data || []
+}
+export default { getAllFacturas, getFactura, getFacturaByCodigo, getTableFacturas, getNextCodigoFactura, postFactura, updateFactura, updateEstadoFactura, deleteFactura, confirmarFacturaPlaceholder,getFacturasPendientesPago }

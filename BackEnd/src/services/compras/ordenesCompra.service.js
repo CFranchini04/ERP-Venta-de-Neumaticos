@@ -1,4 +1,7 @@
 import supabase from '../../config/supabase.js'
+import cotizacionesService from './cotizaciones.service.js' 
+import pedidosService from './pedidos.service.js' 
+
 
 const formatMoney = (value) => {
   const num = Number(value ?? 0)
@@ -294,6 +297,7 @@ const createOrdenCompra = async (grupos, id_estado_inicial = 1) => {
   }
 
   const ordenesCreadas = []
+  const cotizacionesActualizadas = new Set() // ✅ para no actualizar la misma dos veces
 
   for (const grupo of grupos) {
     if (!grupo.id_proveedor) throw new Error('Cada grupo debe tener id_proveedor')
@@ -330,7 +334,6 @@ const createOrdenCompra = async (grupos, id_estado_inicial = 1) => {
       observacion: p.observacion ?? null,
     }))
 
-    // Se agrega .select() para obtener los IDs de los detalles insertados
     const { data: detallesInsertados, error: errorDetalle } = await supabase
       .from('ordenes_compras_detalle')
       .insert(detallesInsert)
@@ -338,8 +341,30 @@ const createOrdenCompra = async (grupos, id_estado_inicial = 1) => {
 
     if (errorDetalle) throw new Error(`Error insertando detalle: ${errorDetalle.message}`)
 
-    // Se pasan los detalles insertados para crear el detalle de la factura
     await crearFacturaVacia(grupo.id_proveedor, idOrden, detallesInsertados ?? [])
+
+    // ✅ NUEVO: Obtener id_cotizacion desde el primer id_cotizacion_detalle del grupo
+    const primerDetalle = grupo.productos.find((p) => p.id_cotizacion_detalle)
+    if (primerDetalle?.id_cotizacion_detalle) {
+      const { data: cotDet } = await supabase
+        .from('cotizaciones_proveedores_detalle')
+        .select('id_cotizacion')
+        .eq('id_cotizacion_detalle', primerDetalle.id_cotizacion_detalle)
+        .maybeSingle()
+
+      const idCotizacion = cotDet?.id_cotizacion
+      if (idCotizacion && !cotizacionesActualizadas.has(idCotizacion)) {
+        cotizacionesActualizadas.add(idCotizacion)
+
+        // Actualizar estado cotización → confirmado (id 2)
+        const cotActualizada = await cotizacionesService.updateEstadoCotizacion(idCotizacion, 2)
+
+        // Actualizar estado pedido → confirmado (id 2)
+        if (cotActualizada?.id_pedido) {
+          await pedidosService.updateEstadoPedido(cotActualizada.id_pedido, 2)
+        }
+      }
+    }
 
     ordenesCreadas.push(await getOrdCompra(idOrden))
   }

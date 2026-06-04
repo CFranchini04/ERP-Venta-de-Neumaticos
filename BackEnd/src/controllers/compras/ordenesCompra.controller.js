@@ -1,4 +1,6 @@
 import ordenesCompraService from '../../services/compras/ordenesCompra.service.js'
+import cotizacionesService from '../../services/compras/cotizaciones.service.js' 
+import pedidosService from '../../services/compras/pedidos.service.js'     
 
 const listarOrdenesCompra = async (req, res) => {
   try {
@@ -74,12 +76,24 @@ const verificarOrdenPorCotizacion = async (req, res) => {
 }
 
 const crearOrdenCompra = async (req, res) => {
+  const { grupos, id_estado_inicial, id_cotizacion } = req.body
+console.log('id_cotizacion recibido:', id_cotizacion)
   try {
-    const { grupos, id_estado_inicial } = req.body
+    const { grupos, id_estado_inicial, id_cotizacion } = req.body
     if (!Array.isArray(grupos) || grupos.length === 0) {
       return res.status(400).json({ message: 'Se requiere al menos un grupo de proveedor con productos' })
     }
+
     const ordenes = await ordenesCompraService.createOrdenCompra(grupos, id_estado_inicial)
+
+    if (id_cotizacion) {
+      const cotizacionActualizada = await cotizacionesService.updateEstadoCotizacion(id_cotizacion, 2)
+
+      if (cotizacionActualizada?.id_pedido) {
+        await pedidosService.updateEstadoPedido(cotizacionActualizada.id_pedido, 2)
+      }
+    }
+
     const n = ordenes.length
     res.status(201).json({
       message: `${n} orden${n !== 1 ? 'es' : ''} de compra creada${n !== 1 ? 's' : ''} exitosamente`,

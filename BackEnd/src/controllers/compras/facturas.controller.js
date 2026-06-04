@@ -110,4 +110,13 @@ const confirmarFacturaPlaceholder = async (req, res) => {
     res.status(400).json({ message: err.message })
   }
 } 
-export default { getAllFacturas, getFactura, getFacturaByCodigo, getTableFacturas, getNextCodigoFactura, postFactura, updateFactura, updateEstadoFactura, deleteFactura, confirmarFacturaPlaceholder }
+const getFacturasPendientesPago = async (req, res) => {
+    try {
+        const facturas = await facturasService.getFacturasPendientesPago()
+        res.status(200).json(facturas)
+    } catch (error) {
+        res.status(400).json({ message: error.message })
+    }
+}
+
+export default { getAllFacturas, getFactura, getFacturaByCodigo, getTableFacturas, getNextCodigoFactura, postFactura, updateFactura, updateEstadoFactura, deleteFactura, confirmarFacturaPlaceholder, getFacturasPendientesPago }

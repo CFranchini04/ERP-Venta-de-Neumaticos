@@ -267,10 +267,13 @@ export default function DetalleCotizacion({ usuario, onNavegar, onLogout }) {
     try {
       setGenerando(true);
       const res = await fetchConToken(`${API_BASE}/compras/ordenes-compra`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ grupos: Object.values(gruposMap) }),
-      });
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+body: JSON.stringify({
+  grupos: Object.values(gruposMap),
+  id_cotizacion: cotizacion.id_cotizacion,
+}),
+});
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || "Error al generar la orden de compra");
       const n = Object.keys(gruposMap).length;

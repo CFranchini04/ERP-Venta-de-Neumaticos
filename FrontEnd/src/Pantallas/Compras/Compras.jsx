@@ -119,21 +119,21 @@ export default function Compras({ usuario = 'Empleado', onNavegar, onLogout }) {
     }
   };
 
-  useEffect(() => {
+useEffect(() => {
     const fetchFacturas = async () => {
-      try {
-        const response = await fetchConToken('http://localhost:9128/api/compras/facturas/tabla')
-        const data = await response.json()
-        if (!response.ok) throw new Error(data.message)
-        setFacturas(Array.isArray(data) ? data : [])
-      } catch (error) {
-        console.error(error.message)
-      } finally {
-        setLoadingFac(false)
-      }
+        try {
+            const response = await fetchConToken('http://localhost:9128/api/compras/facturas/pendientes-pago')
+            const data = await response.json()
+            if (!response.ok) throw new Error(data.message)
+            setFacturas(Array.isArray(data) ? data : [])
+        } catch (error) {
+            console.error(error.message)
+        } finally {
+            setLoadingFac(false)
+        }
     }
     fetchFacturas()
-  }, [])
+}, [])
 
   useEffect(() => {
     const fetchCotizaciones = async () => {
@@ -160,14 +160,15 @@ export default function Compras({ usuario = 'Empleado', onNavegar, onLogout }) {
     { key: "fechaVencimiento", label: "Fecha de Vencimiento" }
   ];
 
-  const dataFacturas = facturas
-    .filter((p) => p.estados?.nombre === "Pendiente")
-    .map((p) => ({
-      codigo: p.codigo_factura,
-      proveedor: p.proveedores?.personas?.nombre,
-      fechaCreacion: p.fecha_emision,
-      fechaVencimiento: p.fecha_vencimiento,
-    }))
+const dataFacturas = facturas.map((p) => ({
+    codigo: p.codigo_factura,
+    proveedor: [
+        p.proveedores?.personas?.nombre,
+        p.proveedores?.personas?.apellido
+    ].filter(Boolean).join(' ') || '—',
+    fechaCreacion: p.fecha_emision,
+    fechaVencimiento: p.fecha_vencimiento,
+}))
 
   //COTIZACIONES
   const columnasCotizaciones = [
@@ -177,23 +178,29 @@ export default function Compras({ usuario = 'Empleado', onNavegar, onLogout }) {
     { key: "accion", label: "" }
   ];
 
-  const dataCotizaciones = Object.values(
-    cotizaciones.reduce((acc, cotizacion) => {
-      const codigoPedido = cotizacion.pedidos_compras?.codigo_pedido
-
-      if (!acc[codigoPedido]) {
-        acc[codigoPedido] = {
-          id: codigoPedido,
-          codigo: codigoPedido.replace('PED', 'COT'), // PED-0001 → COT-0001
-          estado: cotizacion.estados?.nombre,
-          fecha: cotizacion.pedidos_compras?.fecha_creacion,
-          accion: <IconoLupa />
-        }
-      }
-
-      return acc
-    }, {})
-  )
+const dataCotizaciones = Object.values(
+    cotizaciones
+        .filter((c) => c.estados?.nombre?.toLowerCase() !== 'confirmado')
+        .reduce((acc, cotizacion) => {
+            const codigoPedido = cotizacion.pedidos_compras?.codigo_pedido
+            if (!acc[codigoPedido]) {
+                acc[codigoPedido] = {
+                    codigo: codigoPedido?.replace('PED', 'COT') ?? '—',
+                    estado: cotizacion.estados?.nombre ?? '—',
+                    fecha: cotizacion.pedidos_compras?.fecha_creacion ?? '—',
+                    accion: (
+                        <button
+                            onClick={() => navigate(`/compras/cotizaciones/${cotizacion.id_cotizacion}`)}
+                            style={{ border: "none", background: getColor("amarillo"), borderRadius: 6, cursor: "pointer", padding: "5px 10px", display: "flex", alignItems: "center", justifyContent: "center" }}
+                        >
+                            <IconoLupa />
+                        </button>
+                    )
+                }
+            }
+            return acc
+        }, {})
+)
 
   if (loadingFac || loadingCot) {
     return (

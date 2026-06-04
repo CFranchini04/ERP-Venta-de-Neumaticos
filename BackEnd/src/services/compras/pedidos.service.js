@@ -171,6 +171,17 @@ const crearCotizacionParaPedido = async (idPedido) => {
     return data
 }
 
+const updateEstadoPedido = async (id, id_estado) => {
+    const { data, error } = await supabase
+        .from('pedidos_compras')
+        .update({ id_estado })
+        .eq('id_pedido', id)
+        .select()
+        .single()
+    if (error) throw new Error(error.message)
+    return data
+}
+
 export default {
     getAllPedidos,
     getPedidos,
@@ -179,4 +190,5 @@ export default {
     postPedido,
     postDetallePedido,
     crearCotizacionParaPedido,
+    updateEstadoPedido,
 }
