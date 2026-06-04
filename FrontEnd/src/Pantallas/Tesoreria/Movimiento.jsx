@@ -224,7 +224,7 @@ export default function Movimiento({ usuario = 'Empleado', onLogout, onNavegar }
         setCuentasDestino(
           dataCuentas.map(c => ({
             id: c.id_cuenta_bancaria,
-            nombre: `${c.bancos?.nombre ?? '—'} - ${c.tipo_cuenta ?? '—'}`,
+            nombre: `${c.titular ?? '—'} - ${c.bancos?.nombre ?? '—'} - ${c.tipo_cuenta ?? '—'}`,
           }))
         );
 
