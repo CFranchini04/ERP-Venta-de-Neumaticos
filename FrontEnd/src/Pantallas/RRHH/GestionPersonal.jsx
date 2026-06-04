@@ -46,17 +46,13 @@ function Field({ label, name, value, onChange, editando, error, type = 'text' })
       </label>
       {editando ? (
         <div>
-          <input
-            type={type}
-            value={value || ""}
-            onChange={(e) => onChange(name, e.target.value)}
+          <input type={type} value={value || ""} onChange={(e) => onChange(name, e.target.value)}
             style={{
               padding: "8px 10px", borderRadius: 8,
               border: `1px solid ${error ? '#dc2626' : '#ccc'}`,
               fontSize: 14, width: "100%", boxSizing: "border-box",
               background: error ? '#fff5f5' : undefined,
-            }}
-          />
+            }} />
           {error && <span style={{ fontSize: 11, color: '#dc2626' }}>{error}</span>}
         </div>
       ) : (
@@ -67,13 +63,9 @@ function Field({ label, name, value, onChange, editando, error, type = 'text' })
 }
 
 const CAMPOS_REQUERIDOS = {
-  nombre: "Nombre",
-  apellido: "Apellido",
-  CI: "CI",
-  correo_electronico: "Correo",
-  fecha_inicio: "Fecha de inicio",
-  cargo: "Cargo",
-  estado: "Estado",         // ← ahora obligatorio
+  nombre: "Nombre", apellido: "Apellido", CI: "CI",
+  correo_electronico: "Correo", fecha_inicio: "Fecha de inicio",
+  cargo: "Cargo", estado: "Estado",
 };
 
 export default function GestionPersonal({ usuario, onLogout, onNavegar, onGuardado }) {
@@ -84,14 +76,13 @@ export default function GestionPersonal({ usuario, onLogout, onNavegar, onGuarda
   const [cargando, setCargando] = useState(!modoCrear);
   const [errores, setErrores] = useState({});
   const [errorGeneral, setErrorGeneral] = useState("");
-  const [cargosDisponibles, setCargosDisponibles] = useState([]);
+  const [cargosDisponibles, setCargosDisponibles] = useState([]); // [{ id_cargo, nombre, salario }]
   const estadosDisponibles = ['Confirmado', 'Anulado'];
   const navigate = useNavigate();
 
   const [form, setForm] = useState({
-    nombre: "", apellido: "", CI: "",
-    direccion: "", correo_electronico: "",
-    fecha_inicio: "", cargo: "", estado: "",
+    nombre: "", apellido: "", CI: "", direccion: "", correo_electronico: "",
+    fecha_inicio: "", cargo: "", estado: "", salario_base: "",
     conyugue: "", hijos: "", hijos_menores: ""
   });
 
@@ -112,6 +103,8 @@ export default function GestionPersonal({ usuario, onLogout, onNavegar, onGuarda
           fecha_inicio: data.personas_horario_cargo?.[0]?.fecha_inicio || "",
           cargo: data.personas_horario_cargo?.[0]?.cargo?.nombre || "",
           estado: data.personas_horario_cargo?.[0]?.estados?.nombre || "",
+          // salario viene del cargo relacionado
+          salario_base: data.personas_horario_cargo?.[0]?.cargo?.salario ?? "",
           conyugue: data.conyugue || "",
           hijos: data.nro_hijos || 0,
           hijos_menores: data.hijos_menores || 0
@@ -128,8 +121,7 @@ export default function GestionPersonal({ usuario, onLogout, onNavegar, onGuarda
       try {
         const res = await fetchConToken(`${API_BASE}/rrhh/empleados/cargos`);
         const data = await res.json();
-        if (Array.isArray(data))
-          setCargosDisponibles(data.map(c => ({ id_cargo: c.id_cargo, nombre: c.nombre })));
+        if (Array.isArray(data)) setCargosDisponibles(data);
       } catch (err) {
         console.error('Error cargando cargos:', err);
       }
@@ -142,12 +134,21 @@ export default function GestionPersonal({ usuario, onLogout, onNavegar, onGuarda
     if (errores[key]) setErrores(prev => ({ ...prev, [key]: "" }));
   };
 
+  // Al seleccionar cargo, autocompletar salario
+  const handleCargo = (nombreCargo) => {
+    const cargoObj = cargosDisponibles.find(c => c.nombre === nombreCargo);
+    setForm(prev => ({
+      ...prev,
+      cargo: nombreCargo,
+      salario_base: cargoObj?.salario ?? ""
+    }));
+    if (errores.cargo) setErrores(prev => ({ ...prev, cargo: "" }));
+  };
+
   const validar = () => {
     const nuevosErrores = {};
     Object.entries(CAMPOS_REQUERIDOS).forEach(([campo, label]) => {
-      if (!form[campo]?.toString().trim()) {
-        nuevosErrores[campo] = `${label} es obligatorio`;
-      }
+      if (!form[campo]?.toString().trim()) nuevosErrores[campo] = `${label} es obligatorio`;
     });
     setErrores(nuevosErrores);
     return Object.keys(nuevosErrores).length === 0;
@@ -171,15 +172,13 @@ export default function GestionPersonal({ usuario, onLogout, onNavegar, onGuarda
     if (!validar()) return;
     try {
       const res = await fetchConToken(`${API_BASE}/rrhh/empleados/${id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        method: "PUT", headers: { "Content-Type": "application/json" },
         body: JSON.stringify(buildPayload()),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || "Error al guardar el empleado");
       if (onGuardado) onGuardado(data);
-      setEditando(false);
-      setErrorGeneral("");
+      setEditando(false); setErrorGeneral("");
     } catch (err) {
       setErrorGeneral(err.message || "Error al guardar empleado");
     }
@@ -189,15 +188,13 @@ export default function GestionPersonal({ usuario, onLogout, onNavegar, onGuarda
     if (!validar()) return;
     try {
       const res = await fetchConToken(`${API_BASE}/rrhh/empleados/`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+        method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify(buildPayload()),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || "Error al crear el empleado");
       if (onGuardado) onGuardado(data);
-      setErrorGeneral("");
-      navigate("/rrhh");
+      setErrorGeneral(""); navigate("/rrhh");
     } catch (err) {
       setErrorGeneral(err.message || "Error al crear empleado");
     }
@@ -210,13 +207,10 @@ export default function GestionPersonal({ usuario, onLogout, onNavegar, onGuarda
   return (
     <div style={styles.pagina}>
       <Sidebar usuario={usuario} onLogout={onLogout} onNavegar={onNavegar} />
-
       <main style={styles.contenido}>
         <div style={styles.wrapper}>
 
-          <h1 style={styles.titulo}>
-            {modoCrear ? "Crear Empleado" : "Gestión de Personal"}
-          </h1>
+          <h1 style={styles.titulo}>{modoCrear ? "Crear Empleado" : "Gestión de Personal"}</h1>
 
           <div style={styles.grid}>
 
@@ -238,28 +232,20 @@ export default function GestionPersonal({ usuario, onLogout, onNavegar, onGuarda
                 <h3>Datos empresariales</h3>
                 <div style={styles.form}>
 
-                  {/* Fecha de inicio — input type="date" para mostrar el calendario */}
+                  {/* Fecha inicio */}
                   <label style={{ color: errores.fecha_inicio ? '#dc2626' : undefined, fontWeight: errores.fecha_inicio ? 700 : undefined }}>
                     Fecha inicio{errores.fecha_inicio ? ' *' : ''}
                   </label>
                   {editando ? (
                     <div>
-                      <input
-                        type="date"
-                        value={form.fecha_inicio}
+                      <input type="date" value={form.fecha_inicio}
                         onChange={e => handleChange('fecha_inicio', e.target.value)}
-                        style={{
-                          padding: "8px 10px", borderRadius: 8, width: "100%", boxSizing: "border-box",
-                          border: `1px solid ${errores.fecha_inicio ? '#dc2626' : '#ccc'}`,
-                          background: errores.fecha_inicio ? '#fff5f5' : undefined, fontSize: 14,
-                        }}
-                      />
+                        style={{ padding: "8px 10px", borderRadius: 8, width: "100%", boxSizing: "border-box", border: `1px solid ${errores.fecha_inicio ? '#dc2626' : '#ccc'}`, background: errores.fecha_inicio ? '#fff5f5' : undefined, fontSize: 14 }} />
                       {errores.fecha_inicio && <span style={{ fontSize: 11, color: '#dc2626' }}>{errores.fecha_inicio}</span>}
                     </div>
-                  ) : (
-                    <span>{form.fecha_inicio}</span>
-                  )}
+                  ) : <span>{form.fecha_inicio}</span>}
 
+                  {/* Cargo y Estado */}
                   {!editando ? (
                     <>
                       <Field label="Cargo"  name="cargo"  value={form.cargo}  onChange={handleChange} editando={false} error={errores.cargo} />
@@ -271,12 +257,8 @@ export default function GestionPersonal({ usuario, onLogout, onNavegar, onGuarda
                         Cargo{errores.cargo ? ' *' : ''}
                       </label>
                       <div>
-                        <InputSugerencias
-                          value={form.cargo}
-                          onChange={val => handleChange('cargo', val)}
-                          opciones={cargosDisponibles.map(c => c.nombre)}
-                          placeholder="Cargo..."
-                        />
+                        <InputSugerencias value={form.cargo} onChange={handleCargo}
+                          opciones={cargosDisponibles.map(c => c.nombre)} placeholder="Cargo..." />
                         {errores.cargo && <span style={{ fontSize: 11, color: '#dc2626' }}>{errores.cargo}</span>}
                       </div>
 
@@ -284,25 +266,53 @@ export default function GestionPersonal({ usuario, onLogout, onNavegar, onGuarda
                         Estado{errores.estado ? ' *' : ''}
                       </label>
                       <div>
-                        <InputSugerencias
-                          value={form.estado}
-                          onChange={val => handleChange('estado', val)}
-                          opciones={estadosDisponibles}
-                          placeholder="Estado..."
-                        />
+                        <InputSugerencias value={form.estado} onChange={val => handleChange('estado', val)}
+                          opciones={estadosDisponibles} placeholder="Estado..." />
                         {errores.estado && <span style={{ fontSize: 11, color: '#dc2626' }}>{errores.estado}</span>}
                       </div>
                     </>
                   )}
+
+                  {/* Salario base — siempre visible*/}
+                  <label>Salario base</label>
+                  {editando ? (
+                    <div>
+                      <div style={styles.salarioWrapper}>
+                        <span style={styles.salarioPrefix}>Gs.</span>
+                        <input
+                          type="number" min="0"
+                          value={form.salario_base}
+                          disabled={!!cargosDisponibles.find(c => c.nombre === form.cargo)}
+                          onChange={e => handleChange('salario_base', e.target.value)}
+                          placeholder="Se completa al elegir cargo"
+                          style={{
+                            flex: 1, padding: "8px 10px", borderRadius: '0 8px 8px 0',
+                            border: '1px solid #ccc', borderLeft: 'none', fontSize: 14,
+                            background: cargosDisponibles.find(c => c.nombre === form.cargo) ? '#f0f0f0' : undefined,
+                            cursor: cargosDisponibles.find(c => c.nombre === form.cargo) ? 'not-allowed' : undefined,
+                            color: '#333',
+                          }}
+                        />
+                      </div>
+                      {form.cargo && !cargosDisponibles.find(c => c.nombre === form.cargo) && (
+                        <span style={{ fontSize: 11, color: '#888' }}>Cargo no reconocido, ingresá el salario manualmente</span>
+                      )}
+                    </div>
+                  ) : (
+                    <span>
+                      {form.salario_base ? `Gs. ${Number(form.salario_base).toLocaleString('es-PY')}` : '—'}
+                    </span>
+                  )}
+
                 </div>
               </div>
 
               <div style={styles.card}>
                 <h3>Datos familiares</h3>
                 <div style={styles.form}>
-                  <Field label="Cónyuge"       name="conyugue"       value={form.conyugue}       onChange={handleChange} editando={editando} />
-                  <Field label="Hijos"          name="hijos"          value={form.hijos}          onChange={handleChange} editando={editando} />
-                  <Field label="Hijos menores"  name="hijos_menores"  value={form.hijos_menores}  onChange={handleChange} editando={editando} />
+                  <Field label="Cónyuge"      name="conyugue"      value={form.conyugue}      onChange={handleChange} editando={editando} />
+                  <Field label="Hijos"         name="hijos"         value={form.hijos}         onChange={handleChange} editando={editando} />
+                  <Field label="Hijos menores" name="hijos_menores" value={form.hijos_menores} onChange={handleChange} editando={editando} />
                 </div>
               </div>
             </div>
@@ -315,10 +325,10 @@ export default function GestionPersonal({ usuario, onLogout, onNavegar, onGuarda
           )}
 
           <div style={styles.footer}>
-            {!modoCrear && !editando && <Button label="Editar" variant="amarillo" onClick={() => setEditando(true)} />}
-            {!modoCrear && editando  && <Button label="Cancelar" variant="gris" onClick={cancelarEdicion} />}
+            {!modoCrear && !editando && <Button label="Editar"         variant="amarillo" onClick={() => setEditando(true)} />}
+            {!modoCrear && editando  && <Button label="Cancelar"       variant="gris"     onClick={cancelarEdicion} />}
             {modoCrear               && <Button label="Crear empleado" variant="amarillo" onClick={crearEmpleado} />}
-            {!modoCrear && editando  && <Button label="Guardar" variant="amarillo" onClick={editEmpleado} />}
+            {!modoCrear && editando  && <Button label="Guardar"        variant="amarillo" onClick={editEmpleado} />}
           </div>
 
         </div>
@@ -338,4 +348,6 @@ const styles = {
   right:     { display: "flex", flexDirection: "column", gap: 20 },
   footer:    { marginTop: 30, display: "flex", justifyContent: "flex-end", gap: 10 },
   errorGeneral: { marginTop: 12, color: "#dc2626", fontSize: 14, textAlign: "right" },
+  salarioWrapper: { display: "flex", alignItems: "center", border: "1px solid #ccc", borderRadius: 8, overflow: "hidden" },
+  salarioPrefix:  { padding: "8px 10px", background: "#f0f0f0", fontSize: 14, color: "#555", borderRight: "1px solid #ccc", whiteSpace: "nowrap" },
 };
