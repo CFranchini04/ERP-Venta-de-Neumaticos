@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from "react";
 import fetchConToken from "../../../token";
+import { crearAsientoAPI, fetchCuentas } from '../../../Pantallas/Contabilidad/contabilidadHelpers';
+
 
 const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:9128/api";
 
@@ -60,48 +62,48 @@ export default function ModalNotaCredito({ factura, idOrden, onClose, onGuardado
           setCodigo(d.codigo_nota_credito);
         }
 
-if (resFactura.ok) {
-  const d = await resFactura.json();
-  const detalles = d.detalles_facturas_compras || [];
+        if (resFactura.ok) {
+          const d = await resFactura.json();
+          const detalles = d.detalles_facturas_compras || [];
 
-  // ── Filtrar placeholders (precio = 0) ───────────────────────────────
-  const detallesSinPlaceholder = detalles.filter(
-    (det) => Number(det.precio_unitario) > 0
-  );
+          // ── Filtrar placeholders (precio = 0) ───────────────────────────────
+          const detallesSinPlaceholder = detalles.filter(
+            (det) => Number(det.precio_unitario) > 0
+          );
 
-  // ── Filtrar por proveedor de la factura ──────────────────────────
-  const detallesFiltrados = idProveedorFactura
-    ? detallesSinPlaceholder.filter(
-        (det) =>
-          !det.id_proveedor ||
-          Number(det.id_proveedor) === Number(idProveedorFactura)
-      )
-    : detallesSinPlaceholder;
+          // ── Filtrar por proveedor de la factura ──────────────────────────
+          const detallesFiltrados = idProveedorFactura
+            ? detallesSinPlaceholder.filter(
+              (det) =>
+                !det.id_proveedor ||
+                Number(det.id_proveedor) === Number(idProveedorFactura)
+            )
+            : detallesSinPlaceholder;
 
-  // ── Calcular cuánto ya fue devuelto por notas anteriores ─────────
-  const notasAnteriores = d.notas_credito_compras || [];
-  const devueltoPorProducto = {};
-  for (const nota of notasAnteriores) {
-    for (const nd of nota.detalles_notas_credito_compras || []) {
-      devueltoPorProducto[nd.id_producto] =
-        (devueltoPorProducto[nd.id_producto] ?? 0) + Number(nd.cantidad);
-    }
-  }
+          // ── Calcular cuánto ya fue devuelto por notas anteriores ─────────
+          const notasAnteriores = d.notas_credito_compras || [];
+          const devueltoPorProducto = {};
+          for (const nota of notasAnteriores) {
+            for (const nd of nota.detalles_notas_credito_compras || []) {
+              devueltoPorProducto[nd.id_producto] =
+                (devueltoPorProducto[nd.id_producto] ?? 0) + Number(nd.cantidad);
+            }
+          }
 
-  setLineas(
-    detallesFiltrados.map((det) => {
-      const yaDevuelto = devueltoPorProducto[det.id_producto] ?? 0;
-      const disponibleDevolver = Math.max(0, Number(det.cantidad) - yaDevuelto);
-      return {
-        ...det,
-        nombre: det.productos?.nombre ?? `Producto ${det.id_producto}`,
-        yaDevuelto,
-        disponibleDevolver,
-        cantidadDevolver: 0,
-      };
-    })
-  );
-}
+          setLineas(
+            detallesFiltrados.map((det) => {
+              const yaDevuelto = devueltoPorProducto[det.id_producto] ?? 0;
+              const disponibleDevolver = Math.max(0, Number(det.cantidad) - yaDevuelto);
+              return {
+                ...det,
+                nombre: det.productos?.nombre ?? `Producto ${det.id_producto}`,
+                yaDevuelto,
+                disponibleDevolver,
+                cantidadDevolver: 0,
+              };
+            })
+          );
+        }
       } catch (err) {
         setError("Error al cargar datos: " + err.message);
       }
@@ -133,6 +135,38 @@ if (resFactura.ok) {
     const sub = l.cantidadDevolver * Number(l.precio_unitario);
     return acc + sub + sub * 0.1;
   }, 0);
+
+  const generarAsientoNotaCreditoCompra = async (fechaNota, montoTotal, nroNota) => {
+    try {
+      const todasCuentas = await fetchCuentas()
+      const buscarPorCodigo = (codigo) => todasCuentas.find(c => c.codigo == codigo)
+
+      const subtotal = montoTotal / 1.1
+      const iva = montoTotal - subtotal
+
+      const cuentaProveedores = buscarPorCodigo('2.1.1.1.01')
+      const cuentaMercaderias = buscarPorCodigo('1.1.4.1.01')
+      const cuentaIVA = buscarPorCodigo('1.1.3.2.07')
+
+      if (!cuentaProveedores) throw new Error('No se encontró cuenta Proveedores (2.1.1.1.01)')
+      if (!cuentaMercaderias) throw new Error('No se encontró cuenta Mercaderías (1.1.4.1.01)')
+      if (!cuentaIVA) throw new Error('No se encontró cuenta IVA Crédito Fiscal (1.1.3.2.07)')
+
+      await crearAsientoAPI({
+        fecha: fechaNota,
+        concepto: `Nota de crédito compra - ${nroNota}`,
+        lineas: [
+          { codigo: cuentaProveedores.codigo, cuenta: cuentaProveedores.cuenta, debe: montoTotal, haber: 0 },
+          { codigo: cuentaMercaderias.codigo, cuenta: cuentaMercaderias.cuenta, debe: 0, haber: subtotal },
+          { codigo: cuentaIVA.codigo, cuenta: cuentaIVA.cuenta, debe: 0, haber: iva },
+        ],
+        id_periodo_fiscal: null,
+        id_estado: 1,
+      })
+    } catch (err) {
+      throw new Error(`Error generando asiento: ${err.message}`)
+    }
+  }
 
   const handleGuardar = async () => {
     setError("");
@@ -174,6 +208,8 @@ if (resFactura.ok) {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || "Error al guardar");
+
+      await generarAsientoNotaCreditoCompra(form.fecha, montoTotal, form.nro_nota_credito)
 
       onGuardado?.();
       onClose();
@@ -347,8 +383,8 @@ if (resFactura.ok) {
             {guardando
               ? "Guardando..."
               : esDevolucionTotal
-              ? "Anular Factura"
-              : "Emitir Nota de Crédito Parcial"}
+                ? "Anular Factura"
+                : "Emitir Nota de Crédito Parcial"}
           </button>
         </div>
       </div>

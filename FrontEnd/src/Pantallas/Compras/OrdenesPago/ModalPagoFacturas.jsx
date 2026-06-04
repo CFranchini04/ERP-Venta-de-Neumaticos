@@ -3,6 +3,8 @@ import { Button } from "../../../components/Buttons";
 import { getColor } from "../../../components/Colors";
 import fetchConToken from "../../../token";
 import { useNavigate } from "react-router-dom";
+import { crearAsientoAPI, fetchCuentas } from '../../../Pantallas/Contabilidad/contabilidadHelpers';
+
 const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:9128/api";
 
 export default function ModalPagoFacturas({ proveedor, facturas, onClose, onConfirmar }) {
@@ -65,6 +67,84 @@ export default function ModalPagoFacturas({ proveedor, facturas, onClose, onConf
         const ts = Date.now().toString().slice(-6);
         return `OP-${new Date().getFullYear()}-${ts}`;
     };
+    const generarAsientoOrdenPago = async (fecha, codigoOrden, filas) => {
+        const CUENTAS_POR_METODO_PAGO = {
+            1: {
+                "codigo": "1.1.1.1.01",
+                "cuenta": "CAJA EN MONEDA NACIONAL",
+                "imputable": true,
+                "saldo": 0
+            },
+            2: {
+                "codigo": "1.1.1.2.01",
+                "cuenta": "BANCO ... CTA/CTE.",
+                "imputable": true,
+                "saldo": 0
+            },
+            3: {
+                "codigo": "1.1.1.2.01",
+                "cuenta": "BANCO ... CTA/CTE.",
+                "imputable": true,
+                "saldo": 0
+            },
+        };
+        try {
+            const todasCuentas = await fetchCuentas();
+            const buscarPorCodigo = (codigo) =>
+                todasCuentas.find((c) => c.codigo == codigo);
+
+            const cuentaProveedores = buscarPorCodigo("2.1.1.1.01");
+            if (!cuentaProveedores)
+                throw new Error("No se encontró cuenta Proveedores (2.1.1.1.01)");
+
+            const montoTotal = filas.reduce(
+                (sum, f) => sum + (parseFloat(f.monto) || 0),
+                0
+            );
+
+            const lineasHaber = [];
+            const porMetodo = {};
+            for (const fila of filas) {
+                const id = String(fila.id_metodo_pago);
+                porMetodo[id] = (porMetodo[id] || 0) + (parseFloat(fila.monto) || 0);
+            }
+
+            for (const [idMetodo, monto] of Object.entries(porMetodo)) {
+                const def = CUENTAS_POR_METODO_PAGO[idMetodo];
+                if (!def)
+                    throw new Error(`Sin cuenta configurada para método de pago id=${idMetodo}`);
+
+                const cuenta = buscarPorCodigo(def.codigo);
+                if (!cuenta)
+                    throw new Error(`No se encontró cuenta ${def.nombre} (${def.codigo})`);
+
+                lineasHaber.push({
+                    codigo: cuenta.codigo,
+                    cuenta: cuenta.cuenta,
+                    debe: 0,
+                    haber: monto,  
+                });
+            }
+
+            await crearAsientoAPI({
+                fecha,
+                concepto: `Orden de pago - ${codigoOrden}`,
+                lineas: [
+                    {
+                        codigo: cuentaProveedores.codigo,
+                        cuenta: cuentaProveedores.cuenta,
+                        debe: montoTotal,
+                        haber: 0,
+                    },
+                    ...lineasHaber,
+                ],
+                id_periodo_fiscal: null,
+                id_estado: 1,
+            });
+        } catch (err) {
+            throw new Error(`Error generando asiento: ${err.message}`);
+        }
+    };
 
     const handleConfirmar = async () => {
         try {
@@ -91,6 +171,11 @@ export default function ModalPagoFacturas({ proveedor, facturas, onClose, onConf
                 const err = await res.json().catch(() => ({}));
                 throw new Error(err.message || `Error ${res.status}`);
             }
+            await generarAsientoOrdenPago(
+                payload.fecha_creacion,
+                payload.codigo_orden_pago,
+                filas
+            );
             onConfirmar?.();
             onClose();
         } catch (err) {
@@ -106,7 +191,7 @@ export default function ModalPagoFacturas({ proveedor, facturas, onClose, onConf
             <div style={styles.modal}>
                 <div style={styles.header}>
                     <div>
-                        <h2 style={styles.titulo}  onClick={() => navigate("/compras/ordenes-de-pago")}>Confirmar pago</h2>
+                        <h2 style={styles.titulo} onClick={() => navigate("/compras/ordenes-de-pago")}>Confirmar pago</h2>
                         <p style={styles.subtitulo}>
                             Proveedor: <strong>{proveedor?.nombre}</strong> &mdash;{" "}
                             {facturas.length} factura{facturas.length !== 1 ? "s" : ""} seleccionada{facturas.length !== 1 ? "s" : ""}
