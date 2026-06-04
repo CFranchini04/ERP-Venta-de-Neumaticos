@@ -12,7 +12,7 @@ import ordPagoRoutes from './routes/compras/ordenesPago.routes.js'
 import pedidosRoutes from './routes/compras/pedidos.routes.js'
 import facturasRoutes from './routes/compras/facturas.routes.js'
 import cotizacionesRoutes from './routes/compras/cotizaciones.routes.js'
-
+import notasCreditoRoutes from './routes/compras/notasCredito.routes.js'
 //MISC
 import productosRoutes from './routes/misc/productos.routes.js'
 
@@ -67,7 +67,7 @@ app.use('/api/compras/ordenes-pago', ordPagoRoutes)
 app.use('/api/compras/pedidos', pedidosRoutes)
 app.use('/api/compras/facturas', facturasRoutes)
 app.use('/api/compras/cotizaciones', cotizacionesRoutes)
-
+app.use('/api/compras/notas-credito', notasCreditoRoutes)
 //RRHH
 app.use('/api/rrhh/empleados', empleadosRoutes)
 app.use('/api/rrhh/salarios', salariosRoutes)
@@ -83,6 +83,7 @@ app.use('/api/tesoreria/movimientos', movimientosRoutes)
 app.use('/api/ventas/facturas', facturasVentasRoutes)
 app.use('/api/ventas/presupuestos', presupuestosRoutes)
 app.use('/api/ventas/notas-credito', notasCreditoVentasRoutes)
+
 
 
 export default app

@@ -118,7 +118,8 @@ const { data: facturaRows, error: facturaError } = await supabase
     detalles_facturas_compras(
       id_detalle_compra, id_producto, cantidad,
       precio_unitario, id_orden_compra_detalle
-    )
+    ),
+    notas_credito_compras(id_nota_credito_compra)
   `)
   .eq('id_orden_compra', ordenId)
   .order('id_factura_compra', { ascending: true })
@@ -158,7 +159,8 @@ const { data: facturaRows, error: facturaError } = await supabase
     fecha_vencimiento: factura.fecha_vencimiento ?? '',
     estado: await getEstadoNombre(factura.id_estado),
     importe_total: formatMoney(factura.importe_total),
-    detalles_facturas_compras: factura.detalles_facturas_compras || []
+    detalles_facturas_compras: factura.detalles_facturas_compras || [],
+    notas_credito_compras: factura.notas_credito_compras || [],
   })))
 
   return {
