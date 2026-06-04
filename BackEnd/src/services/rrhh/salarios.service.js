@@ -215,7 +215,7 @@ const deletePago = async (id) => {
 // ─── PHC ────────────────────────────────────────────────────────
 
 const getSalarioEmpleado = async (id_empleado) => {
-    const confirmado = 2
+    const activo = 6
     const { data, error } = await supabase
         .from('personas_horario_cargo')
         .select(`
@@ -224,7 +224,7 @@ const getSalarioEmpleado = async (id_empleado) => {
             horarios(*)
         `)
         .eq('id_empleado', id_empleado)
-        .eq('id_estado', confirmado)
+        .eq('id_estado', activo)
         .single()
     if (error) throw new Error(error.message)
     return data

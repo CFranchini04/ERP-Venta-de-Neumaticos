@@ -159,6 +159,7 @@ export default function GestionSalarial({ usuario, onLogout, onNavegar }) {
 
         const dataEmp = await resEmp.json();
         const salario = await resSal.json();
+        console.log(salario)
         const pdp = await resPdp.json();
 
 
