@@ -21,11 +21,14 @@ const SELECT_SINGLE = `
   proveedores(plazo_entrega, personas(nombre, apellido, ruc, direccion, telefono, correo, tipo_persona)),
   ordenes_compras(codigo_orden),
   detalles_facturas_compras(
+    id_detalle_compra,
     cantidad,
     precio_unitario,
     porcentaje_iva,
     monto_iva,
     subtotal,
+    id_orden_compra_detalle,
+    id_producto,
     productos(
       nombre,
       codigo,
@@ -162,7 +165,7 @@ const confirmarFacturaPlaceholder = async (id, {
   id_proveedor, timbrado, nro_factura, fecha_emision,
   fecha_vencimiento, importe_total, id_orden_compra, detalles
 }) => {
-  // 1. Buscar id_estado "confirmado" automáticamente
+  // 1. Buscar id_estado "confirmado"
   const { data: estadoConf } = await supabase
     .from('estados')
     .select('id_estado')
@@ -170,7 +173,7 @@ const confirmarFacturaPlaceholder = async (id, {
     .maybeSingle()
   const id_estado = estadoConf?.id_estado ?? null
 
-  // 2. Actualizar cabecera con estado confirmado
+  // 2. Actualizar cabecera con datos reales y estado confirmado
   const { data: factura, error } = await supabase
     .from('facturas_compras')
     .update({ id_proveedor, timbrado, nro_factura, fecha_emision, fecha_vencimiento, importe_total, id_estado })
@@ -179,24 +182,82 @@ const confirmarFacturaPlaceholder = async (id, {
     .single()
   if (error) throw new Error(error.message)
 
-  // 3. Insertar detalles reales
-  const detallesConId = detalles.map((d) => ({
-    id_factura_compra: id,
-    id_producto: d.id_producto,
-    cantidad: d.cantidad,
-    precio_unitario: d.precio_unitario,
-    porcentaje_iva: d.porcentaje_iva,
-    monto_iva: d.monto_iva,
-    id_orden_compra_detalle: d.id_orden_compra_detalle,
-  }))
-
-  const { data: detallesCreados, error: errorDet } = await supabase
+  // 3. Traer los detalles placeholder existentes de esta factura
+  //    (precio_unitario = 0 significa que son placeholder)
+  const { data: detallesExistentes, error: errorExistentes } = await supabase
     .from('detalles_facturas_compras')
-    .insert(detallesConId)
-    .select()
-  if (errorDet) throw new Error(errorDet.message)
+    .select('id_detalle_compra, id_orden_compra_detalle, id_producto, precio_unitario, subtotal')
+    .eq('id_factura_compra', id)
+  if (errorExistentes) throw new Error(errorExistentes.message)
 
-  // 4. Sumar cantidad_recibida en cada detalle de orden
+  // Indexar placeholders por id_orden_compra_detalle para búsqueda rápida
+  // Solo consideramos placeholder si precio_unitario = 0 y subtotal = 0 (o null)
+  const placeholderPorDetOrden = {}
+  for (const ex of detallesExistentes ?? []) {
+    const esPlaceholder =
+      Number(ex.precio_unitario) === 0 &&
+      (Number(ex.subtotal) === 0 || ex.subtotal == null)
+    if (esPlaceholder && ex.id_orden_compra_detalle) {
+      placeholderPorDetOrden[ex.id_orden_compra_detalle] = ex.id_detalle_compra
+    }
+  }
+
+  // 4. Separar detalles a actualizar (tienen placeholder) vs a insertar (no tienen)
+  const aActualizar = []
+  const aInsertar = []
+
+  for (const d of detalles) {
+    const idDetOrden = d.id_orden_compra_detalle
+    const idPlaceholder = idDetOrden ? placeholderPorDetOrden[idDetOrden] : null
+
+    if (idPlaceholder) {
+      aActualizar.push({ ...d, id_detalle_compra: idPlaceholder })
+    } else {
+      aInsertar.push(d)
+    }
+  }
+
+  const detallesCreados = []
+
+  // 5a. Actualizar placeholders existentes
+  for (const d of aActualizar) {
+    const { id_detalle_compra, ...datosDetalle } = d
+    const { data: updated, error: errUpd } = await supabase
+      .from('detalles_facturas_compras')
+      .update({
+        cantidad: datosDetalle.cantidad,
+        precio_unitario: datosDetalle.precio_unitario,
+        porcentaje_iva: datosDetalle.porcentaje_iva,
+        monto_iva: datosDetalle.monto_iva,
+        id_producto: datosDetalle.id_producto,
+      })
+      .eq('id_detalle_compra', id_detalle_compra)
+      .select()
+      .single()
+    if (errUpd) throw new Error(errUpd.message)
+    detallesCreados.push(updated)
+  }
+
+  // 5b. Insertar los que no tenían placeholder
+  if (aInsertar.length > 0) {
+    const rows = aInsertar.map((d) => ({
+      id_factura_compra: id,
+      id_producto: d.id_producto,
+      cantidad: d.cantidad,
+      precio_unitario: d.precio_unitario,
+      porcentaje_iva: d.porcentaje_iva,
+      monto_iva: d.monto_iva,
+      id_orden_compra_detalle: d.id_orden_compra_detalle,
+    }))
+    const { data: insertados, error: errIns } = await supabase
+      .from('detalles_facturas_compras')
+      .insert(rows)
+      .select()
+    if (errIns) throw new Error(errIns.message)
+    detallesCreados.push(...(insertados ?? []))
+  }
+
+  // 6. Sumar cantidad_recibida en cada detalle de orden
   for (const d of detalles) {
     if (!d.id_orden_compra_detalle) continue
     const { data: detOrden } = await supabase
@@ -211,7 +272,7 @@ const confirmarFacturaPlaceholder = async (id, {
       .eq('id_orden_compra_detalle', d.id_orden_compra_detalle)
   }
 
-  // 5. Verificar si quedan pendientes en la orden
+  // 7. Verificar si quedan pendientes en la orden
   const { data: todosDetalles } = await supabase
     .from('ordenes_compras_detalle')
     .select('cantidad_solicitada, cantidad_recibida, id_producto, id_orden_compra_detalle')
@@ -222,7 +283,7 @@ const confirmarFacturaPlaceholder = async (id, {
   )
 
   if (todosEntregados) {
-    // Buscar estado "completado" y actualizar la orden
+    // Marcar la orden como completada
     const { data: estadoCompleto } = await supabase
       .from('estados')
       .select('id_estado')
@@ -245,7 +306,6 @@ const confirmarFacturaPlaceholder = async (id, {
         cantidad_solicitada: Number(d.cantidad_solicitada) - Number(d.cantidad_recibida),
       }))
 
-    // crearFacturaVacia está en ordenes_compra.service.js, acá se reimplementa inline
     const { data: estadoRow } = await supabase
       .from('estados')
       .select('id_estado')
@@ -260,7 +320,7 @@ const confirmarFacturaPlaceholder = async (id, {
         id_proveedor,
         id_orden_compra,
         id_estado: estadoRow?.id_estado ?? null,
-        codigo_factura
+        codigo_factura,
       })
       .select()
       .single()
