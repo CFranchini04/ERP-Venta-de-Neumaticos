@@ -157,7 +157,7 @@ export default function DetalleNotaCredito({ usuario, onNavegar, onLogout }) {
       <body>
         <div class="header">
           <div class="empresa">
-            <h2>ERP Venta de Neumáticos</h2>
+            <h2>Neumáticos Fukuchi</h2>
             <p>RUC: 80012345-6</p>
             <p>Dirección: Av. Siempre Viva 742, Springfield</p>
             <p>Tel: (021) 123-456 — sistemas@de.gestion</p>
