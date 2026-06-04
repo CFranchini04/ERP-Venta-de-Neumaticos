@@ -27,6 +27,7 @@ export default function Searchbar({
   getLabel = (item) => item?.nombre || item?.label || '',
   style = {},
   fetchOnMount = false,
+  initialValue = '',
 }) {
   const [inputValue, setInputValue]     = useState('');
   const [results, setResults]           = useState([]);
@@ -38,7 +39,13 @@ export default function Searchbar({
   const containerRef       = useRef(null);
   // Guarda los resultados del fetch inicial para restaurarlos al limpiar el input
   const initialResultsRef  = useRef([]);
-
+ 
+  useEffect(() => {
+    if (initialValue) {
+      setInputValue(initialValue)
+      setHasSelection(true)
+    }
+  }, [initialValue])
   // Cierra el dropdown si el usuario hace click fuera
   useEffect(() => {
     const handleClickOutside = (e) => {

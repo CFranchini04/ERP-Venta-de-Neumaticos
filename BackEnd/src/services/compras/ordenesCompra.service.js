@@ -108,11 +108,21 @@ const getOrdCompra = async (id) => {
 
   if (detalleError) throw new Error(detalleError.message)
 
-  const { data: facturaRows, error: facturaError } = await supabase
-    .from('facturas_compras')
-    .select('id_factura_compra,id_proveedor,id_orden_compra,timbrado,nro_factura,fecha_emision,importe_total,fecha_vencimiento,id_estado,codigo_factura')
-    .eq('id_orden_compra', ordenId)
-    .order('id_factura_compra', { ascending: true })
+
+const { data: facturaRows, error: facturaError } = await supabase
+  .from('facturas_compras')
+  .select(`
+    id_factura_compra, id_proveedor, id_orden_compra, timbrado,
+    nro_factura, fecha_emision, importe_total, fecha_vencimiento,
+    id_estado, codigo_factura,
+    detalles_facturas_compras(
+      id_detalle_compra, id_producto, cantidad,
+      precio_unitario, id_orden_compra_detalle
+    ),
+    notas_credito_compras(id_nota_credito_compra)
+  `)
+  .eq('id_orden_compra', ordenId)
+  .order('id_factura_compra', { ascending: true })
 
   if (facturaError) throw new Error(facturaError.message)
 
@@ -148,7 +158,9 @@ const getOrdCompra = async (id) => {
     fecha_emision: factura.fecha_emision ?? '',
     fecha_vencimiento: factura.fecha_vencimiento ?? '',
     estado: await getEstadoNombre(factura.id_estado),
-    importe_total: formatMoney(factura.importe_total)
+    importe_total: formatMoney(factura.importe_total),
+    detalles_facturas_compras: factura.detalles_facturas_compras || [],
+    notas_credito_compras: factura.notas_credito_compras || [],
   })))
 
   return {
@@ -235,7 +247,8 @@ const tieneOrdenCompraPorCotizacion = async (idCotizacion) => {
   return !!(ordDet && ordDet.length > 0)
 }
 
-const crearFacturaVacia = async (id_proveedor, id_orden_compra) => {
+// Recibe también los detalles de la orden ya insertados para crear el detalle de factura
+const crearFacturaVacia = async (id_proveedor, id_orden_compra, detallesOrden = []) => {
   const { data: estadoRow } = await supabase
     .from('estados')
     .select('id_estado')
@@ -251,15 +264,30 @@ const crearFacturaVacia = async (id_proveedor, id_orden_compra) => {
     .select()
     .single()
   if (error) throw new Error(`Error creando factura placeholder: ${error.message}`)
+
+  // Si hay detalles de orden, crear el detalle de factura con precios vacíos
+  if (detallesOrden.length > 0) {
+    const detallesFactura = detallesOrden.map((d) => ({
+      id_factura_compra: data.id_factura_compra,
+      id_producto: d.id_producto,
+      cantidad: d.cantidad_solicitada,
+      precio_unitario: 0,
+      porcentaje_iva: 10,
+      monto_iva: 0,
+      id_orden_compra_detalle: d.id_orden_compra_detalle,
+    }))
+
+    const { error: errorDetFactura } = await supabase
+      .from('detalles_facturas_compras')
+      .insert(detallesFactura)
+
+    if (errorDetFactura)
+      throw new Error(`Error creando detalle de factura: ${errorDetFactura.message}`)
+  }
+
   return data
 }
 
-/**
- * Creates one orden_compra per provider group, then creates a pending factura_compras
- * header for each orden to track expected deliveries.
- * @param {Array} grupos - [{ id_proveedor, productos: [{ id_producto, id_cotizacion_detalle, cantidad, precio_unitario }] }]
- * @param {number} [id_estado_inicial=1]
- */
 const createOrdenCompra = async (grupos, id_estado_inicial = 1) => {
   if (!Array.isArray(grupos) || grupos.length === 0) {
     throw new Error('Se requiere al menos un grupo de proveedor')
@@ -302,13 +330,16 @@ const createOrdenCompra = async (grupos, id_estado_inicial = 1) => {
       observacion: p.observacion ?? null,
     }))
 
-    const { error: errorDetalle } = await supabase
+    // Se agrega .select() para obtener los IDs de los detalles insertados
+    const { data: detallesInsertados, error: errorDetalle } = await supabase
       .from('ordenes_compras_detalle')
       .insert(detallesInsert)
+      .select('id_orden_compra_detalle,id_producto,cantidad_solicitada')
 
     if (errorDetalle) throw new Error(`Error insertando detalle: ${errorDetalle.message}`)
 
-    await crearFacturaVacia(grupo.id_proveedor, idOrden)
+    // Se pasan los detalles insertados para crear el detalle de la factura
+    await crearFacturaVacia(grupo.id_proveedor, idOrden, detallesInsertados ?? [])
 
     ordenesCreadas.push(await getOrdCompra(idOrden))
   }

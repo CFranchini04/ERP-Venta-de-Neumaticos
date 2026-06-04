@@ -17,12 +17,6 @@ export default function OrdenesPago({ usuario, onNavegar, onLogout }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  const handleVerOrden = (orden, e) => {
-    if (e) e.stopPropagation();
-    const idOrden = orden?.id_orden ?? orden?.id;
-    if (!idOrden) return;
-    navigate(`/compras/ordenes-de-pago/${idOrden}`);
-  };
 
   useEffect(() => {
     const cargarOrdenes = async () => {
@@ -37,12 +31,13 @@ export default function OrdenesPago({ usuario, onNavegar, onLogout }) {
           throw new Error(data.message || "No se pudieron cargar las órdenes de pago");
         }
         setOrdenes((data || []).map((o) => ({
-          ...o,
-          codigo: o.codigo_orden_pago || "",
-          fecha: o.fecha_creacion || "",
-          proveedor: o.proveedores?.personas?.nombre || "",
-          estado: o.estados?.nombre || "",
-        })));
+        ...o,
+        codigo: o.codigo_orden_pago || "",
+        fecha: o.fecha_creacion || "",
+        proveedor_id: o.proveedores?.id_proveedor,   // ✅ NUEVO
+        proveedor: o.proveedores?.personas?.nombre || "",
+        estado: o.estados?.nombre || "",
+      })));
       } catch (err) {
         setError(err.message);
       } finally {
@@ -52,6 +47,7 @@ export default function OrdenesPago({ usuario, onNavegar, onLogout }) {
 
     cargarOrdenes();
   }, []);
+
 
   const ordenesFiltradas = ordenes
     .filter((o) => {
@@ -70,7 +66,17 @@ export default function OrdenesPago({ usuario, onNavegar, onLogout }) {
       if (orden === "codigo") return (a.codigo || "").localeCompare(b.codigo || "");
       return 0;
     });
-
+const handleVerOrden = (orden, e) => {
+  if (e) e.stopPropagation();
+  navigate("/compras/ordenes-de-pago/seleccion-facturas", {
+    state: {
+      proveedor: {
+        id: orden.proveedor_id,      // ✅ viene del map
+        nombre: orden.proveedor,
+      }
+    }
+  });
+};
   const columns = [
     { key: "codigo", label: "Código" },
     { key: "proveedor", label: "Proveedor" },

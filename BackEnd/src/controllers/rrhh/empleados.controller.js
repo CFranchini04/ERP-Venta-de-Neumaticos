@@ -114,4 +114,19 @@ const getAllCargos = async (req, res) => {
     }
 }
 
-export default { getAllEmpleados, getTableEmpleado, getEmpleado, getEmpleadoByNombre, getEmpleadoByCi, getEmpleadoByRuc, postEmpleado, updateEmpleado, deleteEmpleado, getAllCargos }
+const postCargo = async (req, res) => {
+    const { nombre, jefe_inmediato, area_superior, salario } = req.body
+
+    if (!nombre)
+        return res.status(400).json({ message: 'El nombre es obligatorio' })
+
+    try {
+        const cargo = await empleadosService.postCargo(nombre, jefe_inmediato, area_superior, salario)
+        return res.status(201).json(cargo)
+    } catch (err) {
+        console.error('Error al crear cargo:', err.message)
+        return res.status(500).json({ message: err.message })
+    }
+}
+
+export default { getAllEmpleados, getTableEmpleado, getEmpleado, getEmpleadoByNombre, getEmpleadoByCi, getEmpleadoByRuc, postEmpleado, updateEmpleado, deleteEmpleado, getAllCargos, postCargo }

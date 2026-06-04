@@ -6,6 +6,7 @@ import List from '../../components/Lista';
 import { formatearGs } from '../../components/formato';
 import fetchConToken from '../../token';
 import ModalConciliacion from './ModalConciliacion';
+import { crearAsientoAPI, fetchCuentas } from '../../Pantallas/Contabilidad/contabilidadHelpers';
 
 const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:9128/api';
 const ID_TRANSFERENCIA = 2;
@@ -132,10 +133,8 @@ function ModalCuentaNueva({ bancosDisponibles, onCerrar, onGuardar }) {
           <div style={gridDos}>
             <Campo label="Número de cuenta" name="nro_cuenta" value={form.nro_cuenta}
               onChange={handleChange} error={errores.nro_cuenta} placeholder="Ej: 0001-123456-7" />
-
             <Campo label="Titular" name="titular" value={form.titular}
               onChange={handleChange} error={errores.titular} placeholder="Nombre completo" />
-
             <div style={styles.campoWrapper}>
               <label style={{ ...styles.campoLabel, color: errores.id_banco ? '#dc2626' : undefined }}>
                 Entidad bancaria{errores.id_banco ? ' *' : ''}
@@ -149,13 +148,11 @@ function ModalCuentaNueva({ bancosDisponibles, onCerrar, onGuardar }) {
               </select>
               {errores.id_banco && <span style={{ fontSize: 11, color: '#dc2626' }}>{errores.id_banco}</span>}
             </div>
-
             <div style={styles.campoWrapper}>
               <label style={styles.campoLabel}>Tipo de documento</label>
               <input value="CI" disabled
                 style={{ ...styles.input, background: '#F0F0F0', cursor: 'not-allowed', color: '#888' }} />
             </div>
-
             <Campo label="Número de documento" name="numeroDocumento" value={form.numeroDocumento}
               onChange={handleChange} error={errores.numeroDocumento} placeholder="Ej: 4567890"
               style={{ gridColumn: '1 / -1' }} />
@@ -205,17 +202,15 @@ export default function Movimiento({ usuario = 'Empleado', onLogout, onNavegar }
   useEffect(() => {
     const cargar = async () => {
       try {
-        const [resCuentas, resMov, resBancos, resEstados] = await Promise.all([
+        const [resCuentas, resMov, resBancos] = await Promise.all([
           fetchConToken(`${API_BASE}/tesoreria/movimientos/cuentas`),
           fetchConToken(`${API_BASE}/tesoreria/movimientos/tabla`),
           fetchConToken(`${API_BASE}/tesoreria/movimientos/bancos`),
-          fetchConToken(`${API_BASE}/tesoreria/movimientos/estados`),
         ]);
 
         const dataCuentas = await resCuentas.json();
         const dataMov = await resMov.json();
         const dataBancos = await resBancos.json();
-        const dataEstados = await resEstados.json();
 
         setCuentas(
           dataCuentas
@@ -235,23 +230,22 @@ export default function Movimiento({ usuario = 'Empleado', onLogout, onNavegar }
 
         setBancosDisponibles(dataBancos);
 
-        const movs = dataMov
-          .map(m => ({
-            id: m.id_movimiento,
-            idCuenta: m.cuenta_origen?.id_cuenta_bancaria,
-            fecha: m.fecha ? new Date(m.fecha).toLocaleDateString('es-ES') : '—',
-            cuentaOrigen: m.cuenta_origen?.bancos?.nombre
-              ? `${m.cuenta_origen.bancos.nombre} - ${m.cuenta_origen.tipo_cuenta ?? '—'}`
-              : '—',
-            cuentaDestino: m.cuenta_destino?.bancos?.nombre
-              ? `${m.cuenta_destino.bancos.nombre} - ${m.cuenta_destino.tipo_cuenta ?? '—'}`
-              : '—',
-            tipo: m.tipo ?? '—',
-            monto: m.monto ?? 0,
-            estado: m.estados?.nombre ?? '—',
-            idEstado: m.id_estado,
-            ...m,
-          }));
+        const movs = dataMov.map(m => ({
+          id: m.id_movimiento,
+          idCuenta: m.cuenta_origen?.id_cuenta_bancaria,
+          fecha: m.fecha ? new Date(m.fecha).toLocaleDateString('es-ES') : '—',
+          cuentaOrigen: m.cuenta_origen?.bancos?.nombre
+            ? `${m.cuenta_origen.bancos.nombre} - ${m.cuenta_origen.tipo_cuenta ?? '—'}`
+            : '—',
+          cuentaDestino: m.cuenta_destino?.bancos?.nombre
+            ? `${m.cuenta_destino.bancos.nombre} - ${m.cuenta_destino.tipo_cuenta ?? '—'}`
+            : '—',
+          tipo: m.tipo ?? '—',
+          monto: m.monto ?? 0,
+          estado: m.estados?.nombre ?? '—',
+          idEstado: m.id_estado,
+          ...m,
+        }));
 
         setHistorial(movs);
       } catch (err) {
@@ -265,10 +259,10 @@ export default function Movimiento({ usuario = 'Empleado', onLogout, onNavegar }
 
   const historialFiltrado = cuentaOrigenId
     ? historial.filter(m => {
-        const coincideCuenta = m.idCuenta === Number(cuentaOrigenId);
-        const coincideEstado = filtroEstado === '' || m.estado === filtroEstado;
-        return coincideCuenta && coincideEstado;
-      })
+      const coincideCuenta = m.idCuenta === Number(cuentaOrigenId);
+      const coincideEstado = filtroEstado === '' || m.estado === filtroEstado;
+      return coincideCuenta && coincideEstado;
+    })
     : historial.filter(m => filtroEstado === '' || m.estado === filtroEstado);
 
   function handleNavegar(moduloId) {
@@ -281,6 +275,34 @@ export default function Movimiento({ usuario = 'Empleado', onLogout, onNavegar }
     setCuentaDestino(null);
     setFecha(''); setTipoMovimiento(''); setMonto(''); setConcepto('');
     setError('');
+  }
+
+  const generarAsientoMovimiento = async (cuentaOrigenId, cuentaDestinoId, montoNum, fechaMov, conceptoMov) => {
+    try {
+      const todasCuentas = await fetchCuentas()
+      const buscarPorCodigo = (codigo) => todasCuentas.find(c => c.codigo == codigo)
+
+      // Cuenta contable origen — banco que sale el dinero
+      const cuentaOrig = buscarPorCodigo('1.1.1.2.01')
+      // Cuenta contable destino — banco que recibe el dinero  
+      const cuentaDest = buscarPorCodigo('1.1.1.2.02')
+
+      if (!cuentaOrig) throw new Error('No se encontró cuenta contable origen (1.1.1.2.01)')
+      if (!cuentaDest) throw new Error('No se encontró cuenta contable destino (1.1.1.2.02)')
+
+      await crearAsientoAPI({
+        fecha: fechaMov,
+        concepto: conceptoMov || 'Transferencia entre cuentas',
+        lineas: [
+          { id_cuenta: cuentaDest.id_cuentas, debe: montoNum, haber: 0 },
+          { id_cuenta: cuentaOrig.id_cuentas, debe: 0, haber: montoNum },
+        ],
+        id_periodo_fiscal: null,
+        id_estado: 1,
+      })
+    } catch (err) {
+      throw new Error(`Error generando asiento: ${err.message}`)
+    }
   }
 
   async function handleGuardarMovimiento() {
@@ -319,6 +341,16 @@ export default function Movimiento({ usuario = 'Empleado', onLogout, onNavegar }
       }
 
       const nuevo = await res.json();
+
+      // Generás el asiento contable
+      await generarAsientoMovimiento(
+        Number(cuentaOrigenId),
+        cuentaDestino.id,
+        Number(monto),
+        fecha,
+        observacionFinal
+      );
+
       const cuentaOrigen = cuentas.find(c => c.id === Number(cuentaOrigenId));
       setHistorial(prev => [{
         id: nuevo.id_movimiento,
@@ -355,7 +387,11 @@ export default function Movimiento({ usuario = 'Empleado', onLogout, onNavegar }
   }
 
   function handleConciliarMovimiento(movimientoActualizado) {
-    setHistorial(prev => prev.map(m => m.id === movimientoActualizado.id_movimiento ? { ...m, estado: movimientoActualizado.estados?.nombre, idEstado: movimientoActualizado.id_estado } : m));
+    setHistorial(prev => prev.map(m =>
+      m.id === movimientoActualizado.id_movimiento
+        ? { ...m, estado: movimientoActualizado.estados?.nombre, idEstado: movimientoActualizado.id_estado }
+        : m
+    ));
     cerrarModalConciliacion();
   }
 

@@ -5,6 +5,7 @@ import { getColor } from '../../components/Colors';
 import List from '../../components/Lista';
 import { formatearGs } from '../../components/formato';
 import fetchConToken from '../../token';
+import { crearAsientoAPI, fetchCuentas } from '../../Pantallas/Contabilidad/contabilidadHelpers';
 
 const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:9128/api';
 const IDS_DEPOSITO = [1, 6];
@@ -28,6 +29,7 @@ export default function Deposito({ usuario = 'Empleado', onLogout, onNavegar }) 
   const [bancoCheque, setBancoCheque] = useState('');
   const [titularCheque, setTitularCheque] = useState('');
   const [observacion, setObservacion] = useState('');
+  const [cuentaOrigenId, setCuentaOrigenId] = useState('');
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState('');
 
@@ -53,7 +55,7 @@ export default function Deposito({ usuario = 'Empleado', onLogout, onNavegar }) 
 
         const depositos = dataMov
           .filter(m => {
-            const esDeposito = IDS_DEPOSITO.includes(Number(m.id_tipo_movimiento)); 
+            const esDeposito = IDS_DEPOSITO.includes(Number(m.id_tipo_movimiento));
             const noEsAjena = m.cuenta_origen?.tipo_cuenta?.toLowerCase() !== 'ajena';
             const esDeLaCuenta = cuentaInicial?.id
               ? m.cuenta_origen?.id_cuenta_bancaria === Number(cuentaInicial.id)
@@ -99,13 +101,57 @@ export default function Deposito({ usuario = 'Empleado', onLogout, onNavegar }) 
     setBancoCheque('');
     setTitularCheque('');
     setObservacion('');
+    setCuentaOrigenId('');
     setError('');
+  }
+
+  const generarAsientoDeposito = async (cuentaDestId, montoNum, tipo, cuentaOrigenId = null) => {
+    try {
+      const todasCuentas = await fetchCuentas()
+      const buscarPorId = (id) => todasCuentas.find(c => c.id_cuentas == id || c.id == id)
+      const buscarPorCodigo = (codigo) => todasCuentas.find(c => c.codigo == codigo)
+
+      const cuentaDest = buscarPorId(cuentaDestId)
+      if (!cuentaDest) throw new Error('No se encontró la cuenta bancaria destino')
+
+      let cuentaContra = null
+
+      if (tipo === 'Efectivo') {
+        cuentaContra = buscarPorCodigo('1.1.1.1.01')
+        if (!cuentaContra) throw new Error('No se encontró la cuenta Caja (1.1.1.1.01)')
+      } else if (tipo === 'Cheque Propio') {
+        if (!cuentaOrigenId) throw new Error('Debe seleccionar la cuenta bancaria de origen del cheque')
+        cuentaContra = buscarPorId(cuentaOrigenId)
+        if (!cuentaContra) throw new Error('No se encontró la cuenta bancaria de origen')
+      } else if (tipo === 'Cheque Terceros') {
+        cuentaContra = buscarPorCodigo('1.1.3.1.05')
+        if (!cuentaContra) throw new Error('No se encontró la cuenta Documentos a cobrar (1.1.3.1.05)')
+      }
+
+      const asiento = await crearAsientoAPI({
+        fecha: new Date().toISOString().split('T')[0],
+        concepto: `Depósito ${tipo} - ${cuentaDest.nombre ?? cuentaDest.cuenta}`,
+        lineas: [
+          { id_cuenta: cuentaDest.id_cuentas, debe: montoNum, haber: 0 },
+          { id_cuenta: cuentaContra.id_cuentas, debe: 0, haber: montoNum },
+        ],
+        id_periodo_fiscal: null,
+        id_estado: 1,
+      })
+
+      return asiento
+    } catch (err) {
+      throw new Error(`Error generando asiento: ${err.message}`)
+    }
   }
 
   async function handleGuardarDeposito() {
     if (!cuentaId) { setError('Seleccione una cuenta.'); return; }
     if (!tipoDeposito) { setError('Seleccione el tipo de depósito.'); return; }
     if (!monto) { setError('Ingrese el monto.'); return; }
+    if (tipoDeposito === 'Cheque Propio' && !cuentaOrigenId) {
+      setError('Seleccione la cuenta bancaria de origen del cheque.'); return;
+    }
 
     const esCheque = tipoDeposito === 'Cheque Propio' || tipoDeposito === 'Cheque Terceros';
     const id_tipo_movimiento = esCheque ? 6 : 1;
@@ -114,12 +160,13 @@ export default function Deposito({ usuario = 'Empleado', onLogout, onNavegar }) 
       concepto,
       esCheque && numeroCheque ? `Cheque N°: ${numeroCheque}` : '',
       esCheque && bancoCheque ? `Banco: ${bancoCheque}` : '',
-        tipoDeposito === 'Cheque Terceros' && titularCheque ? `Titular: ${titularCheque}` : '',
+      tipoDeposito === 'Cheque Terceros' && titularCheque ? `Titular: ${titularCheque}` : '',
       observacion,
     ].filter(Boolean).join(' | ');
 
     setGuardando(true);
     setError('');
+
     try {
       const res = await fetchConToken(`${API_BASE}/tesoreria/movimientos`, {
         method: 'POST',
@@ -131,10 +178,6 @@ export default function Deposito({ usuario = 'Empleado', onLogout, onNavegar }) 
           monto: Number(monto),
           id_tipo_movimiento,
           observacion: observacionFinal,
-          tipoDeposito,
-          nroCheque: (tipoDeposito === 'Cheque Propio' || tipoDeposito === 'Cheque Terceros') ? numeroCheque : null,
-          bancoCheque: (tipoDeposito === 'Cheque Propio' || tipoDeposito === 'Cheque Terceros') ? bancoCheque : null,
-          titularCheque: tipoDeposito === 'Cheque Terceros' ? titularCheque : null,
         }),
       });
 
@@ -144,6 +187,14 @@ export default function Deposito({ usuario = 'Empleado', onLogout, onNavegar }) 
       }
 
       const nuevo = await res.json();
+
+      await generarAsientoDeposito(
+        Number(cuentaId),
+        Number(monto),
+        tipoDeposito,
+        tipoDeposito === 'Cheque Propio' ? Number(cuentaOrigenId) : null
+      );
+
       const cuenta = cuentas.find(c => c.id === Number(cuentaId));
       setHistorial(prev => [{
         id: nuevo.id_movimiento,
@@ -233,7 +284,7 @@ export default function Deposito({ usuario = 'Empleado', onLogout, onNavegar }) 
                     <button
                       key={tipo}
                       type="button"
-                      onClick={() => setTipoDeposito(tipo)}
+                      onClick={() => { setTipoDeposito(tipo); setCuentaOrigenId(''); }}
                       style={{
                         ...styles.btnTipoDeposito,
                         ...(tipoDeposito === tipo ? styles.btnTipoDepositoActivo : {})
@@ -259,6 +310,24 @@ export default function Deposito({ usuario = 'Empleado', onLogout, onNavegar }) 
                   <input placeholder="Banco del cheque" value={bancoCheque} onChange={e => setBancoCheque(e.target.value)} style={styles.input} />
                   {tipoDeposito === 'Cheque Terceros' && (
                     <input placeholder="Titular del cheque" value={titularCheque} onChange={e => setTitularCheque(e.target.value)} style={styles.input} />
+                  )}
+                  {tipoDeposito === 'Cheque Propio' && (
+                    <>
+                      <label style={{ fontSize: 13, fontWeight: 600, color: '#555' }}>Cuenta bancaria de origen</label>
+                      <select
+                        value={cuentaOrigenId}
+                        onChange={e => setCuentaOrigenId(e.target.value)}
+                        style={styles.select}
+                      >
+                        <option value="">Seleccionar cuenta origen...</option>
+                        {cuentas
+                          .filter(c => c.id !== Number(cuentaId))
+                          .map(c => (
+                            <option key={c.id} value={c.id}>{c.nombre}</option>
+                          ))
+                        }
+                      </select>
+                    </>
                   )}
                 </div>
               )}
