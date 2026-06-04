@@ -1,0 +1,49 @@
+[
+  {
+    "modulo": "ventas",
+    "evento": "factura_emitida",
+    "descripcion": "Venta con IVA 10% — cobro a crédito",
+    "lineas": [
+      { "codigo": "1.1.3.1.01", "cuenta": "DEUDORES POR VENTAS",  "lado": "debe",  "formula": "total" },
+      { "codigo": "4.1.1.1.01", "cuenta": "VENTAS",               "lado": "haber", "formula": "neto"  },
+      { "codigo": "2.1.1.4.01", "cuenta": "I.V.A. DEBITO FISCAL", "lado": "haber", "formula": "iva"   }
+    ]
+  },
+  {
+    "modulo": "compras",
+    "evento": "factura_recibida",
+    "descripcion": "Compra de mercaderías con IVA 10%",
+    "lineas": [
+      { "codigo": "1.1.4.1.01", "cuenta": "MERCADERIAS DE REVENTA", "lado": "debe",  "formula": "neto"  },
+      { "codigo": "1.1.3.2.07", "cuenta": "I.V.A. CREDITO FISCAL",  "lado": "debe",  "formula": "iva"   },
+      { "codigo": "2.1.1.1.01", "cuenta": "PROVEEDORES",            "lado": "haber", "formula": "total" }
+    ]
+  },
+  {
+    "modulo": "tesoreria",
+    "evento": "pago_proveedor",
+    "descripcion": "Pago de orden de pago a proveedor",
+    "lineas": [
+      { "codigo": "2.1.1.1.01", "cuenta": "PROVEEDORES",        "lado": "debe",  "formula": "total" },
+      { "codigo": "1.1.1.2.01", "cuenta": "BANCO ... CTA/CTE.", "lado": "haber", "formula": "total" }
+    ]
+  },
+  {
+    "modulo": "tesoreria",
+    "evento": "cobranza_cliente",
+    "descripcion": "Cobranza a deudor",
+    "lineas": [
+      { "codigo": "1.1.1.2.01", "cuenta": "BANCO ... CTA/CTE.",    "lado": "debe",  "formula": "total" },
+      { "codigo": "1.1.3.1.01", "cuenta": "DEUDORES POR VENTAS",   "lado": "haber", "formula": "total" }
+    ]
+  },
+  {
+    "modulo": "rrhh",
+    "evento": "pago_sueldos",
+    "descripcion": "Liquidación y pago de sueldos",
+    "lineas": [
+      { "codigo": "4.1.1.4.1.01", "cuenta": "SUELDOS Y CARGAS SOCIALES - ADM.-", "lado": "debe",  "formula": "total" },
+      { "codigo": "1.1.1.2.01",   "cuenta": "BANCO ... CTA/CTE.",                "lado": "haber", "formula": "total" }
+    ]
+  }
+]

@@ -15,6 +15,7 @@ import cotizacionesRoutes from './routes/compras/cotizaciones.routes.js'
 import notasCreditoRoutes from './routes/compras/notasCredito.routes.js'
 import metodosPagoRouter from './routes/compras/metodosPago.routes.js'
 
+
 //MISC
 import productosRoutes from './routes/misc/productos.routes.js'
 
@@ -23,8 +24,10 @@ import empleadosRoutes from './routes/rrhh/empleados.routes.js'
 import salariosRoutes from './routes/rrhh/salarios.routes.js'
 
 //CONTABILIDAD
+import cuentasRoutes  from './routes/contabilidad/cuentas.routes.js'
 import asientosRoutes from './routes/contabilidad/asientos.routes.js'
-import ceuntasRoutes from './routes/contabilidad/cuentas.routes.js'
+
+
 
 //TESORERIA
 import movimientosRoutes from './routes/tesoreria/movimientos.routes.js'
@@ -71,13 +74,15 @@ app.use('/api/compras/facturas', facturasRoutes)
 app.use('/api/compras/cotizaciones', cotizacionesRoutes)
 app.use('/api/compras/notas-credito', notasCreditoRoutes)
 app.use('/api/compras/metodos-pago', metodosPagoRouter)
+app.use('/api/compras/notas-credito', notasCreditoRoutes)
+app.use('/api/compras/metodos-pago', metodosPagoRouter)
 //RRHH
 app.use('/api/rrhh/empleados', empleadosRoutes)
 app.use('/api/rrhh/salarios', salariosRoutes)
 
 //CONTABILIDAD
+app.use('/api/contabilidad/cuentas',  cuentasRoutes)
 app.use('/api/contabilidad/asientos', asientosRoutes)
-app.use('/api/contabilidad/cuentas', ceuntasRoutes)
 
 //TESORERIA
 app.use('/api/tesoreria/movimientos', movimientosRoutes)
@@ -86,7 +91,5 @@ app.use('/api/tesoreria/movimientos', movimientosRoutes)
 app.use('/api/ventas/facturas', facturasVentasRoutes)
 app.use('/api/ventas/presupuestos', presupuestosRoutes)
 app.use('/api/ventas/notas-credito', notasCreditoVentasRoutes)
-
-
 
 export default app

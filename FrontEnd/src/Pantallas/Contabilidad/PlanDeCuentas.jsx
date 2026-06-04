@@ -49,7 +49,7 @@ function ModalCuenta({ titulo, valor, onClose, onSubmit, codigoBloqueado = false
         </div>
 
         <div style={modalStyles.footer}>
-          <Button label="Cancelar" variant="gris" onClick={onClose} />
+          <Button label="Cancelar" variant="gris-claro" onClick={onClose} />
           <Button label="Guardar" variant="amarillo" onClick={() => onSubmit(form)} />
         </div>
       </div>
