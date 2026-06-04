@@ -1,93 +1,75 @@
-<<<<<<< HEAD
-import planInicial from '../../data/contabilidad/planDeCuentas.json' assert { type: 'json' };
-
-=======
 import planInicial from '../../data/contabilidad/planDeCuentas.json' with { type: 'json' };
+import { readFile, writeFile } from 'fs/promises'
+import { fileURLToPath } from 'url'
+import path from 'path'
+import periodosService from './periodos.service.js'
 
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
+const FILE = path.resolve(__dirname, '../../data/contabilidad/planDeCuentas.json')
 
-let cuentas = planInicial.map(c => ({ ...c }))
->>>>>>> 1d247877beac191966728741ff995beabbcbcf39
-
+const leer = async () => JSON.parse(await readFile(FILE, 'utf8'))
+const escribir = (d) => writeFile(FILE, JSON.stringify(d, null, 2), 'utf8')
 
 const sortByCodigo = (a, b) => {
   const pa = a.codigo.split('.').map(Number)
   const pb = b.codigo.split('.').map(Number)
   const len = Math.max(pa.length, pb.length)
   for (let i = 0; i < len; i++) {
-    const va = pa[i] ?? 0
-    const vb = pb[i] ?? 0
+    const va = pa[i] ?? 0, vb = pb[i] ?? 0
     if (va !== vb) return va - vb
   }
   return 0
 }
 
-const listarCuentas = async () => {
-  return [...cuentas].sort(sortByCodigo)
-}
+const hoy = () => new Date().toISOString().slice(0, 10)
 
-const obtenerCuenta = async (codigo) => {
-  const cuenta = cuentas.find(c => c.codigo === codigo)
-  return cuenta ?? null
-}
+const listarCuentas = async () => (await leer()).sort(sortByCodigo)
 
-const crearCuenta = async (datos) => {
-  const { codigo, cuenta, imputable } = datos
+const obtenerCuenta = async (codigo) =>
+  (await leer()).find(c => c.codigo === codigo) ?? null
 
-  if (!codigo || !cuenta) {
-    throw new Error('Código y cuenta son obligatorios')
-  }
+const crearCuenta = async ({ codigo, cuenta, imputable }) => {
+  if (!codigo || !cuenta) throw new Error('Código y cuenta son obligatorios')
+  await periodosService.validarPeriodoAbierto(hoy())
 
-  const existe = cuentas.some(c => c.codigo === codigo)
-  if (existe) {
+  const cuentas = await leer()
+  if (cuentas.some(c => c.codigo === codigo))
     throw new Error(`Ya existe una cuenta con código ${codigo}`)
-  }
 
   const nueva = {
-    codigo,
-    cuenta,
+    codigo, cuenta,
     imputable: !!imputable,
-    ...(imputable ? { saldo: 0 } : {})
+    ...(imputable ? { saldo: 0 } : {}),
   }
-
   cuentas.push(nueva)
+  await escribir(cuentas.sort(sortByCodigo))
   return nueva
 }
 
 const actualizarCuenta = async (codigo, cambios) => {
+  await periodosService.validarPeriodoAbierto(hoy())
+  const cuentas = await leer()
   const idx = cuentas.findIndex(c => c.codigo === codigo)
   if (idx === -1) throw new Error(`Cuenta ${codigo} no encontrada`)
 
-  const { codigo: _, ...datosAActualizar } = cambios
-
-  const datosLimpios = Object.fromEntries(
-    Object.entries(datosAActualizar).filter(([_, v]) => v !== undefined && v !== '')
+  const { codigo: _, ...resto } = cambios
+  const limpios = Object.fromEntries(
+    Object.entries(resto).filter(([__, v]) => v !== undefined && v !== '')
   )
-
-  cuentas[idx] = { ...cuentas[idx], ...datosLimpios, codigo }
+  cuentas[idx] = { ...cuentas[idx], ...limpios, codigo }
+  await escribir(cuentas)
   return cuentas[idx]
 }
 
 const eliminarCuenta = async (codigo) => {
-  const prefijo = codigo + '.'
-  const tieneHijos = cuentas.some(c => c.codigo.startsWith(prefijo))
-  if (tieneHijos) {
+  await periodosService.validarPeriodoAbierto(hoy())
+  const cuentas = await leer()
+  if (cuentas.some(c => c.codigo.startsWith(codigo + '.')))
     throw new Error('No se puede eliminar: la cuenta tiene subcuentas')
-  }
-
-  const longitudInicial = cuentas.length
-  cuentas = cuentas.filter(c => c.codigo !== codigo)
-
-  if (cuentas.length === longitudInicial) {
-    throw new Error(`Cuenta ${codigo} no encontrada`)
-  }
-
+  const filtradas = cuentas.filter(c => c.codigo !== codigo)
+  if (filtradas.length === cuentas.length) throw new Error(`Cuenta ${codigo} no encontrada`)
+  await escribir(filtradas)
   return { codigo, message: 'Cuenta eliminada correctamente' }
 }
 
-export default {
-  listarCuentas,
-  obtenerCuenta,
-  crearCuenta,
-  actualizarCuenta,
-  eliminarCuenta
-}
+export default { listarCuentas, obtenerCuenta, crearCuenta, actualizarCuenta, eliminarCuenta }

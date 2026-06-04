@@ -1,424 +1,2303 @@
 [
-  { "codigo": "1",          "cuenta": "ACTIVO",                                        "imputable": false },
-  { "codigo": "1.1",        "cuenta": "ACTIVO CORRIENTE",                              "imputable": false },
-  { "codigo": "1.1.1",      "cuenta": "CAJA Y BANCOS",                                 "imputable": false },
-  { "codigo": "1.1.1.1",    "cuenta": "CAJA",                                          "imputable": false },
-  { "codigo": "1.1.1.1.01", "cuenta": "CAJA EN MONEDA NACIONAL",                       "imputable": true,  "saldo": 0 },
-  { "codigo": "1.1.1.1.02", "cuenta": "CAJA EN MONEDA NACIONAL",                       "imputable": true,  "saldo": 0 },
-  { "codigo": "1.1.1.1.03", "cuenta": "FONDO FIJO",                                    "imputable": true,  "saldo": 0 },
-  { "codigo": "1.1.1.1.04", "cuenta": "CAJA EN MONEDA EXTRANJERA",                     "imputable": true,  "saldo": 0 },
-  { "codigo": "1.1.1.2",    "cuenta": "BANCOS EN MONEDA NACIONAL",                     "imputable": false },
-  { "codigo": "1.1.1.2.01", "cuenta": "BANCO ... CTA/CTE.",                            "imputable": true,  "saldo": 0 },
-  { "codigo": "1.1.1.2.02", "cuenta": "BANCO ... CTA/CTE.",                            "imputable": true,  "saldo": 0 },
-  { "codigo": "1.1.1.2.03", "cuenta": "BANCO ... CAJA DE AHORROS",                     "imputable": true,  "saldo": 0 },
-  { "codigo": "1.1.1.2.04", "cuenta": "BANCO ... CAJA DE AHORROS",                     "imputable": true,  "saldo": 0 },
-  { "codigo": "1.1.1.3",    "cuenta": "BANCOS EN MONEDA EXTRANJERA",                   "imputable": false },
-  { "codigo": "1.1.1.3.01", "cuenta": "BANCO ... CTA/CTE. M/EXTRANJERA",               "imputable": true,  "saldo": 0 },
-  { "codigo": "1.1.1.3.02", "cuenta": "BANCO ... CTA/CTE. M/EXTRANJERA",               "imputable": true,  "saldo": 0 },
-  { "codigo": "1.1.1.3.03", "cuenta": "...",                                           "imputable": true,  "saldo": 0 },
-
-  { "codigo": "1.1.2",      "cuenta": "INVERSIONES CORRIENTES",                        "imputable": false },
-  { "codigo": "1.1.2.1",    "cuenta": "BANCOS PLAZO FIJO EN MONEDA NACIONAL",          "imputable": false },
-  { "codigo": "1.1.2.1.01", "cuenta": "BANCO ... PLAZO FIJO",                          "imputable": true,  "saldo": 0 },
-  { "codigo": "1.1.2.1.02", "cuenta": "INT. NO DEVENG. PLAZO FIJO BANCO ...",          "imputable": true,  "saldo": 0 },
-  { "codigo": "1.1.2.1.03", "cuenta": "BANCO ... PLAZO FIJO",                          "imputable": true,  "saldo": 0 },
-  { "codigo": "1.1.2.1.04", "cuenta": "INT. NO DEVENG. PLAZO FIJO BANCO ...",          "imputable": true,  "saldo": 0 },
-  { "codigo": "1.1.2.1.05", "cuenta": "...",                                           "imputable": true,  "saldo": 0 },
-  { "codigo": "1.1.2.2",    "cuenta": "TITULOS Y ACCIONES CON COTIZACION",             "imputable": false },
-  { "codigo": "1.1.2.2.01", "cuenta": "ACCIONES DE ... S.A.",                          "imputable": true,  "saldo": 0 },
-  { "codigo": "1.1.2.2.02", "cuenta": "ACCIONES DE ... S.A.",                          "imputable": true,  "saldo": 0 },
-  { "codigo": "1.1.2.2.03", "cuenta": "DIVIDENDOS A COBRAR",                           "imputable": true,  "saldo": 0 },
-  { "codigo": "1.1.2.2.04", "cuenta": "TITULOS PUBLICOS ...",                          "imputable": true,  "saldo": 0 },
-  { "codigo": "1.1.2.2.05", "cuenta": "TITULOS PUBLICOS ...",                          "imputable": true,  "saldo": 0 },
-  { "codigo": "1.1.2.2.06", "cuenta": "INTERESES A COBRAR TITULOS PUBLICOS",           "imputable": true,  "saldo": 0 },
-  { "codigo": "1.1.2.2.07", "cuenta": "...",                                           "imputable": true,  "saldo": 0 },
-  { "codigo": "1.1.2.3",    "cuenta": "PRESTAMOS OTORGADOS",                           "imputable": false },
-  { "codigo": "1.1.2.3.01", "cuenta": "PRESTAMOS DOCUMENTADOS",                        "imputable": true,  "saldo": 0 },
-  { "codigo": "1.1.2.3.02", "cuenta": "INT.NO DEVENG.PRESTAMOS DOCUM.",                "imputable": true,  "saldo": 0 },
-  { "codigo": "1.1.2.3.03", "cuenta": "PRESTAMOS PRENDARIOS",                          "imputable": true,  "saldo": 0 },
-  { "codigo": "1.1.2.3.04", "cuenta": "INT.DEVENG. A COBRAR PREST. PRENDARIOS",        "imputable": true,  "saldo": 0 },
-  { "codigo": "1.1.2.3.05", "cuenta": "...",                                           "imputable": true,  "saldo": 0 },
-  { "codigo": "1.1.2.4",    "cuenta": "OTRAS INVERSIONES EN MONEDA EXTRANJERA",        "imputable": false },
-  { "codigo": "1.1.2.4.01", "cuenta": "BANCO ... CAJA DE AHORROS M/EXTRANJERA",        "imputable": true,  "saldo": 0 },
-  { "codigo": "1.1.2.4.02", "cuenta": "INT.DEVENG. A COBRAR C/A M/EXTRANJERA",         "imputable": true,  "saldo": 0 },
-  { "codigo": "1.1.2.4.03", "cuenta": "BANCO ... PLAZO FIJO ...M/EXTRANJERA",          "imputable": true,  "saldo": 0 },
-  { "codigo": "1.1.2.4.04", "cuenta": "INT. NO DEV. P. FIJO BANCO ... M/EXTRANJERA",   "imputable": true,  "saldo": 0 },
-  { "codigo": "1.1.2.4.05", "cuenta": "...",                                           "imputable": true,  "saldo": 0 },
-
-  { "codigo": "1.1.3",      "cuenta": "CREDITOS",                                      "imputable": false },
-  { "codigo": "1.1.3.1",    "cuenta": "CREDITOS POR VENTAS",                           "imputable": false },
-  { "codigo": "1.1.3.1.01", "cuenta": "DEUDORES POR VENTAS",                           "imputable": true,  "saldo": 0 },
-  { "codigo": "1.1.3.1.02", "cuenta": "DEUDORES MOROSOS",                              "imputable": true,  "saldo": 0 },
-  { "codigo": "1.1.3.1.03", "cuenta": "DEUDORES EN GESTION JUDICIAL",                  "imputable": true,  "saldo": 0 },
-  { "codigo": "1.1.3.1.04", "cuenta": "PREVISION P/DS. INCOBRABLES",                   "imputable": true,  "saldo": 0 },
-  { "codigo": "1.1.3.1.05", "cuenta": "DOCUMENTOS A COBRAR DE CLIENTES",               "imputable": true,  "saldo": 0 },
-  { "codigo": "1.1.3.1.06", "cuenta": "INTER. NO DEV. DOC. A COBRAR DE CLIENTES",      "imputable": true,  "saldo": 0 },
-  { "codigo": "1.1.3.1.07", "cuenta": "INTERESES DEVENG. A COBRAR",                    "imputable": true,  "saldo": 0 },
-  { "codigo": "1.1.3.1.08", "cuenta": "DOCUMENTOS A COBRAR DESCONTADOS",               "imputable": true,  "saldo": 0 },
-  { "codigo": "1.1.3.1.09", "cuenta": "...",                                           "imputable": true,  "saldo": 0 },
-  { "codigo": "1.1.3.2",    "cuenta": "OTROS CREDITOS",                                "imputable": false },
-  { "codigo": "1.1.3.2.01", "cuenta": "SEGUROS PAGADOS POR ADELANTADO",                "imputable": true,  "saldo": 0 },
-  { "codigo": "1.1.3.2.02", "cuenta": "ALQUILERES PAGADOS POR ADELANTADO",             "imputable": true,  "saldo": 0 },
-  { "codigo": "1.1.3.2.03", "cuenta": "OTROS DOCUMENTOS A COBRAR",                     "imputable": true,  "saldo": 0 },
-  { "codigo": "1.1.3.2.04", "cuenta": "INTER. NO DEV. OTROS DOC. A COBRAR",            "imputable": true,  "saldo": 0 },
-  { "codigo": "1.1.3.2.05", "cuenta": "INTERESES PAGADOS POR ADELANTADO",              "imputable": true,  "saldo": 0 },
-  { "codigo": "1.1.3.2.06", "cuenta": "ANTICIPOS DE SUELDOS",                          "imputable": true,  "saldo": 0 },
-  { "codigo": "1.1.3.2.07", "cuenta": "I.V.A. CREDITO FISCAL",                         "imputable": true,  "saldo": 0 },
-  { "codigo": "1.1.3.2.08", "cuenta": "ANTICIPOS FISCALES",                            "imputable": true,  "saldo": 0 },
-  { "codigo": "1.1.3.2.09", "cuenta": "RETENCIONES FISCALES",                          "imputable": true,  "saldo": 0 },
-  { "codigo": "1.1.3.2.10", "cuenta": "ACCIONISTAS",                                   "imputable": true,  "saldo": 0 },
-
-  { "codigo": "1.1.4",      "cuenta": "BIENES DE CAMBIO",                              "imputable": false },
-  { "codigo": "1.1.4.1",    "cuenta": "MERCADERIAS",                                   "imputable": false },
-  { "codigo": "1.1.4.1.01", "cuenta": "MERCADERIAS DE REVENTA",                        "imputable": true,  "saldo": 0 },
-  { "codigo": "1.1.4.1.02", "cuenta": "MERCADERIAS EN TRANSITO",                       "imputable": true,  "saldo": 0 },
-  { "codigo": "1.1.4.1.03", "cuenta": "MERCADERIAS ENTREG. EN CONSIGNACION",           "imputable": true,  "saldo": 0 },
-  { "codigo": "1.1.4.1.04", "cuenta": "ANTICIPO A PROVEEDORES",                        "imputable": true,  "saldo": 0 },
-  { "codigo": "1.1.4.2",    "cuenta": "OTROS BIENES DE CAMBIO",                        "imputable": false },
-  { "codigo": "1.1.4.2.01", "cuenta": "MATERIAS PRIMAS",                               "imputable": true,  "saldo": 0 },
-  { "codigo": "1.1.4.2.02", "cuenta": "PRODUCTOS EN PROCESO",                          "imputable": true,  "saldo": 0 },
-  { "codigo": "1.1.4.2.03", "cuenta": "PRODUCTOS TERMINADOS",                          "imputable": true,  "saldo": 0 },
-
-  { "codigo": "1.1.5",      "cuenta": "OTROS ACTIVOS",                                 "imputable": false },
-  { "codigo": "1.1.5.1",    "cuenta": "OTROS ACTIVOS CORRIENTES",                      "imputable": false },
-  { "codigo": "1.1.5.1.01", "cuenta": "...",                                           "imputable": true,  "saldo": 0 },
-  { "codigo": "1.1.5.1.02", "cuenta": "...",                                           "imputable": true,  "saldo": 0 },
-
-  { "codigo": "1.2",        "cuenta": "ACTIVO NO CORRIENTE",                           "imputable": false },
-  { "codigo": "1.2.1",      "cuenta": "CREDITOS NO CORRIENTES",                        "imputable": false },
-  { "codigo": "1.2.1.1",    "cuenta": "CREDITOS POR VENTAS",                           "imputable": false },
-  { "codigo": "1.2.1.1.01", "cuenta": "DEUDORES MOROSOS",                              "imputable": true,  "saldo": 0 },
-  { "codigo": "1.2.1.1.02", "cuenta": "DEUDORES EN GESTION JUDICIAL",                  "imputable": true,  "saldo": 0 },
-  { "codigo": "1.2.1.1.03", "cuenta": "DOCUMENTOS A COBRAR",                           "imputable": true,  "saldo": 0 },
-  { "codigo": "1.2.1.1.04", "cuenta": "INTERESES NO DEV. DOC. A COBRAR",               "imputable": true,  "saldo": 0 },
-  { "codigo": "1.2.1.1.05", "cuenta": "...",                                           "imputable": true,  "saldo": 0 },
-  { "codigo": "1.2.1.2",    "cuenta": "OTROS CREDITOS",                                "imputable": false },
-  { "codigo": "1.2.1.2.01", "cuenta": "SEGUROS PAGADOS POR ADELANTADO",                "imputable": true,  "saldo": 0 },
-  { "codigo": "1.2.1.2.02", "cuenta": "DIVIDENDOS A COBRAR",                           "imputable": true,  "saldo": 0 },
-  { "codigo": "1.2.1.2.03", "cuenta": "...",                                           "imputable": true,  "saldo": 0 },
-
-  { "codigo": "1.2.2",      "cuenta": "BIENES DE CAMBIO NO CORRIENTES",                "imputable": false },
-  { "codigo": "1.2.2.1",    "cuenta": "MERCADERIAS",                                   "imputable": false },
-  { "codigo": "1.2.2.1.01", "cuenta": "MERCADERIAS DE REVENTA",                        "imputable": true,  "saldo": 0 },
-  { "codigo": "1.2.2.1.02", "cuenta": "MERCADERIAS ...",                               "imputable": true,  "saldo": 0 },
-  { "codigo": "1.2.2.1.03", "cuenta": "MERCADERIAS ENTREG. EN CONSIGNACION",           "imputable": true,  "saldo": 0 },
-  { "codigo": "1.2.2.2",    "cuenta": "OTROS BIENES DE CAMBIO",                        "imputable": false },
-  { "codigo": "1.2.2.2.01", "cuenta": "MATERIAS PRIMAS",                               "imputable": true,  "saldo": 0 },
-  { "codigo": "1.2.2.2.02", "cuenta": "PRODUCTOS EN PROCESO",                          "imputable": true,  "saldo": 0 },
-  { "codigo": "1.2.2.2.03", "cuenta": "PRODUCTOS TERMINADOS",                          "imputable": true,  "saldo": 0 },
-
-  { "codigo": "1.2.3",      "cuenta": "INVERSIONES NO CORRIENTES",                     "imputable": false },
-  { "codigo": "1.2.3.1",    "cuenta": "PARTICIPACIONES EN OTRAS EMPRESAS",             "imputable": false },
-  { "codigo": "1.2.3.1.01", "cuenta": "ACCIONES DE OTRAS SOCIEDADES C/COTIZ",          "imputable": true,  "saldo": 0 },
-  { "codigo": "1.2.3.1.02", "cuenta": "ACCIONES DE OTRAS SOCIEDADES S/COTIZ",          "imputable": true,  "saldo": 0 },
-  { "codigo": "1.2.3.1.03", "cuenta": "...",                                           "imputable": true,  "saldo": 0 },
-  { "codigo": "1.2.3.2",    "cuenta": "INMUEBLES PARA RENTA",                          "imputable": false },
-  { "codigo": "1.2.3.2.01", "cuenta": "INMUEBLES P/ RENTA V. DE ORIGEN",               "imputable": true,  "saldo": 0 },
-  { "codigo": "1.2.3.2.02", "cuenta": "DEPREC.ACUM.INMUEBLE P/ RENTA",                 "imputable": true,  "saldo": 0 },
-  { "codigo": "1.2.3.3",    "cuenta": "PRESTAMOS OTORGADOS",                           "imputable": false },
-  { "codigo": "1.2.3.3.01", "cuenta": "PRESTAMOS DOCUMENTADOS",                        "imputable": true,  "saldo": 0 },
-  { "codigo": "1.2.3.3.02", "cuenta": "INT.NO DEVENG.PRESTAMOS DOCUM.",                "imputable": true,  "saldo": 0 },
-  { "codigo": "1.2.3.3.03", "cuenta": "PRESTAMOS PRENDARIOS",                          "imputable": true,  "saldo": 0 },
-  { "codigo": "1.2.3.3.04", "cuenta": "INT.DEVENG. A COBRAR PREST. PRENDARIOS",        "imputable": true,  "saldo": 0 },
-  { "codigo": "1.2.3.4",    "cuenta": "OTRAS INVERSIONES EN MONEDA EXTRANJERA",        "imputable": false },
-  { "codigo": "1.2.3.4.01", "cuenta": "...",                                           "imputable": true,  "saldo": 0 },
-  { "codigo": "1.2.3.4.02", "cuenta": "...",                                           "imputable": true,  "saldo": 0 },
-
-  { "codigo": "1.2.4",      "cuenta": "BIENES DE USO",                                 "imputable": false },
-  { "codigo": "1.2.4.1",    "cuenta": "MUEBLES Y UTILES",                              "imputable": false },
-  { "codigo": "1.2.4.1.01", "cuenta": "MUEBLES Y UTILES VALOR DE ORIGEN",              "imputable": true,  "saldo": 0 },
-  { "codigo": "1.2.4.1.02", "cuenta": "DEPREC. ACUMUL. MUEBLES Y UTILES",              "imputable": true,  "saldo": 0 },
-  { "codigo": "1.2.4.2",    "cuenta": "MAQUINARIAS",                                   "imputable": false },
-  { "codigo": "1.2.4.2.01", "cuenta": "MAQUINARIAS VALOR DE ORIGEN",                   "imputable": true,  "saldo": 0 },
-  { "codigo": "1.2.4.2.02", "cuenta": "DEPRECIACION ACUMULADA MAQUINARIAS",            "imputable": true,  "saldo": 0 },
-  { "codigo": "1.2.4.3",    "cuenta": "RODADOS",                                       "imputable": false },
-  { "codigo": "1.2.4.3.01", "cuenta": "RODADOS VALOR DE ORIGEN",                       "imputable": true,  "saldo": 0 },
-  { "codigo": "1.2.4.3.02", "cuenta": "DEPRECIACION ACUMULADA RODADOS",                "imputable": true,  "saldo": 0 },
-  { "codigo": "1.2.4.4",    "cuenta": "INMUEBLES",                                     "imputable": false },
-  { "codigo": "1.2.4.4.01", "cuenta": "INMUEBLES VALOR DE ORIGEN",                     "imputable": true,  "saldo": 0 },
-  { "codigo": "1.2.4.4.02", "cuenta": "DEPRECIACION ACUMULADA INMUEBLES",              "imputable": true,  "saldo": 0 },
-  { "codigo": "1.2.4.5",    "cuenta": "TERRENOS",                                      "imputable": false },
-  { "codigo": "1.2.4.5.01", "cuenta": "TERRENOS VALOR DE ORIGEN",                      "imputable": true,  "saldo": 0 },
-  { "codigo": "1.2.4.5.02", "cuenta": "...",                                           "imputable": true,  "saldo": 0 },
-  { "codigo": "1.2.4.6",    "cuenta": "EQUIPOS INFORMATICOS",                          "imputable": false },
-  { "codigo": "1.2.4.6.01", "cuenta": "EQUIPOS INFORMATICOS VALOR DE ORIGEN",          "imputable": true,  "saldo": 0 },
-  { "codigo": "1.2.4.6.02", "cuenta": "DEPREC. ACUMUL. EQUIPOS INFORMATICOS",          "imputable": true,  "saldo": 0 },
-
-  { "codigo": "1.2.5",      "cuenta": "ACTIVOS INTANGIBLES",                           "imputable": false },
-  { "codigo": "1.2.5.1",    "cuenta": "BIENES INMATERIALES",                           "imputable": false },
-  { "codigo": "1.2.5.1.1",  "cuenta": "LLAVE DE NEGOCIO",                              "imputable": false },
-  { "codigo": "1.2.5.1.1.01","cuenta": "LLAVE DE NEGOCIO VALOR DE ORIGEN",             "imputable": true,  "saldo": 0 },
-  { "codigo": "1.2.5.1.1.02","cuenta": "DEPREC. ACUMUL. LLAVE DE NEGOCIO",             "imputable": true,  "saldo": 0 },
-  { "codigo": "1.2.5.1.2",  "cuenta": "MARCAS",                                        "imputable": false },
-  { "codigo": "1.2.5.1.2.01","cuenta": "MARCAS VALOR DE ORIGEN",                       "imputable": true,  "saldo": 0 },
-  { "codigo": "1.2.5.1.2.02","cuenta": "DEPRECIACION ACUMULADA MARCAS",                "imputable": true,  "saldo": 0 },
-  { "codigo": "1.2.5.1.3",  "cuenta": "PATENTES",                                      "imputable": false },
-  { "codigo": "1.2.5.1.3.01","cuenta": "PATENTES VALOR DE ORIGEN",                     "imputable": true,  "saldo": 0 },
-  { "codigo": "1.2.5.1.3.02","cuenta": "DEPRECIACION ACUMULADA PATENTES",              "imputable": true,  "saldo": 0 },
-  { "codigo": "1.2.5.1.4",  "cuenta": "CONCESIONES",                                   "imputable": false },
-  { "codigo": "1.2.5.1.4.01","cuenta": "CONCESIONES VALOR DE ORIGEN",                  "imputable": true,  "saldo": 0 },
-  { "codigo": "1.2.5.1.4.02","cuenta": "DEPREC.ACUMULADA CONCESIONES",                 "imputable": true,  "saldo": 0 },
-  { "codigo": "1.2.5.1.5",  "cuenta": "DERECHOS DE AUTOR",                             "imputable": false },
-  { "codigo": "1.2.5.1.5.01","cuenta": "DERECHOS DE AUTOR VALOR DE ORIGEN",            "imputable": true,  "saldo": 0 },
-  { "codigo": "1.2.5.1.5.02","cuenta": "DEPRECIACION ACUMULADA DERECHOS DE AUTOR",     "imputable": true,  "saldo": 0 },
-  { "codigo": "1.2.5.1.6",  "cuenta": "OTROS BIENES INMATERIALES",                     "imputable": false },
-  { "codigo": "1.2.5.1.6.01","cuenta": "...",                                          "imputable": true,  "saldo": 0 },
-  { "codigo": "1.2.5.2",    "cuenta": "CARGOS DIFERIDOS",                              "imputable": false },
-  { "codigo": "1.2.5.2.1",  "cuenta": "GASTOS DE ORGANIZACION",                        "imputable": false },
-  { "codigo": "1.2.5.2.1.01","cuenta": "GASTOS DE ORGANIZACION V. DE ORIGEN",          "imputable": true,  "saldo": 0 },
-  { "codigo": "1.2.5.2.1.02","cuenta": "DEP.ACUM.GASTOS DE ORGANIZACION",              "imputable": true,  "saldo": 0 },
-  { "codigo": "1.2.5.2.2",  "cuenta": "GASTOS DE INVESTIGACION Y DESARROLLO",          "imputable": false },
-  { "codigo": "1.2.5.2.2.01","cuenta": "GTOS.DE INVEST.Y DESARROLLO V.DE ORIGEN",      "imputable": true,  "saldo": 0 },
-  { "codigo": "1.2.5.2.2.02","cuenta": "DEPR.ACUM.GTOS.DE INVEST.Y DESARROLLO",        "imputable": true,  "saldo": 0 },
-
-  { "codigo": "1.2.6",      "cuenta": "OTROS ACTIVOS NO CTES.",                        "imputable": false },
-  { "codigo": "1.2.6.1",    "cuenta": "ACTIVOS FUERA DE SERVICIO",                     "imputable": false },
-  { "codigo": "1.2.6.1.01", "cuenta": "BIENES DE USO FUERA DE SERVICIO",               "imputable": true,  "saldo": 0 },
-  { "codigo": "1.2.6.1.02", "cuenta": "REZAGOS",                                       "imputable": true,  "saldo": 0 },
-
-  { "codigo": "2",          "cuenta": "PASIVO",                                        "imputable": false },
-  { "codigo": "2.1",        "cuenta": "PASIVO CORRIENTE",                              "imputable": false },
-  { "codigo": "2.1.1",      "cuenta": "DEUDAS",                                        "imputable": false },
-  { "codigo": "2.1.1.1",    "cuenta": "COMERCIALES",                                   "imputable": false },
-  { "codigo": "2.1.1.1.01", "cuenta": "PROVEEDORES",                                   "imputable": true,  "saldo": 0 },
-  { "codigo": "2.1.1.1.02", "cuenta": "DOC.A PAGAR DE PROVEEDORES",                    "imputable": true,  "saldo": 0 },
-  { "codigo": "2.1.1.1.03", "cuenta": "INTERESES NO DEV. DOC.A PAGAR DE PROV.",        "imputable": true,  "saldo": 0 },
-  { "codigo": "2.1.1.1.04", "cuenta": "ANTICIPO DE CLIENTES",                          "imputable": true,  "saldo": 0 },
-  { "codigo": "2.1.1.1.05", "cuenta": "HONORARIOS POR SERVICIOS A PAGAR",              "imputable": true,  "saldo": 0 },
-  { "codigo": "2.1.1.1.06", "cuenta": "OTRAS DEUDAS COMERCIALES",                      "imputable": true,  "saldo": 0 },
-  { "codigo": "2.1.1.1.07", "cuenta": "...",                                           "imputable": true,  "saldo": 0 },
-  { "codigo": "2.1.1.2",    "cuenta": "PRESTAMOS BANCARIOS",                           "imputable": false },
-  { "codigo": "2.1.1.2.01", "cuenta": "PRESTAMO DOCUMENTADO BANCO ...",                "imputable": true,  "saldo": 0 },
-  { "codigo": "2.1.1.2.02", "cuenta": "BANCO ... ADELANTOS EN CTA.CTE.",               "imputable": true,  "saldo": 0 },
-  { "codigo": "2.1.1.2.03", "cuenta": "INTER.DEVENG. A PAGAR BCO. ...",                "imputable": true,  "saldo": 0 },
-  { "codigo": "2.1.1.2.04", "cuenta": "INTER.NO DEVENGADOS PMO.BCO. ...",              "imputable": true,  "saldo": 0 },
-  { "codigo": "2.1.1.2.05", "cuenta": "...",                                           "imputable": true,  "saldo": 0 },
-  { "codigo": "2.1.1.3",    "cuenta": "REMUNERACIONES Y CARGAS SOCIALES A PAGAR",     "imputable": false },
-  { "codigo": "2.1.1.3.01", "cuenta": "SUELDOS A PAGAR",                               "imputable": true,  "saldo": 0 },
-  { "codigo": "2.1.1.3.02", "cuenta": "RETENCIONES A DEPOSITAR",                       "imputable": true,  "saldo": 0 },
-  { "codigo": "2.1.1.3.03", "cuenta": "CONTRIBUCIONES PATRONALES A PAGAR",             "imputable": true,  "saldo": 0 },
-  { "codigo": "2.1.1.4",    "cuenta": "CARGAS FISCALES A PAGAR",                       "imputable": false },
-  { "codigo": "2.1.1.4.01", "cuenta": "I.V.A. DEBITO FISCAL",                          "imputable": true,  "saldo": 0 },
-  { "codigo": "2.1.1.4.02", "cuenta": "I.V.A. SALDO DDJJ A PAGAR",                     "imputable": true,  "saldo": 0 },
-  { "codigo": "2.1.1.4.03", "cuenta": "IMPUESTO S/LOS ING. BRUTOS A PAGAR",            "imputable": true,  "saldo": 0 },
-  { "codigo": "2.1.1.4.04", "cuenta": "RET.IMPUESTO A LAS GCIAS A DEPOSITAR",          "imputable": true,  "saldo": 0 },
-  { "codigo": "2.1.1.4.05", "cuenta": "TASA MUNICIPAL A PAGAR",                        "imputable": true,  "saldo": 0 },
-  { "codigo": "2.1.1.4.06", "cuenta": "...",                                           "imputable": true,  "saldo": 0 },
-  { "codigo": "2.1.1.5",    "cuenta": "OTRAS DEUDAS",                                  "imputable": false },
-  { "codigo": "2.1.1.5.01", "cuenta": "ALQUILERES COBR.POR ADELANTADO",                "imputable": true,  "saldo": 0 },
-  { "codigo": "2.1.1.5.02", "cuenta": "GASTOS DEVENGADOS A PAGAR",                     "imputable": true,  "saldo": 0 },
-  { "codigo": "2.1.1.5.03", "cuenta": "DIVIDENDOS A PAGAR",                            "imputable": true,  "saldo": 0 },
-  { "codigo": "2.1.1.5.04", "cuenta": "HONOR. DIR.Y SIND. A PAGAR",                    "imputable": true,  "saldo": 0 },
-  { "codigo": "2.1.1.5.05", "cuenta": "SOCIO ... CUENTA PARTICULAR",                   "imputable": true,  "saldo": 0 },
-  { "codigo": "2.1.1.5.06", "cuenta": "...",                                           "imputable": true,  "saldo": 0 },
-  { "codigo": "2.1.2",      "cuenta": "PREVISIONES",                                   "imputable": false },
-  { "codigo": "2.1.2.1",    "cuenta": "PREVISIONES LABORALES",                         "imputable": false },
-  { "codigo": "2.1.2.1.01", "cuenta": "PREVISION PARA DESPIDOS",                       "imputable": true,  "saldo": 0 },
-  { "codigo": "2.1.2.1.02", "cuenta": "...",                                           "imputable": true,  "saldo": 0 },
-  { "codigo": "2.1.2.2",    "cuenta": "OTRAS PREVISIONES",                             "imputable": false },
-  { "codigo": "2.1.2.2.01", "cuenta": "PREVISION P/ JUICIOS PENDIENTES",               "imputable": true,  "saldo": 0 },
-  { "codigo": "2.1.2.2.02", "cuenta": "...",                                           "imputable": true,  "saldo": 0 },
-  { "codigo": "2.1.2.2.03", "cuenta": "...",                                           "imputable": true,  "saldo": 0 },
-
-  { "codigo": "2.2",        "cuenta": "PASIVO NO CORRIENTE",                           "imputable": false },
-  { "codigo": "2.2.1",      "cuenta": "DEUDAS",                                        "imputable": false },
-  { "codigo": "2.2.1.1",    "cuenta": "DEUDAS COMERCIALES",                            "imputable": false },
-  { "codigo": "2.2.1.1.01", "cuenta": "DOC.A PAGAR PROVEEDORES",                       "imputable": true,  "saldo": 0 },
-  { "codigo": "2.2.1.1.02", "cuenta": "INTERESES NO DEV. DOC.A PAGAR PROV.",           "imputable": true,  "saldo": 0 },
-  { "codigo": "2.2.1.1.03", "cuenta": "...",                                           "imputable": true,  "saldo": 0 },
-  { "codigo": "2.2.1.2",    "cuenta": "PRESTAMOS BANCARIOS",                           "imputable": false },
-  { "codigo": "2.2.1.2.01", "cuenta": "PRESTAMO DOCUMENTADO BANCO ...",                "imputable": true,  "saldo": 0 },
-  { "codigo": "2.2.1.2.02", "cuenta": "INTER.NO DEVENGADOS PMO.BCO. ...",              "imputable": true,  "saldo": 0 },
-  { "codigo": "2.2.1.3",    "cuenta": "REMUNERACIONES Y CARGAS SOCIALES A PAGAR",     "imputable": false },
-  { "codigo": "2.2.1.3.01", "cuenta": "PLAN FACILID.DE PAGO APORTES Y CONTRIB.",       "imputable": true,  "saldo": 0 },
-  { "codigo": "2.2.1.3.02", "cuenta": "...",                                           "imputable": true,  "saldo": 0 },
-  { "codigo": "2.2.1.4",    "cuenta": "CARGAS FISCALES A PAGAR",                       "imputable": false },
-  { "codigo": "2.2.1.4.01", "cuenta": "MORATORIA ...",                                 "imputable": true,  "saldo": 0 },
-  { "codigo": "2.2.1.4.02", "cuenta": "PLAN FACILID.DE PAGO ...",                      "imputable": true,  "saldo": 0 },
-  { "codigo": "2.2.1.4.03", "cuenta": "...",                                           "imputable": true,  "saldo": 0 },
-  { "codigo": "2.2.1.5",    "cuenta": "OTRAS DEUDAS",                                  "imputable": false },
-  { "codigo": "2.2.1.5.01", "cuenta": "DIVIDENDOS A PAGAR",                            "imputable": true,  "saldo": 0 },
-  { "codigo": "2.2.1.5.02", "cuenta": "...",                                           "imputable": true,  "saldo": 0 },
-
-  { "codigo": "2.2.2",      "cuenta": "PREVISIONES",                                   "imputable": false },
-  { "codigo": "2.2.2.1",    "cuenta": "PREVISIONES LABORALES",                         "imputable": false },
-  { "codigo": "2.2.2.1.01", "cuenta": "PREVISION PARA DESPIDOS",                       "imputable": true,  "saldo": 0 },
-  { "codigo": "2.2.2.1.02", "cuenta": "...",                                           "imputable": true,  "saldo": 0 },
-  { "codigo": "2.2.2.2",    "cuenta": "OTRAS PREVISIONES",                             "imputable": false },
-  { "codigo": "2.2.2.2.01", "cuenta": "PREVISION P/ JUICIOS PENDIENTES",               "imputable": true,  "saldo": 0 },
-  { "codigo": "2.2.2.2.02", "cuenta": "...",                                           "imputable": true,  "saldo": 0 },
-
-  { "codigo": "3",          "cuenta": "PATRIMONIO NETO",                               "imputable": false },
-  { "codigo": "3.1",        "cuenta": "CAPITAL",                                       "imputable": false },
-  { "codigo": "3.1.1",      "cuenta": "APORTES CAPITALIZADOS",                         "imputable": false },
-  { "codigo": "3.1.1.01",   "cuenta": "ACCIONES EN CIRCULACION",                       "imputable": true,  "saldo": 0 },
-  { "codigo": "3.1.2",      "cuenta": "APORTES NO CAPITALIZADOS",                      "imputable": false },
-  { "codigo": "3.1.2.01",   "cuenta": "AJUSTE DE CAPITAL",                             "imputable": true,  "saldo": 0 },
-  { "codigo": "3.1.2.02",   "cuenta": "ACCIONES A EMITIR POR DIVIDENDOS",              "imputable": true,  "saldo": 0 },
-  { "codigo": "3.1.2.03",   "cuenta": "APORTES IRREVOCABLES P/FUT.SUSCRIP.",           "imputable": true,  "saldo": 0 },
-  { "codigo": "3.1.2.04",   "cuenta": "PRIMA DE EMISION",                              "imputable": true,  "saldo": 0 },
-  { "codigo": "3.2",        "cuenta": "RESULTADOS",                                    "imputable": false },
-  { "codigo": "3.2.1",      "cuenta": "GANANCIAS RESERVADAS",                          "imputable": false },
-  { "codigo": "3.2.1.01",   "cuenta": "RESERVA LEGAL",                                 "imputable": true,  "saldo": 0 },
-  { "codigo": "3.2.1.02",   "cuenta": "RESERVA ESTATUTARIA",                           "imputable": true,  "saldo": 0 },
-  { "codigo": "3.2.1.03",   "cuenta": "RESERVA FACULTATIVA",                           "imputable": true,  "saldo": 0 },
-  { "codigo": "3.2.2",      "cuenta": "RESULTADOS NO ASIGNADOS",                       "imputable": false },
-  { "codigo": "3.2.2.01",   "cuenta": "RESULTADOS NO ASIGN. EJ. ANTERIORES",           "imputable": true,  "saldo": 0 },
-  { "codigo": "3.2.2.02",   "cuenta": "RESULTADO DEL EJERCICIO",                       "imputable": true,  "saldo": 0 },
-
-  { "codigo": "4",          "cuenta": "RESULTADOS",                                    "imputable": false },
-  { "codigo": "4.1",        "cuenta": "RESULTADOS ORDINARIOS",                         "imputable": false },
-  { "codigo": "4.1.1",      "cuenta": "RESULTADOS ORDINARIOS OPERATIVOS",              "imputable": false },
-  { "codigo": "4.1.1.1",    "cuenta": "RESULTADO BRUTO DE VENTAS",                     "imputable": false },
-  { "codigo": "4.1.1.1.01", "cuenta": "VENTAS",                                        "imputable": true,  "saldo": 0 },
-  { "codigo": "4.1.1.1.02", "cuenta": "COSTO DE MERCADERIAS VENDIDAS",                 "imputable": true,  "saldo": 0 },
-  { "codigo": "4.1.1.1.03", "cuenta": "DIFERENCIAS DE INVENTARIOS",                    "imputable": true,  "saldo": 0 },
-  { "codigo": "4.1.1.2",    "cuenta": "OTROS RESULTADOS DE COMERCIALIZACION",          "imputable": false },
-  { "codigo": "4.1.1.2.01", "cuenta": "COMISIONES GANADAS",                            "imputable": true,  "saldo": 0 },
-  { "codigo": "4.1.1.2.02", "cuenta": "DEUDORES INCOBRABLES",                          "imputable": true,  "saldo": 0 },
-  { "codigo": "4.1.1.2.03", "cuenta": "...",                                           "imputable": true,  "saldo": 0 },
-  { "codigo": "4.1.1.3",    "cuenta": "GASTOS DE COMERCIALIZACION",                    "imputable": false },
-  { "codigo": "4.1.1.3.1",  "cuenta": "GASTOS EN PERSONAL",                            "imputable": false },
-  { "codigo": "4.1.1.3.1.01","cuenta": "SUELDOS Y CARGAS SOCIALES- COMERC.-",          "imputable": true,  "saldo": 0 },
-  { "codigo": "4.1.1.3.1.02","cuenta": "COMISIONES POR VENTAS",                        "imputable": true,  "saldo": 0 },
-  { "codigo": "4.1.1.3.1.03","cuenta": "VIATICOS Y MOVILIDAD - COMERC.-",              "imputable": true,  "saldo": 0 },
-  { "codigo": "4.1.1.3.1.04","cuenta": "...",                                          "imputable": true,  "saldo": 0 },
-  { "codigo": "4.1.1.3.2",  "cuenta": "GASTOS EN SERVICIOS",                           "imputable": false },
-  { "codigo": "4.1.1.3.2.01","cuenta": "GTOS.LUZ,GAS,T.E. - COMERC.-",                 "imputable": true,  "saldo": 0 },
-  { "codigo": "4.1.1.3.2.02","cuenta": "SERVICIOS MUNICIPALES - COMERC.-",             "imputable": true,  "saldo": 0 },
-  { "codigo": "4.1.1.3.2.03","cuenta": "...",                                          "imputable": true,  "saldo": 0 },
-  { "codigo": "4.1.1.3.3",  "cuenta": "GASTOS S/ BIENES DE USO",                       "imputable": false },
-  { "codigo": "4.1.1.3.3.01","cuenta": "COMBUSTIBLES - COMERC.-",                      "imputable": true,  "saldo": 0 },
-  { "codigo": "4.1.1.3.3.02","cuenta": "MANTENIMIENTO DE EDIFICIO - COMERC.-",         "imputable": true,  "saldo": 0 },
-  { "codigo": "4.1.1.3.3.03","cuenta": "MANTENIMIENTO DE ... - COMERC.-",              "imputable": true,  "saldo": 0 },
-  { "codigo": "4.1.1.3.3.04","cuenta": "DEPRECIACION MUEBLES Y UTILES - COMERC.-",     "imputable": true,  "saldo": 0 },
-  { "codigo": "4.1.1.3.3.05","cuenta": "DEPRECIACION MAQUINARIAS - COMERC.-",          "imputable": true,  "saldo": 0 },
-  { "codigo": "4.1.1.3.3.06","cuenta": "DEPRECIACION RODADOS - COMERC.-",              "imputable": true,  "saldo": 0 },
-  { "codigo": "4.1.1.3.3.07","cuenta": "DEPRECIACION INMUEBLES - COMERC.-",            "imputable": true,  "saldo": 0 },
-  { "codigo": "4.1.1.3.3.08","cuenta": "DEPRECIACION EQ. INFORMATICOS - COMERC.-",     "imputable": true,  "saldo": 0 },
-  { "codigo": "4.1.1.3.3.09","cuenta": "SEGUROS - COMERC.-",                           "imputable": true,  "saldo": 0 },
-  { "codigo": "4.1.1.3.3.10","cuenta": "...",                                          "imputable": true,  "saldo": 0 },
-  { "codigo": "4.1.1.3.4",  "cuenta": "OTROS GASTOS DE COMERCIALIZACION",              "imputable": false },
-  { "codigo": "4.1.1.3.4.01","cuenta": "GTOS. PAPLERIA Y UTILES - COMERC.-",           "imputable": true,  "saldo": 0 },
-  { "codigo": "4.1.1.3.4.02","cuenta": "GTOS. PUBLICIDAD",                             "imputable": true,  "saldo": 0 },
-  { "codigo": "4.1.1.3.4.03","cuenta": "FLETES DE ENVIO",                              "imputable": true,  "saldo": 0 },
-  { "codigo": "4.1.1.3.4.04","cuenta": "IMPUESTO S/ LOS ING. BRUTOS",                  "imputable": true,  "saldo": 0 },
-  { "codigo": "4.1.1.3.4.05","cuenta": "...",                                          "imputable": true,  "saldo": 0 },
-  { "codigo": "4.1.1.3.4.06","cuenta": "...",                                          "imputable": true,  "saldo": 0 },
-  { "codigo": "4.1.1.4",    "cuenta": "GASTOS DE ADMINISTRACION",                      "imputable": false },
-  { "codigo": "4.1.1.4.1",  "cuenta": "GASTOS EN PERSONAL",                            "imputable": false },
-  { "codigo": "4.1.1.4.1.01","cuenta": "SUELDOS Y CARGAS SOCIALES - ADM.-",            "imputable": true,  "saldo": 0 },
-  { "codigo": "4.1.1.4.1.02","cuenta": "VIATICOS Y MOVILIDAD - ADM.-",                 "imputable": true,  "saldo": 0 },
-  { "codigo": "4.1.1.4.1.03","cuenta": "...",                                          "imputable": true,  "saldo": 0 },
-  { "codigo": "4.1.1.4.1.04","cuenta": "...",                                          "imputable": true,  "saldo": 0 },
-  { "codigo": "4.1.1.4.2",  "cuenta": "GASTOS EN SERVICIOS",                           "imputable": false },
-  { "codigo": "4.1.1.4.2.01","cuenta": "GTOS.LUZ,GAS,T.E. - ADM.-",                    "imputable": true,  "saldo": 0 },
-  { "codigo": "4.1.1.4.2.02","cuenta": "SERVICIOS MUNICIPALES - ADM.-",                "imputable": true,  "saldo": 0 },
-  { "codigo": "4.1.1.4.2.03","cuenta": "...",                                          "imputable": true,  "saldo": 0 },
-  { "codigo": "4.1.1.4.3",  "cuenta": "GASTOS S/ BIENES DE USO",                       "imputable": false },
-  { "codigo": "4.1.1.4.3.01","cuenta": "COMBUSTIBLES - ADM.-",                         "imputable": true,  "saldo": 0 },
-  { "codigo": "4.1.1.4.3.02","cuenta": "MANTENIMIENTO DE EDIFICIO - ADM.-",            "imputable": true,  "saldo": 0 },
-  { "codigo": "4.1.1.4.3.03","cuenta": "MANTENIMIENTO DE ... - ADM.-",                 "imputable": true,  "saldo": 0 },
-  { "codigo": "4.1.1.4.3.04","cuenta": "REPARACION DE ... - ADM.-",                    "imputable": true,  "saldo": 0 },
-  { "codigo": "4.1.1.4.3.05","cuenta": "DEPRECIACION MUEBLES Y UTILES - ADM.-",        "imputable": true,  "saldo": 0 },
-  { "codigo": "4.1.1.4.3.06","cuenta": "DEPRECIACION MAQUINARIAS - ADM.-",             "imputable": true,  "saldo": 0 },
-  { "codigo": "4.1.1.4.3.07","cuenta": "DEPRECIACION RODADOS - ADM.-",                 "imputable": true,  "saldo": 0 },
-  { "codigo": "4.1.1.4.3.08","cuenta": "DEPRECIACION INMUEBLES - ADM.-",               "imputable": true,  "saldo": 0 },
-  { "codigo": "4.1.1.4.3.09","cuenta": "DEPRECIACION EQ. INFORMATICOS - ADM.-",        "imputable": true,  "saldo": 0 },
-  { "codigo": "4.1.1.4.3.10","cuenta": "DEPRECIACION GTOS.DE ORGANIZACION - ADM.-",    "imputable": true,  "saldo": 0 },
-  { "codigo": "4.1.1.4.3.11","cuenta": "SEGUROS - ADM.-",                              "imputable": true,  "saldo": 0 },
-  { "codigo": "4.1.1.4.4",  "cuenta": "OTROS GASTOS DE ADMINISTRACION",                "imputable": false },
-  { "codigo": "4.1.1.4.4.01","cuenta": "GTOS. PAPLERIA Y UTILES - ADM.-",              "imputable": true,  "saldo": 0 },
-  { "codigo": "4.1.1.4.4.02","cuenta": "GTOS. Y COMISIONES BANCARIAS - ADM.-",         "imputable": true,  "saldo": 0 },
-  { "codigo": "4.1.1.4.4.03","cuenta": "ALQUILERES PERDIDOS - ADM.-",                  "imputable": true,  "saldo": 0 },
-  { "codigo": "4.1.1.4.4.04","cuenta": "GTOS.FRANQUEOS",                               "imputable": true,  "saldo": 0 },
-  { "codigo": "4.1.1.4.4.05","cuenta": "...",                                          "imputable": true,  "saldo": 0 },
-
-  { "codigo": "4.1.2",      "cuenta": "RESULTADOS ORDINARIOS FINANCIEROS",             "imputable": false },
-  { "codigo": "4.1.2.1",    "cuenta": "GENERADOS POR ACTIVOS",                         "imputable": false },
-  { "codigo": "4.1.2.1.01", "cuenta": "INTERESES GANADOS DS.POR VENTAS",               "imputable": true,  "saldo": 0 },
-  { "codigo": "4.1.2.1.02", "cuenta": "INTERESES GANADOS DOC.A COB. DEUDORES",         "imputable": true,  "saldo": 0 },
-  { "codigo": "4.1.2.2",    "cuenta": "GENERADOS POR PASIVOS",                         "imputable": false },
-  { "codigo": "4.1.2.2.01", "cuenta": "INTERESES PERDIDOS PROVEEDORES",                "imputable": true,  "saldo": 0 },
-  { "codigo": "4.1.2.2.02", "cuenta": "INTERESES PERDIDOS DOC.A PAGAR PROV.",          "imputable": true,  "saldo": 0 },
-  { "codigo": "4.1.2.3",    "cuenta": "OTROS RESULTADOS FINANCIEROS",                  "imputable": false },
-  { "codigo": "4.1.2.3.01", "cuenta": "DESCUENTOS OBTENIDOS",                          "imputable": true,  "saldo": 0 },
-  { "codigo": "4.1.2.3.02", "cuenta": "DESCUENTOS CONCEDIDOS",                         "imputable": true,  "saldo": 0 },
-  { "codigo": "4.1.3",      "cuenta": "RESULTADOS ORDINARIOS NO OPERATIVOS",           "imputable": false },
-  { "codigo": "4.1.3.1",    "cuenta": "DE INVERSIONES CORRIENTES",                     "imputable": false },
-  { "codigo": "4.1.3.1.01", "cuenta": "VENTA DE TITULOS PUBLICOS",                     "imputable": true,  "saldo": 0 },
-  { "codigo": "4.1.3.1.02", "cuenta": "COSTO DE VENTA TITULOS PUBLICOS",               "imputable": true,  "saldo": 0 },
-  { "codigo": "4.1.3.1.03", "cuenta": "VENTA DE ACCIONES DE OTRAS SOC.",               "imputable": true,  "saldo": 0 },
-  { "codigo": "4.1.3.1.04", "cuenta": "COSTO DE VENTA ACCIONES DE OTRAS SOC.",         "imputable": true,  "saldo": 0 },
-  { "codigo": "4.1.3.1.05", "cuenta": "DIVIDENDOS GANADOS",                            "imputable": true,  "saldo": 0 },
-  { "codigo": "4.1.3.1.06", "cuenta": "DIFERENCIA COTIZACION MON. EXTRANJERA",         "imputable": true,  "saldo": 0 },
-  { "codigo": "4.1.3.1.07", "cuenta": "...",                                           "imputable": true,  "saldo": 0 },
-  { "codigo": "4.1.3.2",    "cuenta": "DE INVERSIONES NO CORRIENTES",                  "imputable": false },
-  { "codigo": "4.1.3.2.01", "cuenta": "AJUSTE VAL. ACCIONES DE OTRAS SOC.",            "imputable": true,  "saldo": 0 },
-  { "codigo": "4.1.3.2.02", "cuenta": "OTROS AJ. VAL. ACCIONES",                       "imputable": true,  "saldo": 0 },
-  { "codigo": "4.1.3.2.03", "cuenta": "ALQUILERES GANADOS INMUEBLE P/RENTA",           "imputable": true,  "saldo": 0 },
-  { "codigo": "4.1.3.2.04", "cuenta": "VTA. DE INMUEBLE P/RENTA",                      "imputable": true,  "saldo": 0 },
-  { "codigo": "4.1.3.2.05", "cuenta": "COSTO DE VENTA INMUEBLE P/RENTA",               "imputable": true,  "saldo": 0 },
-  { "codigo": "4.1.3.2.06", "cuenta": "DIVIDENDOS GANADOS",                            "imputable": true,  "saldo": 0 },
-  { "codigo": "4.1.3.2.07", "cuenta": "GTOS. S/ INMUEBLE P/RENTA",                     "imputable": true,  "saldo": 0 },
-  { "codigo": "4.1.3.3",    "cuenta": "RESULTADOS FINANCIEROS DE INVERSIONES",         "imputable": false },
-  { "codigo": "4.1.3.3.1",  "cuenta": "GENERADOS POR ACTIVOS",                         "imputable": false },
-  { "codigo": "4.1.3.3.1.01","cuenta": "INTERESES GANADOS TITULOS PUBLICOS",           "imputable": true,  "saldo": 0 },
-  { "codigo": "4.1.3.3.1.02","cuenta": "INTERESES GANADOS PREST. OTORGADOS",           "imputable": true,  "saldo": 0 },
-  { "codigo": "4.1.3.3.1.03","cuenta": "...",                                          "imputable": true,  "saldo": 0 },
-  { "codigo": "4.1.3.3.2",  "cuenta": "GENERADOS POR PASIVOS",                         "imputable": false },
-  { "codigo": "4.1.3.3.2.01","cuenta": "INT. PERDIDOS PMO.HIP. INMUEBLE P/RENTA",      "imputable": true,  "saldo": 0 },
-  { "codigo": "4.1.3.3.2.02","cuenta": "...",                                          "imputable": true,  "saldo": 0 },
-  { "codigo": "4.1.3.4",    "cuenta": "OTROS RESULTADOS ORDINARIOS NO OPERATIVOS",     "imputable": false },
-  { "codigo": "4.1.3.4.01", "cuenta": "INGRESOS VARIOS",                               "imputable": true,  "saldo": 0 },
-  { "codigo": "4.1.3.4.02", "cuenta": "GASTOS VARIOS",                                 "imputable": true,  "saldo": 0 },
-  { "codigo": "4.1.3.4.03", "cuenta": "RDO.REEMPLAZO BIENES",                          "imputable": true,  "saldo": 0 },
-
-  { "codigo": "4.2",        "cuenta": "RESULTADOS EXTRAORDINARIOS",                    "imputable": false },
-  { "codigo": "4.2.1",      "cuenta": "DEL EJERCICIO",                                 "imputable": false },
-  { "codigo": "4.2.1.1",    "cuenta": "OPERATIVOS",                                    "imputable": false },
-  { "codigo": "4.2.1.1.01", "cuenta": "INDEMNIZACION POR DESPIDO",                     "imputable": true,  "saldo": 0 },
-  { "codigo": "4.2.1.1.02", "cuenta": "SINIESTROS BIENES DE USO",                      "imputable": true,  "saldo": 0 },
-  { "codigo": "4.2.1.1.03", "cuenta": "...",                                           "imputable": true,  "saldo": 0 },
-  { "codigo": "4.2.1.2",    "cuenta": "FINANCIEROS",                                   "imputable": false },
-  { "codigo": "4.2.1.2.01", "cuenta": "INTERESES PERDIDOS ...",                        "imputable": true,  "saldo": 0 },
-  { "codigo": "4.2.1.3",    "cuenta": "NO OPERATIVOS",                                 "imputable": false },
-  { "codigo": "4.2.1.3.01", "cuenta": "SINIESTROS INMUEBLE P/RENTA",                   "imputable": true,  "saldo": 0 },
-  { "codigo": "4.2.1.3.02", "cuenta": "RDO. VPP ACCIONES OTRAS SOCIEDADES",            "imputable": true,  "saldo": 0 },
-  { "codigo": "4.2.1.3.03", "cuenta": "INDEMNIZACION POR DAÑOS Y PERJUICIOS",          "imputable": true,  "saldo": 0 },
-  { "codigo": "4.2.1.4",    "cuenta": "OTROS RESULTADOS EXTRAORDINARIOS",              "imputable": false },
-  { "codigo": "4.2.1.4.01", "cuenta": "...",                                           "imputable": true,  "saldo": 0 },
-  { "codigo": "4.2.2",      "cuenta": "DE EJERCICIOS ANTERIORES",                      "imputable": false },
-  { "codigo": "4.2.2.1",    "cuenta": "OPERATIVOS",                                    "imputable": false },
-  { "codigo": "4.2.2.1.01", "cuenta": "INDEMNIZACION POR DESPIDOS",                    "imputable": true,  "saldo": 0 },
-  { "codigo": "4.2.2.1.02", "cuenta": "...",                                           "imputable": true,  "saldo": 0 },
-  { "codigo": "4.2.2.2",    "cuenta": "FINANCIEROS",                                   "imputable": false },
-  { "codigo": "4.2.2.2.01", "cuenta": "...",                                           "imputable": true,  "saldo": 0 },
-  { "codigo": "4.2.2.3",    "cuenta": "NO OPERATIVOS",                                 "imputable": false },
-  { "codigo": "4.2.2.3.01", "cuenta": "INDEMNIZACION POR JUICIOS PENDIENTES",          "imputable": true,  "saldo": 0 },
-  { "codigo": "4.2.2.3.02", "cuenta": "...",                                           "imputable": true,  "saldo": 0 },
-  { "codigo": "4.2.2.4",    "cuenta": "OTROS RESULTADOS EXTRAORDINARIOS",              "imputable": false },
-  { "codigo": "4.2.2.4.01", "cuenta": "...",                                           "imputable": true,  "saldo": 0 },
-
-  { "codigo": "5",          "cuenta": "CUENTAS DE ORDEN",                              "imputable": false },
-  { "codigo": "5.1",        "cuenta": "ACTIVOS CONTINGENTES",                          "imputable": false },
-  { "codigo": "5.1.1",      "cuenta": "BIENES DE TERCEROS",                            "imputable": false },
-  { "codigo": "5.1.1.01",   "cuenta": "MERCADERIAS RECIBIDAS EN CONSIGNAC.",           "imputable": true,  "saldo": 0 },
-  { "codigo": "5.1.1.02",   "cuenta": "BIENES RECIBIDOS EN MUESTRA",                   "imputable": true,  "saldo": 0 },
-  { "codigo": "5.1.1.03",   "cuenta": "DEPOSITOS EN GARANTIA",                         "imputable": true,  "saldo": 0 },
-  { "codigo": "5.1.1.04",   "cuenta": "...",                                           "imputable": true,  "saldo": 0 },
-  { "codigo": "5.1.2",      "cuenta": "OTRAS CUENTAS DE ORDEN ACTIVAS",                "imputable": false },
-  { "codigo": "5.1.2.01",   "cuenta": "DOC. A COBRAR DESCONTADOS EN BCO. ...",         "imputable": true,  "saldo": 0 },
-  { "codigo": "5.1.2.02",   "cuenta": "DOC. A COBRAR ENDOSADOS A TERCEROS",            "imputable": true,  "saldo": 0 },
-  { "codigo": "5.1.2.03",   "cuenta": "...",                                           "imputable": true,  "saldo": 0 },
-  { "codigo": "5.2",        "cuenta": "PASIVOS CONTINGENTES",                          "imputable": false },
-  { "codigo": "5.2.1",      "cuenta": "POR TENENCIA DE BIENES DE TERCEROS",            "imputable": false },
-  { "codigo": "5.2.1.01",   "cuenta": "PROVEEDORES POR MERC.REC.EN CONSIG.",           "imputable": true,  "saldo": 0 },
-  { "codigo": "5.2.1.02",   "cuenta": "ACREED. POR BIENES REC.EN MUESTRAS",            "imputable": true,  "saldo": 0 },
-  { "codigo": "5.2.1.03",   "cuenta": "DEPOSITANTES DE GARANTIAS",                     "imputable": true,  "saldo": 0 },
-  { "codigo": "5.2.1.04",   "cuenta": "...",                                           "imputable": true,  "saldo": 0 },
-  { "codigo": "5.2.2",      "cuenta": "OTRAS CUENTAS DE ORDEN PASIVAS",                "imputable": false },
-  { "codigo": "5.2.2.01",   "cuenta": "BCO. ... DOC. A COBRAR DESCONTADOS",            "imputable": true,  "saldo": 0 },
-  { "codigo": "5.2.2.02",   "cuenta": "TERCEROS DOC. A COBRAR ENDOSADOS",              "imputable": true,  "saldo": 0 },
-  { "codigo": "5.2.2.03",   "cuenta": "...",                                           "imputable": true,  "saldo": 0 }
+  {
+    "codigo": "1",
+    "cuenta": "ACTIVO",
+    "imputable": true
+  },
+  {
+    "codigo": "1.1",
+    "cuenta": "ACTIVO CORRIENTE",
+    "imputable": false
+  },
+  {
+    "codigo": "1.1.1",
+    "cuenta": "CAJA Y BANCOS",
+    "imputable": false
+  },
+  {
+    "codigo": "1.1.1.1",
+    "cuenta": "CAJA",
+    "imputable": false
+  },
+  {
+    "codigo": "1.1.1.1.01",
+    "cuenta": "CAJA EN MONEDA NACIONAL",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "1.1.1.1.02",
+    "cuenta": "FONDO FIJO",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "1.1.1.1.03",
+    "cuenta": "CAJA EN MONEDA EXTRANJERA",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "1.1.1.1.04",
+    "cuenta": "Caja en moneda extranjera",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "1.1.1.2",
+    "cuenta": "BANCOS EN MONEDA NACIONAL",
+    "imputable": false
+  },
+  {
+    "codigo": "1.1.1.2.01",
+    "cuenta": "BANCO ... CTA/CTE.",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "1.1.1.2.02",
+    "cuenta": "BANCO ... CTA/CTE.",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "1.1.1.2.03",
+    "cuenta": "BANCO ... CAJA DE AHORROS",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "1.1.1.2.04",
+    "cuenta": "BANCO ... CAJA DE AHORROS",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "1.1.1.3",
+    "cuenta": "BANCOS EN MONEDA EXTRANJERA",
+    "imputable": false
+  },
+  {
+    "codigo": "1.1.1.3.01",
+    "cuenta": "BANCO ... CTA/CTE. M/EXTRANJERA",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "1.1.1.3.02",
+    "cuenta": "BANCO ... CTA/CTE. M/EXTRANJERA",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "1.1.1.3.03",
+    "cuenta": "...",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "1.1.2",
+    "cuenta": "INVERSIONES CORRIENTES",
+    "imputable": false
+  },
+  {
+    "codigo": "1.1.2.1",
+    "cuenta": "BANCOS PLAZO FIJO EN MONEDA NACIONAL",
+    "imputable": false
+  },
+  {
+    "codigo": "1.1.2.1.01",
+    "cuenta": "BANCO ... PLAZO FIJO",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "1.1.2.1.02",
+    "cuenta": "INT. NO DEVENG. PLAZO FIJO BANCO ...",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "1.1.2.1.03",
+    "cuenta": "BANCO ... PLAZO FIJO",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "1.1.2.1.04",
+    "cuenta": "INT. NO DEVENG. PLAZO FIJO BANCO ...",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "1.1.2.1.05",
+    "cuenta": "...",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "1.1.2.2",
+    "cuenta": "TITULOS Y ACCIONES CON COTIZACION",
+    "imputable": false
+  },
+  {
+    "codigo": "1.1.2.2.01",
+    "cuenta": "ACCIONES DE ... S.A.",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "1.1.2.2.02",
+    "cuenta": "ACCIONES DE ... S.A.",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "1.1.2.2.03",
+    "cuenta": "DIVIDENDOS A COBRAR",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "1.1.2.2.04",
+    "cuenta": "TITULOS PUBLICOS ...",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "1.1.2.2.05",
+    "cuenta": "TITULOS PUBLICOS ...",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "1.1.2.2.06",
+    "cuenta": "INTERESES A COBRAR TITULOS PUBLICOS",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "1.1.2.2.07",
+    "cuenta": "...",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "1.1.2.3",
+    "cuenta": "PRESTAMOS OTORGADOS",
+    "imputable": false
+  },
+  {
+    "codigo": "1.1.2.3.01",
+    "cuenta": "PRESTAMOS DOCUMENTADOS",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "1.1.2.3.02",
+    "cuenta": "INT.NO DEVENG.PRESTAMOS DOCUM.",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "1.1.2.3.03",
+    "cuenta": "PRESTAMOS PRENDARIOS",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "1.1.2.3.04",
+    "cuenta": "INT.DEVENG. A COBRAR PREST. PRENDARIOS",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "1.1.2.3.05",
+    "cuenta": "...",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "1.1.2.4",
+    "cuenta": "OTRAS INVERSIONES EN MONEDA EXTRANJERA",
+    "imputable": false
+  },
+  {
+    "codigo": "1.1.2.4.01",
+    "cuenta": "BANCO ... CAJA DE AHORROS M/EXTRANJERA",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "1.1.2.4.02",
+    "cuenta": "INT.DEVENG. A COBRAR C/A M/EXTRANJERA",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "1.1.2.4.03",
+    "cuenta": "BANCO ... PLAZO FIJO ...M/EXTRANJERA",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "1.1.2.4.04",
+    "cuenta": "INT. NO DEV. P. FIJO BANCO ... M/EXTRANJERA",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "1.1.2.4.05",
+    "cuenta": "...",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "1.1.3",
+    "cuenta": "CREDITOS",
+    "imputable": false
+  },
+  {
+    "codigo": "1.1.3.1",
+    "cuenta": "CREDITOS POR VENTAS",
+    "imputable": false
+  },
+  {
+    "codigo": "1.1.3.1.01",
+    "cuenta": "DEUDORES POR VENTAS",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "1.1.3.1.02",
+    "cuenta": "DEUDORES MOROSOS",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "1.1.3.1.03",
+    "cuenta": "DEUDORES EN GESTION JUDICIAL",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "1.1.3.1.04",
+    "cuenta": "PREVISION P/DS. INCOBRABLES",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "1.1.3.1.05",
+    "cuenta": "DOCUMENTOS A COBRAR DE CLIENTES",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "1.1.3.1.06",
+    "cuenta": "INTER. NO DEV. DOC. A COBRAR DE CLIENTES",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "1.1.3.1.07",
+    "cuenta": "INTERESES DEVENG. A COBRAR",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "1.1.3.1.08",
+    "cuenta": "DOCUMENTOS A COBRAR DESCONTADOS",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "1.1.3.1.09",
+    "cuenta": "...",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "1.1.3.2",
+    "cuenta": "OTROS CREDITOS",
+    "imputable": false
+  },
+  {
+    "codigo": "1.1.3.2.01",
+    "cuenta": "SEGUROS PAGADOS POR ADELANTADO",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "1.1.3.2.02",
+    "cuenta": "ALQUILERES PAGADOS POR ADELANTADO",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "1.1.3.2.03",
+    "cuenta": "OTROS DOCUMENTOS A COBRAR",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "1.1.3.2.04",
+    "cuenta": "INTER. NO DEV. OTROS DOC. A COBRAR",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "1.1.3.2.05",
+    "cuenta": "INTERESES PAGADOS POR ADELANTADO",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "1.1.3.2.06",
+    "cuenta": "ANTICIPOS DE SUELDOS",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "1.1.3.2.07",
+    "cuenta": "I.V.A. CREDITO FISCAL",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "1.1.3.2.08",
+    "cuenta": "ANTICIPOS FISCALES",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "1.1.3.2.09",
+    "cuenta": "RETENCIONES FISCALES",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "1.1.3.2.10",
+    "cuenta": "ACCIONISTAS",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "1.1.4",
+    "cuenta": "BIENES DE CAMBIO",
+    "imputable": false
+  },
+  {
+    "codigo": "1.1.4.1",
+    "cuenta": "MERCADERIAS",
+    "imputable": false
+  },
+  {
+    "codigo": "1.1.4.1.01",
+    "cuenta": "MERCADERIAS DE REVENTA",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "1.1.4.1.02",
+    "cuenta": "MERCADERIAS EN TRANSITO",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "1.1.4.1.03",
+    "cuenta": "MERCADERIAS ENTREG. EN CONSIGNACION",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "1.1.4.1.04",
+    "cuenta": "ANTICIPO A PROVEEDORES",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "1.1.4.2",
+    "cuenta": "OTROS BIENES DE CAMBIO",
+    "imputable": false
+  },
+  {
+    "codigo": "1.1.4.2.01",
+    "cuenta": "MATERIAS PRIMAS",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "1.1.4.2.02",
+    "cuenta": "PRODUCTOS EN PROCESO",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "1.1.4.2.03",
+    "cuenta": "PRODUCTOS TERMINADOS",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "1.1.5",
+    "cuenta": "OTROS ACTIVOS",
+    "imputable": false
+  },
+  {
+    "codigo": "1.1.5.1",
+    "cuenta": "OTROS ACTIVOS CORRIENTES",
+    "imputable": false
+  },
+  {
+    "codigo": "1.1.5.1.01",
+    "cuenta": "...",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "1.1.5.1.02",
+    "cuenta": "...",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "1.2",
+    "cuenta": "ACTIVO NO CORRIENTE",
+    "imputable": false
+  },
+  {
+    "codigo": "1.2.1",
+    "cuenta": "CREDITOS NO CORRIENTES",
+    "imputable": false
+  },
+  {
+    "codigo": "1.2.1.1",
+    "cuenta": "CREDITOS POR VENTAS",
+    "imputable": false
+  },
+  {
+    "codigo": "1.2.1.1.01",
+    "cuenta": "DEUDORES MOROSOS",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "1.2.1.1.02",
+    "cuenta": "DEUDORES EN GESTION JUDICIAL",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "1.2.1.1.03",
+    "cuenta": "DOCUMENTOS A COBRAR",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "1.2.1.1.04",
+    "cuenta": "INTERESES NO DEV. DOC. A COBRAR",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "1.2.1.1.05",
+    "cuenta": "...",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "1.2.1.2",
+    "cuenta": "OTROS CREDITOS",
+    "imputable": false
+  },
+  {
+    "codigo": "1.2.1.2.01",
+    "cuenta": "SEGUROS PAGADOS POR ADELANTADO",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "1.2.1.2.02",
+    "cuenta": "DIVIDENDOS A COBRAR",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "1.2.1.2.03",
+    "cuenta": "...",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "1.2.2",
+    "cuenta": "BIENES DE CAMBIO NO CORRIENTES",
+    "imputable": false
+  },
+  {
+    "codigo": "1.2.2.1",
+    "cuenta": "MERCADERIAS",
+    "imputable": false
+  },
+  {
+    "codigo": "1.2.2.1.01",
+    "cuenta": "MERCADERIAS DE REVENTA",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "1.2.2.1.02",
+    "cuenta": "MERCADERIAS ...",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "1.2.2.1.03",
+    "cuenta": "MERCADERIAS ENTREG. EN CONSIGNACION",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "1.2.2.2",
+    "cuenta": "OTROS BIENES DE CAMBIO",
+    "imputable": false
+  },
+  {
+    "codigo": "1.2.2.2.01",
+    "cuenta": "MATERIAS PRIMAS",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "1.2.2.2.02",
+    "cuenta": "PRODUCTOS EN PROCESO",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "1.2.2.2.03",
+    "cuenta": "PRODUCTOS TERMINADOS",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "1.2.3",
+    "cuenta": "INVERSIONES NO CORRIENTES",
+    "imputable": false
+  },
+  {
+    "codigo": "1.2.3.1",
+    "cuenta": "PARTICIPACIONES EN OTRAS EMPRESAS",
+    "imputable": false
+  },
+  {
+    "codigo": "1.2.3.1.01",
+    "cuenta": "ACCIONES DE OTRAS SOCIEDADES C/COTIZ",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "1.2.3.1.02",
+    "cuenta": "ACCIONES DE OTRAS SOCIEDADES S/COTIZ",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "1.2.3.1.03",
+    "cuenta": "...",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "1.2.3.2",
+    "cuenta": "INMUEBLES PARA RENTA",
+    "imputable": false
+  },
+  {
+    "codigo": "1.2.3.2.01",
+    "cuenta": "INMUEBLES P/ RENTA V. DE ORIGEN",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "1.2.3.2.02",
+    "cuenta": "DEPREC.ACUM.INMUEBLE P/ RENTA",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "1.2.3.3",
+    "cuenta": "PRESTAMOS OTORGADOS",
+    "imputable": false
+  },
+  {
+    "codigo": "1.2.3.3.01",
+    "cuenta": "PRESTAMOS DOCUMENTADOS",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "1.2.3.3.02",
+    "cuenta": "INT.NO DEVENG.PRESTAMOS DOCUM.",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "1.2.3.3.03",
+    "cuenta": "PRESTAMOS PRENDARIOS",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "1.2.3.3.04",
+    "cuenta": "INT.DEVENG. A COBRAR PREST. PRENDARIOS",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "1.2.3.4",
+    "cuenta": "OTRAS INVERSIONES EN MONEDA EXTRANJERA",
+    "imputable": false
+  },
+  {
+    "codigo": "1.2.3.4.01",
+    "cuenta": "...",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "1.2.3.4.02",
+    "cuenta": "...",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "1.2.4",
+    "cuenta": "BIENES DE USO",
+    "imputable": false
+  },
+  {
+    "codigo": "1.2.4.1",
+    "cuenta": "MUEBLES Y UTILES",
+    "imputable": false
+  },
+  {
+    "codigo": "1.2.4.1.01",
+    "cuenta": "MUEBLES Y UTILES VALOR DE ORIGEN",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "1.2.4.1.02",
+    "cuenta": "DEPREC. ACUMUL. MUEBLES Y UTILES",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "1.2.4.2",
+    "cuenta": "MAQUINARIAS",
+    "imputable": false
+  },
+  {
+    "codigo": "1.2.4.2.01",
+    "cuenta": "MAQUINARIAS VALOR DE ORIGEN",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "1.2.4.2.02",
+    "cuenta": "DEPRECIACION ACUMULADA MAQUINARIAS",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "1.2.4.3",
+    "cuenta": "RODADOS",
+    "imputable": false
+  },
+  {
+    "codigo": "1.2.4.3.01",
+    "cuenta": "RODADOS VALOR DE ORIGEN",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "1.2.4.3.02",
+    "cuenta": "DEPRECIACION ACUMULADA RODADOS",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "1.2.4.4",
+    "cuenta": "INMUEBLES",
+    "imputable": false
+  },
+  {
+    "codigo": "1.2.4.4.01",
+    "cuenta": "INMUEBLES VALOR DE ORIGEN",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "1.2.4.4.02",
+    "cuenta": "DEPRECIACION ACUMULADA INMUEBLES",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "1.2.4.5",
+    "cuenta": "TERRENOS",
+    "imputable": false
+  },
+  {
+    "codigo": "1.2.4.5.01",
+    "cuenta": "TERRENOS VALOR DE ORIGEN",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "1.2.4.5.02",
+    "cuenta": "...",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "1.2.4.6",
+    "cuenta": "EQUIPOS INFORMATICOS",
+    "imputable": false
+  },
+  {
+    "codigo": "1.2.4.6.01",
+    "cuenta": "EQUIPOS INFORMATICOS VALOR DE ORIGEN",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "1.2.4.6.02",
+    "cuenta": "DEPREC. ACUMUL. EQUIPOS INFORMATICOS",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "1.2.5",
+    "cuenta": "ACTIVOS INTANGIBLES",
+    "imputable": false
+  },
+  {
+    "codigo": "1.2.5.1",
+    "cuenta": "BIENES INMATERIALES",
+    "imputable": false
+  },
+  {
+    "codigo": "1.2.5.1.1",
+    "cuenta": "LLAVE DE NEGOCIO",
+    "imputable": false
+  },
+  {
+    "codigo": "1.2.5.1.1.01",
+    "cuenta": "LLAVE DE NEGOCIO VALOR DE ORIGEN",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "1.2.5.1.1.02",
+    "cuenta": "DEPREC. ACUMUL. LLAVE DE NEGOCIO",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "1.2.5.1.2",
+    "cuenta": "MARCAS",
+    "imputable": false
+  },
+  {
+    "codigo": "1.2.5.1.2.01",
+    "cuenta": "MARCAS VALOR DE ORIGEN",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "1.2.5.1.2.02",
+    "cuenta": "DEPRECIACION ACUMULADA MARCAS",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "1.2.5.1.3",
+    "cuenta": "PATENTES",
+    "imputable": false
+  },
+  {
+    "codigo": "1.2.5.1.3.01",
+    "cuenta": "PATENTES VALOR DE ORIGEN",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "1.2.5.1.3.02",
+    "cuenta": "DEPRECIACION ACUMULADA PATENTES",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "1.2.5.1.4",
+    "cuenta": "CONCESIONES",
+    "imputable": false
+  },
+  {
+    "codigo": "1.2.5.1.4.01",
+    "cuenta": "CONCESIONES VALOR DE ORIGEN",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "1.2.5.1.4.02",
+    "cuenta": "DEPREC.ACUMULADA CONCESIONES",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "1.2.5.1.5",
+    "cuenta": "DERECHOS DE AUTOR",
+    "imputable": false
+  },
+  {
+    "codigo": "1.2.5.1.5.01",
+    "cuenta": "DERECHOS DE AUTOR VALOR DE ORIGEN",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "1.2.5.1.5.02",
+    "cuenta": "DEPRECIACION ACUMULADA DERECHOS DE AUTOR",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "1.2.5.1.6",
+    "cuenta": "OTROS BIENES INMATERIALES",
+    "imputable": false
+  },
+  {
+    "codigo": "1.2.5.1.6.01",
+    "cuenta": "...",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "1.2.5.2",
+    "cuenta": "CARGOS DIFERIDOS",
+    "imputable": false
+  },
+  {
+    "codigo": "1.2.5.2.1",
+    "cuenta": "GASTOS DE ORGANIZACION",
+    "imputable": false
+  },
+  {
+    "codigo": "1.2.5.2.1.01",
+    "cuenta": "GASTOS DE ORGANIZACION V. DE ORIGEN",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "1.2.5.2.1.02",
+    "cuenta": "DEP.ACUM.GASTOS DE ORGANIZACION",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "1.2.5.2.2",
+    "cuenta": "GASTOS DE INVESTIGACION Y DESARROLLO",
+    "imputable": false
+  },
+  {
+    "codigo": "1.2.5.2.2.01",
+    "cuenta": "GTOS.DE INVEST.Y DESARROLLO V.DE ORIGEN",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "1.2.5.2.2.02",
+    "cuenta": "DEPR.ACUM.GTOS.DE INVEST.Y DESARROLLO",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "1.2.6",
+    "cuenta": "OTROS ACTIVOS NO CTES.",
+    "imputable": false
+  },
+  {
+    "codigo": "1.2.6.1",
+    "cuenta": "ACTIVOS FUERA DE SERVICIO",
+    "imputable": false
+  },
+  {
+    "codigo": "1.2.6.1.01",
+    "cuenta": "BIENES DE USO FUERA DE SERVICIO",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "1.2.6.1.02",
+    "cuenta": "REZAGOS",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "2",
+    "cuenta": "PASIVO",
+    "imputable": false
+  },
+  {
+    "codigo": "2.1",
+    "cuenta": "PASIVO CORRIENTE",
+    "imputable": false
+  },
+  {
+    "codigo": "2.1.1",
+    "cuenta": "DEUDAS",
+    "imputable": false
+  },
+  {
+    "codigo": "2.1.1.1",
+    "cuenta": "COMERCIALES",
+    "imputable": false
+  },
+  {
+    "codigo": "2.1.1.1.01",
+    "cuenta": "PROVEEDORES",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "2.1.1.1.02",
+    "cuenta": "DOC.A PAGAR DE PROVEEDORES",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "2.1.1.1.03",
+    "cuenta": "INTERESES NO DEV. DOC.A PAGAR DE PROV.",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "2.1.1.1.04",
+    "cuenta": "ANTICIPO DE CLIENTES",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "2.1.1.1.05",
+    "cuenta": "HONORARIOS POR SERVICIOS A PAGAR",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "2.1.1.1.06",
+    "cuenta": "OTRAS DEUDAS COMERCIALES",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "2.1.1.1.07",
+    "cuenta": "...",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "2.1.1.2",
+    "cuenta": "PRESTAMOS BANCARIOS",
+    "imputable": false
+  },
+  {
+    "codigo": "2.1.1.2.01",
+    "cuenta": "PRESTAMO DOCUMENTADO BANCO ...",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "2.1.1.2.02",
+    "cuenta": "BANCO ... ADELANTOS EN CTA.CTE.",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "2.1.1.2.03",
+    "cuenta": "INTER.DEVENG. A PAGAR BCO. ...",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "2.1.1.2.04",
+    "cuenta": "INTER.NO DEVENGADOS PMO.BCO. ...",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "2.1.1.2.05",
+    "cuenta": "...",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "2.1.1.3",
+    "cuenta": "REMUNERACIONES Y CARGAS SOCIALES A PAGAR",
+    "imputable": false
+  },
+  {
+    "codigo": "2.1.1.3.01",
+    "cuenta": "SUELDOS A PAGAR",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "2.1.1.3.02",
+    "cuenta": "RETENCIONES A DEPOSITAR",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "2.1.1.3.03",
+    "cuenta": "CONTRIBUCIONES PATRONALES A PAGAR",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "2.1.1.4",
+    "cuenta": "CARGAS FISCALES A PAGAR",
+    "imputable": false
+  },
+  {
+    "codigo": "2.1.1.4.01",
+    "cuenta": "I.V.A. DEBITO FISCAL",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "2.1.1.4.02",
+    "cuenta": "I.V.A. SALDO DDJJ A PAGAR",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "2.1.1.4.03",
+    "cuenta": "IMPUESTO S/LOS ING. BRUTOS A PAGAR",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "2.1.1.4.04",
+    "cuenta": "RET.IMPUESTO A LAS GCIAS A DEPOSITAR",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "2.1.1.4.05",
+    "cuenta": "TASA MUNICIPAL A PAGAR",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "2.1.1.4.06",
+    "cuenta": "...",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "2.1.1.5",
+    "cuenta": "OTRAS DEUDAS",
+    "imputable": false
+  },
+  {
+    "codigo": "2.1.1.5.01",
+    "cuenta": "ALQUILERES COBR.POR ADELANTADO",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "2.1.1.5.02",
+    "cuenta": "GASTOS DEVENGADOS A PAGAR",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "2.1.1.5.03",
+    "cuenta": "DIVIDENDOS A PAGAR",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "2.1.1.5.04",
+    "cuenta": "HONOR. DIR.Y SIND. A PAGAR",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "2.1.1.5.05",
+    "cuenta": "SOCIO ... CUENTA PARTICULAR",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "2.1.1.5.06",
+    "cuenta": "...",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "2.1.2",
+    "cuenta": "PREVISIONES",
+    "imputable": false
+  },
+  {
+    "codigo": "2.1.2.1",
+    "cuenta": "PREVISIONES LABORALES",
+    "imputable": false
+  },
+  {
+    "codigo": "2.1.2.1.01",
+    "cuenta": "PREVISION PARA DESPIDOS",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "2.1.2.1.02",
+    "cuenta": "...",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "2.1.2.2",
+    "cuenta": "OTRAS PREVISIONES",
+    "imputable": false
+  },
+  {
+    "codigo": "2.1.2.2.01",
+    "cuenta": "PREVISION P/ JUICIOS PENDIENTES",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "2.1.2.2.02",
+    "cuenta": "...",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "2.1.2.2.03",
+    "cuenta": "...",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "2.2",
+    "cuenta": "PASIVO NO CORRIENTE",
+    "imputable": false
+  },
+  {
+    "codigo": "2.2.1",
+    "cuenta": "DEUDAS",
+    "imputable": false
+  },
+  {
+    "codigo": "2.2.1.1",
+    "cuenta": "DEUDAS COMERCIALES",
+    "imputable": false
+  },
+  {
+    "codigo": "2.2.1.1.01",
+    "cuenta": "DOC.A PAGAR PROVEEDORES",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "2.2.1.1.02",
+    "cuenta": "INTERESES NO DEV. DOC.A PAGAR PROV.",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "2.2.1.1.03",
+    "cuenta": "...",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "2.2.1.2",
+    "cuenta": "PRESTAMOS BANCARIOS",
+    "imputable": false
+  },
+  {
+    "codigo": "2.2.1.2.01",
+    "cuenta": "PRESTAMO DOCUMENTADO BANCO ...",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "2.2.1.2.02",
+    "cuenta": "INTER.NO DEVENGADOS PMO.BCO. ...",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "2.2.1.3",
+    "cuenta": "REMUNERACIONES Y CARGAS SOCIALES A PAGAR",
+    "imputable": false
+  },
+  {
+    "codigo": "2.2.1.3.01",
+    "cuenta": "PLAN FACILID.DE PAGO APORTES Y CONTRIB.",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "2.2.1.3.02",
+    "cuenta": "...",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "2.2.1.4",
+    "cuenta": "CARGAS FISCALES A PAGAR",
+    "imputable": false
+  },
+  {
+    "codigo": "2.2.1.4.01",
+    "cuenta": "MORATORIA ...",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "2.2.1.4.02",
+    "cuenta": "PLAN FACILID.DE PAGO ...",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "2.2.1.4.03",
+    "cuenta": "...",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "2.2.1.5",
+    "cuenta": "OTRAS DEUDAS",
+    "imputable": false
+  },
+  {
+    "codigo": "2.2.1.5.01",
+    "cuenta": "DIVIDENDOS A PAGAR",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "2.2.1.5.02",
+    "cuenta": "...",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "2.2.2",
+    "cuenta": "PREVISIONES",
+    "imputable": false
+  },
+  {
+    "codigo": "2.2.2.1",
+    "cuenta": "PREVISIONES LABORALES",
+    "imputable": false
+  },
+  {
+    "codigo": "2.2.2.1.01",
+    "cuenta": "PREVISION PARA DESPIDOS",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "2.2.2.1.02",
+    "cuenta": "...",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "2.2.2.2",
+    "cuenta": "OTRAS PREVISIONES",
+    "imputable": false
+  },
+  {
+    "codigo": "2.2.2.2.01",
+    "cuenta": "PREVISION P/ JUICIOS PENDIENTES",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "2.2.2.2.02",
+    "cuenta": "...",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "3",
+    "cuenta": "PATRIMONIO NETO",
+    "imputable": false
+  },
+  {
+    "codigo": "3.1",
+    "cuenta": "CAPITAL",
+    "imputable": false
+  },
+  {
+    "codigo": "3.1.1",
+    "cuenta": "APORTES CAPITALIZADOS",
+    "imputable": false
+  },
+  {
+    "codigo": "3.1.1.01",
+    "cuenta": "ACCIONES EN CIRCULACION",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "3.1.2",
+    "cuenta": "APORTES NO CAPITALIZADOS",
+    "imputable": false
+  },
+  {
+    "codigo": "3.1.2.01",
+    "cuenta": "AJUSTE DE CAPITAL",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "3.1.2.02",
+    "cuenta": "ACCIONES A EMITIR POR DIVIDENDOS",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "3.1.2.03",
+    "cuenta": "APORTES IRREVOCABLES P/FUT.SUSCRIP.",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "3.1.2.04",
+    "cuenta": "PRIMA DE EMISION",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "3.2",
+    "cuenta": "RESULTADOS",
+    "imputable": false
+  },
+  {
+    "codigo": "3.2.1",
+    "cuenta": "GANANCIAS RESERVADAS",
+    "imputable": false
+  },
+  {
+    "codigo": "3.2.1.01",
+    "cuenta": "RESERVA LEGAL",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "3.2.1.02",
+    "cuenta": "RESERVA ESTATUTARIA",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "3.2.1.03",
+    "cuenta": "RESERVA FACULTATIVA",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "3.2.2",
+    "cuenta": "RESULTADOS NO ASIGNADOS",
+    "imputable": false
+  },
+  {
+    "codigo": "3.2.2.01",
+    "cuenta": "RESULTADOS NO ASIGN. EJ. ANTERIORES",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "3.2.2.02",
+    "cuenta": "RESULTADO DEL EJERCICIO",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "4",
+    "cuenta": "RESULTADOS",
+    "imputable": false
+  },
+  {
+    "codigo": "4.1",
+    "cuenta": "RESULTADOS ORDINARIOS",
+    "imputable": false
+  },
+  {
+    "codigo": "4.1.1",
+    "cuenta": "RESULTADOS ORDINARIOS OPERATIVOS",
+    "imputable": false
+  },
+  {
+    "codigo": "4.1.1.1",
+    "cuenta": "RESULTADO BRUTO DE VENTAS",
+    "imputable": false
+  },
+  {
+    "codigo": "4.1.1.1.01",
+    "cuenta": "VENTAS",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "4.1.1.1.02",
+    "cuenta": "COSTO DE MERCADERIAS VENDIDAS",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "4.1.1.1.03",
+    "cuenta": "DIFERENCIAS DE INVENTARIOS",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "4.1.1.2",
+    "cuenta": "OTROS RESULTADOS DE COMERCIALIZACION",
+    "imputable": false
+  },
+  {
+    "codigo": "4.1.1.2.01",
+    "cuenta": "COMISIONES GANADAS",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "4.1.1.2.02",
+    "cuenta": "DEUDORES INCOBRABLES",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "4.1.1.2.03",
+    "cuenta": "...",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "4.1.1.3",
+    "cuenta": "GASTOS DE COMERCIALIZACION",
+    "imputable": false
+  },
+  {
+    "codigo": "4.1.1.3.1",
+    "cuenta": "GASTOS EN PERSONAL",
+    "imputable": false
+  },
+  {
+    "codigo": "4.1.1.3.1.01",
+    "cuenta": "SUELDOS Y CARGAS SOCIALES- COMERC.-",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "4.1.1.3.1.02",
+    "cuenta": "COMISIONES POR VENTAS",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "4.1.1.3.1.03",
+    "cuenta": "VIATICOS Y MOVILIDAD - COMERC.-",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "4.1.1.3.1.04",
+    "cuenta": "...",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "4.1.1.3.2",
+    "cuenta": "GASTOS EN SERVICIOS",
+    "imputable": false
+  },
+  {
+    "codigo": "4.1.1.3.2.01",
+    "cuenta": "GTOS.LUZ,GAS,T.E. - COMERC.-",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "4.1.1.3.2.02",
+    "cuenta": "SERVICIOS MUNICIPALES - COMERC.-",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "4.1.1.3.2.03",
+    "cuenta": "...",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "4.1.1.3.3",
+    "cuenta": "GASTOS S/ BIENES DE USO",
+    "imputable": false
+  },
+  {
+    "codigo": "4.1.1.3.3.01",
+    "cuenta": "COMBUSTIBLES - COMERC.-",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "4.1.1.3.3.02",
+    "cuenta": "MANTENIMIENTO DE EDIFICIO - COMERC.-",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "4.1.1.3.3.03",
+    "cuenta": "MANTENIMIENTO DE ... - COMERC.-",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "4.1.1.3.3.04",
+    "cuenta": "DEPRECIACION MUEBLES Y UTILES - COMERC.-",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "4.1.1.3.3.05",
+    "cuenta": "DEPRECIACION MAQUINARIAS - COMERC.-",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "4.1.1.3.3.06",
+    "cuenta": "DEPRECIACION RODADOS - COMERC.-",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "4.1.1.3.3.07",
+    "cuenta": "DEPRECIACION INMUEBLES - COMERC.-",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "4.1.1.3.3.08",
+    "cuenta": "DEPRECIACION EQ. INFORMATICOS - COMERC.-",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "4.1.1.3.3.09",
+    "cuenta": "SEGUROS - COMERC.-",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "4.1.1.3.3.10",
+    "cuenta": "...",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "4.1.1.3.4",
+    "cuenta": "OTROS GASTOS DE COMERCIALIZACION",
+    "imputable": false
+  },
+  {
+    "codigo": "4.1.1.3.4.01",
+    "cuenta": "GTOS. PAPLERIA Y UTILES - COMERC.-",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "4.1.1.3.4.02",
+    "cuenta": "GTOS. PUBLICIDAD",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "4.1.1.3.4.03",
+    "cuenta": "FLETES DE ENVIO",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "4.1.1.3.4.04",
+    "cuenta": "IMPUESTO S/ LOS ING. BRUTOS",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "4.1.1.3.4.05",
+    "cuenta": "...",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "4.1.1.3.4.06",
+    "cuenta": "...",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "4.1.1.4",
+    "cuenta": "GASTOS DE ADMINISTRACION",
+    "imputable": false
+  },
+  {
+    "codigo": "4.1.1.4.1",
+    "cuenta": "GASTOS EN PERSONAL",
+    "imputable": false
+  },
+  {
+    "codigo": "4.1.1.4.1.01",
+    "cuenta": "SUELDOS Y CARGAS SOCIALES - ADM.-",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "4.1.1.4.1.02",
+    "cuenta": "VIATICOS Y MOVILIDAD - ADM.-",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "4.1.1.4.1.03",
+    "cuenta": "...",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "4.1.1.4.1.04",
+    "cuenta": "...",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "4.1.1.4.2",
+    "cuenta": "GASTOS EN SERVICIOS",
+    "imputable": false
+  },
+  {
+    "codigo": "4.1.1.4.2.01",
+    "cuenta": "GTOS.LUZ,GAS,T.E. - ADM.-",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "4.1.1.4.2.02",
+    "cuenta": "SERVICIOS MUNICIPALES - ADM.-",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "4.1.1.4.2.03",
+    "cuenta": "...",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "4.1.1.4.3",
+    "cuenta": "GASTOS S/ BIENES DE USO",
+    "imputable": false
+  },
+  {
+    "codigo": "4.1.1.4.3.01",
+    "cuenta": "COMBUSTIBLES - ADM.-",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "4.1.1.4.3.02",
+    "cuenta": "MANTENIMIENTO DE EDIFICIO - ADM.-",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "4.1.1.4.3.03",
+    "cuenta": "MANTENIMIENTO DE ... - ADM.-",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "4.1.1.4.3.04",
+    "cuenta": "REPARACION DE ... - ADM.-",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "4.1.1.4.3.05",
+    "cuenta": "DEPRECIACION MUEBLES Y UTILES - ADM.-",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "4.1.1.4.3.06",
+    "cuenta": "DEPRECIACION MAQUINARIAS - ADM.-",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "4.1.1.4.3.07",
+    "cuenta": "DEPRECIACION RODADOS - ADM.-",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "4.1.1.4.3.08",
+    "cuenta": "DEPRECIACION INMUEBLES - ADM.-",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "4.1.1.4.3.09",
+    "cuenta": "DEPRECIACION EQ. INFORMATICOS - ADM.-",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "4.1.1.4.3.10",
+    "cuenta": "DEPRECIACION GTOS.DE ORGANIZACION - ADM.-",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "4.1.1.4.3.11",
+    "cuenta": "SEGUROS - ADM.-",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "4.1.1.4.4",
+    "cuenta": "OTROS GASTOS DE ADMINISTRACION",
+    "imputable": false
+  },
+  {
+    "codigo": "4.1.1.4.4.01",
+    "cuenta": "GTOS. PAPLERIA Y UTILES - ADM.-",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "4.1.1.4.4.02",
+    "cuenta": "GTOS. Y COMISIONES BANCARIAS - ADM.-",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "4.1.1.4.4.03",
+    "cuenta": "ALQUILERES PERDIDOS - ADM.-",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "4.1.1.4.4.04",
+    "cuenta": "GTOS.FRANQUEOS",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "4.1.1.4.4.05",
+    "cuenta": "...",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "4.1.2",
+    "cuenta": "RESULTADOS ORDINARIOS FINANCIEROS",
+    "imputable": false
+  },
+  {
+    "codigo": "4.1.2.1",
+    "cuenta": "GENERADOS POR ACTIVOS",
+    "imputable": false
+  },
+  {
+    "codigo": "4.1.2.1.01",
+    "cuenta": "INTERESES GANADOS DS.POR VENTAS",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "4.1.2.1.02",
+    "cuenta": "INTERESES GANADOS DOC.A COB. DEUDORES",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "4.1.2.2",
+    "cuenta": "GENERADOS POR PASIVOS",
+    "imputable": false
+  },
+  {
+    "codigo": "4.1.2.2.01",
+    "cuenta": "INTERESES PERDIDOS PROVEEDORES",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "4.1.2.2.02",
+    "cuenta": "INTERESES PERDIDOS DOC.A PAGAR PROV.",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "4.1.2.3",
+    "cuenta": "OTROS RESULTADOS FINANCIEROS",
+    "imputable": false
+  },
+  {
+    "codigo": "4.1.2.3.01",
+    "cuenta": "DESCUENTOS OBTENIDOS",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "4.1.2.3.02",
+    "cuenta": "DESCUENTOS CONCEDIDOS",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "4.1.3",
+    "cuenta": "RESULTADOS ORDINARIOS NO OPERATIVOS",
+    "imputable": false
+  },
+  {
+    "codigo": "4.1.3.1",
+    "cuenta": "DE INVERSIONES CORRIENTES",
+    "imputable": false
+  },
+  {
+    "codigo": "4.1.3.1.01",
+    "cuenta": "VENTA DE TITULOS PUBLICOS",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "4.1.3.1.02",
+    "cuenta": "COSTO DE VENTA TITULOS PUBLICOS",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "4.1.3.1.03",
+    "cuenta": "VENTA DE ACCIONES DE OTRAS SOC.",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "4.1.3.1.04",
+    "cuenta": "COSTO DE VENTA ACCIONES DE OTRAS SOC.",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "4.1.3.1.05",
+    "cuenta": "DIVIDENDOS GANADOS",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "4.1.3.1.06",
+    "cuenta": "DIFERENCIA COTIZACION MON. EXTRANJERA",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "4.1.3.1.07",
+    "cuenta": "...",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "4.1.3.2",
+    "cuenta": "DE INVERSIONES NO CORRIENTES",
+    "imputable": false
+  },
+  {
+    "codigo": "4.1.3.2.01",
+    "cuenta": "AJUSTE VAL. ACCIONES DE OTRAS SOC.",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "4.1.3.2.02",
+    "cuenta": "OTROS AJ. VAL. ACCIONES",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "4.1.3.2.03",
+    "cuenta": "ALQUILERES GANADOS INMUEBLE P/RENTA",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "4.1.3.2.04",
+    "cuenta": "VTA. DE INMUEBLE P/RENTA",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "4.1.3.2.05",
+    "cuenta": "COSTO DE VENTA INMUEBLE P/RENTA",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "4.1.3.2.06",
+    "cuenta": "DIVIDENDOS GANADOS",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "4.1.3.2.07",
+    "cuenta": "GTOS. S/ INMUEBLE P/RENTA",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "4.1.3.3",
+    "cuenta": "RESULTADOS FINANCIEROS DE INVERSIONES",
+    "imputable": false
+  },
+  {
+    "codigo": "4.1.3.3.1",
+    "cuenta": "GENERADOS POR ACTIVOS",
+    "imputable": false
+  },
+  {
+    "codigo": "4.1.3.3.1.01",
+    "cuenta": "INTERESES GANADOS TITULOS PUBLICOS",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "4.1.3.3.1.02",
+    "cuenta": "INTERESES GANADOS PREST. OTORGADOS",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "4.1.3.3.1.03",
+    "cuenta": "...",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "4.1.3.3.2",
+    "cuenta": "GENERADOS POR PASIVOS",
+    "imputable": false
+  },
+  {
+    "codigo": "4.1.3.3.2.01",
+    "cuenta": "INT. PERDIDOS PMO.HIP. INMUEBLE P/RENTA",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "4.1.3.3.2.02",
+    "cuenta": "...",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "4.1.3.4",
+    "cuenta": "OTROS RESULTADOS ORDINARIOS NO OPERATIVOS",
+    "imputable": false
+  },
+  {
+    "codigo": "4.1.3.4.01",
+    "cuenta": "INGRESOS VARIOS",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "4.1.3.4.02",
+    "cuenta": "GASTOS VARIOS",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "4.1.3.4.03",
+    "cuenta": "RDO.REEMPLAZO BIENES",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "4.2",
+    "cuenta": "RESULTADOS EXTRAORDINARIOS",
+    "imputable": false
+  },
+  {
+    "codigo": "4.2.1",
+    "cuenta": "DEL EJERCICIO",
+    "imputable": false
+  },
+  {
+    "codigo": "4.2.1.1",
+    "cuenta": "OPERATIVOS",
+    "imputable": false
+  },
+  {
+    "codigo": "4.2.1.1.01",
+    "cuenta": "INDEMNIZACION POR DESPIDO",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "4.2.1.1.02",
+    "cuenta": "SINIESTROS BIENES DE USO",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "4.2.1.1.03",
+    "cuenta": "...",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "4.2.1.2",
+    "cuenta": "FINANCIEROS",
+    "imputable": false
+  },
+  {
+    "codigo": "4.2.1.2.01",
+    "cuenta": "INTERESES PERDIDOS ...",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "4.2.1.3",
+    "cuenta": "NO OPERATIVOS",
+    "imputable": false
+  },
+  {
+    "codigo": "4.2.1.3.01",
+    "cuenta": "SINIESTROS INMUEBLE P/RENTA",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "4.2.1.3.02",
+    "cuenta": "RDO. VPP ACCIONES OTRAS SOCIEDADES",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "4.2.1.3.03",
+    "cuenta": "INDEMNIZACION POR DAÑOS Y PERJUICIOS",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "4.2.1.4",
+    "cuenta": "OTROS RESULTADOS EXTRAORDINARIOS",
+    "imputable": false
+  },
+  {
+    "codigo": "4.2.1.4.01",
+    "cuenta": "...",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "4.2.2",
+    "cuenta": "DE EJERCICIOS ANTERIORES",
+    "imputable": false
+  },
+  {
+    "codigo": "4.2.2.1",
+    "cuenta": "OPERATIVOS",
+    "imputable": false
+  },
+  {
+    "codigo": "4.2.2.1.01",
+    "cuenta": "INDEMNIZACION POR DESPIDOS",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "4.2.2.1.02",
+    "cuenta": "...",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "4.2.2.2",
+    "cuenta": "FINANCIEROS",
+    "imputable": false
+  },
+  {
+    "codigo": "4.2.2.2.01",
+    "cuenta": "...",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "4.2.2.3",
+    "cuenta": "NO OPERATIVOS",
+    "imputable": false
+  },
+  {
+    "codigo": "4.2.2.3.01",
+    "cuenta": "INDEMNIZACION POR JUICIOS PENDIENTES",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "4.2.2.3.02",
+    "cuenta": "...",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "4.2.2.4",
+    "cuenta": "OTROS RESULTADOS EXTRAORDINARIOS",
+    "imputable": false
+  },
+  {
+    "codigo": "4.2.2.4.01",
+    "cuenta": "...",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "5",
+    "cuenta": "CUENTAS DE ORDEN",
+    "imputable": false
+  },
+  {
+    "codigo": "5.1",
+    "cuenta": "ACTIVOS CONTINGENTES",
+    "imputable": false
+  },
+  {
+    "codigo": "5.1.1",
+    "cuenta": "BIENES DE TERCEROS",
+    "imputable": false
+  },
+  {
+    "codigo": "5.1.1.01",
+    "cuenta": "MERCADERIAS RECIBIDAS EN CONSIGNAC.",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "5.1.1.02",
+    "cuenta": "BIENES RECIBIDOS EN MUESTRA",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "5.1.1.03",
+    "cuenta": "DEPOSITOS EN GARANTIA",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "5.1.1.04",
+    "cuenta": "...",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "5.1.2",
+    "cuenta": "OTRAS CUENTAS DE ORDEN ACTIVAS",
+    "imputable": false
+  },
+  {
+    "codigo": "5.1.2.01",
+    "cuenta": "DOC. A COBRAR DESCONTADOS EN BCO. ...",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "5.1.2.02",
+    "cuenta": "DOC. A COBRAR ENDOSADOS A TERCEROS",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "5.1.2.03",
+    "cuenta": "...",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "5.2",
+    "cuenta": "PASIVOS CONTINGENTES",
+    "imputable": false
+  },
+  {
+    "codigo": "5.2.1",
+    "cuenta": "POR TENENCIA DE BIENES DE TERCEROS",
+    "imputable": false
+  },
+  {
+    "codigo": "5.2.1.01",
+    "cuenta": "PROVEEDORES POR MERC.REC.EN CONSIG.",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "5.2.1.02",
+    "cuenta": "ACREED. POR BIENES REC.EN MUESTRAS",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "5.2.1.03",
+    "cuenta": "DEPOSITANTES DE GARANTIAS",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "5.2.1.04",
+    "cuenta": "...",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "5.2.2",
+    "cuenta": "OTRAS CUENTAS DE ORDEN PASIVAS",
+    "imputable": false
+  },
+  {
+    "codigo": "5.2.2.01",
+    "cuenta": "BCO. ... DOC. A COBRAR DESCONTADOS",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "5.2.2.02",
+    "cuenta": "TERCEROS DOC. A COBRAR ENDOSADOS",
+    "imputable": true,
+    "saldo": 0
+  },
+  {
+    "codigo": "5.2.2.03",
+    "cuenta": "...",
+    "imputable": true,
+    "saldo": 0
+  }
 ]

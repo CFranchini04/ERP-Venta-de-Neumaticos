@@ -1,105 +1,76 @@
-<<<<<<< HEAD
-// Servicio de Asientos del Libro Diario (in-memory).
-import asientosIniciales from './Pantallas/Contabilidad/asientosMock.json' with { type: 'json' };
-=======
 import asientosIniciales from '../../data/contabilidad/asientosMock.json' with { type: 'json' };
->>>>>>> 1d247877beac191966728741ff995beabbcbcf39
+import { readFile, writeFile } from 'fs/promises'
+import { fileURLToPath } from 'url'
+import path from 'path'
+import periodosService from './periodos.service.js'
 
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
+const FILE = path.resolve(__dirname, '../../data/contabilidad/asientosMock.json')
 
-let asientos = asientosIniciales.map(a => ({ ...a, lineas: a.lineas.map(l => ({ ...l })) }));
-let proximoId = asientos.reduce((m, a) => Math.max(m, a.id || 0), 0) + 1;
-let proximoNumero = asientos.reduce((m, a) => Math.max(m, a.numero || 0), 0) + 1;
-
+const leer = async () => JSON.parse(await readFile(FILE, 'utf8'))
+const escribir = (d) => writeFile(FILE, JSON.stringify(d, null, 2), 'utf8')
 
 const validarBalanceado = (lineas) => {
-  const totD = lineas.reduce((s, l) => s + Number(l.debe || 0), 0);
-  const totH = lineas.reduce((s, l) => s + Number(l.haber || 0), 0);
-  return totD === totH && totD > 0;
-};
+  const debe  = lineas.reduce((s, l) => s + (Number(l.debe)  || 0), 0)
+  const haber = lineas.reduce((s, l) => s + (Number(l.haber) || 0), 0)
+  if (Math.abs(debe - haber) > 0.01) throw new Error('El asiento no está balanceado (Σdebe ≠ Σhaber)')
+  if (debe === 0) throw new Error('El asiento no puede tener importes en cero')
+}
 
-const listarAsientos = async (filtros = {}) => {
-  const { desde, hasta } = filtros;
-  return [...asientos]
+const listarAsientos = async (desde, hasta) => {
+  const asientos = await leer()
+  return asientos
     .filter(a => (!desde || a.fecha >= desde) && (!hasta || a.fecha <= hasta))
-    .sort((a, b) => a.fecha.localeCompare(b.fecha) || a.numero - b.numero);
-};
+    .sort((a, b) => a.fecha.localeCompare(b.fecha) || a.numero - b.numero)
+}
 
 const obtenerAsiento = async (id) => {
-  const asiento = asientos.find(a => a.id === Number(id));
-  return asiento ?? null;
-};
+  const asientos = await leer()
+  return asientos.find(a => a.id === Number(id)) ?? null
+}
 
-const crearAsiento = async (datos) => {
-  const { fecha, concepto, lineas } = datos;
+const crearAsiento = async ({ fecha, concepto, lineas, origen = null }) => {
+  if (!fecha || !concepto || !Array.isArray(lineas) || lineas.length < 2)
+    throw new Error('fecha, concepto y al menos 2 líneas son obligatorios')
+  validarBalanceado(lineas)
+  await periodosService.validarPeriodoAbierto(fecha)
 
-  if (!fecha || !concepto) {
-    throw new Error('Fecha y concepto son obligatorios');
-  }
-  if (!Array.isArray(lineas) || lineas.length < 2) {
-    throw new Error('Se requieren al menos 2 líneas para el asiento');
-  }
-  if (!validarBalanceado(lineas)) {
-    throw new Error('El asiento no está balanceado (Debe ≠ Haber)');
-  }
+  const asientos = await leer()
+  const id     = asientos.length ? Math.max(...asientos.map(a => a.id)) + 1 : 1
+  const numero = asientos.length ? Math.max(...asientos.map(a => a.numero)) + 1 : 1
 
-  const nuevo = {
-    id: proximoId++,
-    numero: proximoNumero++,
-    fecha,
-    concepto,
-    lineas: lineas.map(l => ({
-      codigo: l.codigo,
-      cuenta: l.cuenta || '',
-      debe: Number(l.debe) || 0,
-      haber: Number(l.haber) || 0,
-    })),
-  };
-
-  asientos.push(nuevo);
-  return nuevo;
-};
+  const nuevo = { id, numero, fecha, concepto, lineas, origen }
+  asientos.push(nuevo)
+  await escribir(asientos)
+  return nuevo
+}
 
 const actualizarAsiento = async (id, cambios) => {
-  const idx = asientos.findIndex(a => a.id === Number(id));
-  if (idx === -1) throw new Error(`Asiento ${id} no encontrado`);
-
-  const { id: _, numero: __, ...datosAActualizar } = cambios;
-
-  const datosLimpios = Object.fromEntries(
-    Object.entries(datosAActualizar).filter(([_, v]) => v !== undefined && v !== '')
-  );
-
-  const merged = { 
-    ...asientos[idx], 
-    ...datosLimpios, 
-    id: asientos[idx].id, 
-    numero: asientos[idx].numero 
-  };
-
-  if (merged.lineas && !validarBalanceado(merged.lineas)) {
-    throw new Error('El asiento no está balanceado (Debe ≠ Haber)');
-  }
-
-  asientos[idx] = merged;
-  return merged;
-};
+  const asientos = await leer()
+  const idx = asientos.findIndex(a => a.id === Number(id))
+  if (idx === -1) throw new Error(`Asiento ${id} no encontrado`)
+  if (cambios.lineas) validarBalanceado(cambios.lineas)
+  const fechaFinal = cambios.fecha ?? asientos[idx].fecha
+  await periodosService.validarPeriodoAbierto(fechaFinal)
+  asientos[idx] = { ...asientos[idx], ...cambios, id: asientos[idx].id }
+  await escribir(asientos)
+  return asientos[idx]
+}
 
 const eliminarAsiento = async (id) => {
-  const longitudInicial = asientos.length;
-  asientos = asientos.filter(a => a.id !== Number(id));
-
-  if (asientos.length === longitudInicial) {
-    throw new Error(`Asiento ${id} no encontrado`);
-  }
-
-  return { id: Number(id), message: 'Asiento eliminado correctamente' };
-};
-
+  const asientos = await leer()
+  const a = asientos.find(x => x.id === Number(id))
+  if (!a) throw new Error(`Asiento ${id} no encontrado`)
+  await periodosService.validarPeriodoAbierto(a.fecha)
+  const filtrados = asientos.filter(x => x.id !== Number(id))
+  await escribir(filtrados)
+  return { id: Number(id) }
+}
 
 export default {
   listarAsientos,
   obtenerAsiento,
   crearAsiento,
   actualizarAsiento,
-  eliminarAsiento
-};
+  eliminarAsiento,
+}

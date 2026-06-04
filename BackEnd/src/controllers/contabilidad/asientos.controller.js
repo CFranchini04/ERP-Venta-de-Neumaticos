@@ -1,67 +1,31 @@
 import asientosService from '../../services/contabilidad/asientos.service.js'
 
 const getAsientos = async (req, res) => {
-  try {
-    const { desde, hasta } = req.query || {}
-    const asientos = await asientosService.listarAsientos({ desde, hasta })
-    res.status(200).json(asientos)
-  } catch (error) {
-    res.status(400).json({ message: error.message })
-  }
+  try { res.json(await asientosService.listarAsientos(req.query.desde, req.query.hasta)) }
+  catch (e) { res.status(400).json({ message: e.message }) }
 }
 
 const getAsiento = async (req, res) => {
   try {
-    const { id } = req.params
-    const asiento = await asientosService.obtenerAsiento(id)
-    if (!asiento) {
-      return res.status(404).json({ message: 'Asiento no encontrado' })
-    }
-    res.status(200).json(asiento)
-  } catch (error) {
-    res.status(400).json({ message: error.message })
-  }
+    const a = await asientosService.obtenerAsiento(req.params.id)
+    if (!a) return res.status(404).json({ message: 'No encontrado' })
+    res.json(a)
+  } catch (e) { res.status(400).json({ message: e.message }) }
 }
 
 const postAsiento = async (req, res) => {
-  try {
-    const datos = req.body
-    const nuevoAsiento = await asientosService.crearAsiento(datos)
-    res.status(201).json(nuevoAsiento)
-  } catch (error) {
-    res.status(400).json({ message: error.message })
-  }
+  try { res.status(201).json(await asientosService.crearAsiento(req.body)) }
+  catch (e) { res.status(400).json({ message: e.message }) }
 }
 
 const putAsiento = async (req, res) => {
-  try {
-    const { id } = req.params
-    const datos = req.body
-    if (!id) return res.status(400).json({ message: 'Id requerido' })
-    
-    const asientoActualizado = await asientosService.actualizarAsiento(id, datos)
-    res.status(200).json(asientoActualizado)
-  } catch (error) {
-    res.status(400).json({ message: error.message })
-  }
+  try { res.json(await asientosService.actualizarAsiento(req.params.id, req.body)) }
+  catch (e) { res.status(400).json({ message: e.message }) }
 }
 
 const deleteAsiento = async (req, res) => {
-  try {
-    const { id } = req.params
-    if (!id) return res.status(400).json({ message: 'Id requerido' })
-    
-    const resultado = await asientosService.eliminarAsiento(id)
-    res.status(200).json(resultado)
-  } catch (error) {
-    res.status(400).json({ message: error.message })
-  }
+  try { res.json(await asientosService.eliminarAsiento(req.params.id)) }
+  catch (e) { res.status(400).json({ message: e.message }) }
 }
 
-export default {
-  getAsientos,
-  getAsiento,
-  postAsiento,
-  putAsiento,
-  deleteAsiento
-}
+export default { getAsientos, getAsiento, postAsiento, putAsiento, deleteAsiento }
