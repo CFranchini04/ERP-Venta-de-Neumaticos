@@ -238,6 +238,8 @@ const styles = {
     padding: 0,
     boxSizing: "border-box",
     gap: 20,
+    overflowY: "auto",
+    height: "100vh",
   },
   encabezado: {
     width: "100%",
