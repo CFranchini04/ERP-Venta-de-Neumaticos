@@ -62,6 +62,7 @@ const getPedidoCompleto = async (id) => {
             estados(nombre),
             cotizaciones_proveedores_detalle(
                 id_cotizacion_detalle,
+                id_cotizacion,
                 id_proveedor,
                 cantidad,
                 precio_unitario,
@@ -108,9 +109,15 @@ const getPedidoCompleto = async (id) => {
                 : '—',
             detalle: (c.cotizaciones_proveedores_detalle || []).map((cd) => {
                 const personas = cd.proveedores?.personas
-                const provNombre = personas ? `${personas.nombre ?? ''} ${personas.apellido ?? ''}`.trim() || '—' : '—'
+                const provNombre = personas
+                    ? `${personas.nombre ?? ''} ${personas.apellido ?? ''}`.trim() || '—'
+                    : '—'
                 return {
                     id_cotizacion_detalle: cd.id_cotizacion_detalle,
+                    // ── FIX: exponer id_cotizacion en cada fila del detalle ──────
+                    // Sin este campo el frontend no puede filtrar "solo los detalles
+                    // de esta cotización" y termina mostrando 0 opciones.
+                    id_cotizacion: cd.id_cotizacion,
                     id_producto: cd.productos?.id_producto ?? null,
                     producto: cd.productos?.nombre ?? '—',
                     id_proveedor: cd.id_proveedor,

@@ -144,16 +144,22 @@ export default function DetallePedido({ usuario, onNavegar, onLogout }) {
 
   useEffect(() => { fetchPedido(); }, [id]);
 
-  // After pedido loads: auto-populate selections from cotizacion data, then merge localStorage
   useEffect(() => {
     if (!pedido) return;
     const pidPedido = pedido.id_pedido ?? Number(id);
 
-    // Auto-populate: one entry per product using the first proveedor that quoted it
+    // ── La cotización de este pedido específico ──────────────────────────────
+    // pedido.cotizaciones[0] ya viene filtrada por el endpoint /pedidos/:id/completo,
+    // así que sus detalles pertenecen ÚNICAMENTE a este pedido.
     const cot = pedido.cotizaciones?.[0];
     const autoSel = {};
+
     if (cot?.detalle) {
+      // Para cada producto del pedido, tomamos el primer detalle que lo cotice
+      // dentro de ESTA cotización (no de otras cotizaciones de otros pedidos).
       cot.detalle.forEach((d) => {
+        // Solo registrar la primera aparición por producto (la selección por defecto).
+        // El usuario puede cambiarlo después con el lápiz.
         if (autoSel[d.id_producto]) return;
         autoSel[d.id_producto] = {
           id_cotizacion: cot.id_cotizacion,
@@ -163,20 +169,31 @@ export default function DetallePedido({ usuario, onNavegar, onLogout }) {
           estado: cot.estado,
           precio_unitario: d.precio_unitario,
           subtotal: d.subtotal,
+          // ── FIX: usar la cantidad del detalle de ESTE pedido, no de otro ──
           cantidad: d.cantidad,
         };
       });
     }
 
-    // Merge with localStorage — manual selections override the auto ones
+    // Merge con localStorage: las selecciones manuales del usuario tienen prioridad,
+    // pero solo si el id_cotizacion_detalle guardado pertenece a la cotización actual.
+    // Esto evita que una selección guardada de otro pedido "contamine" este.
+    const idCotizacionActual = cot?.id_cotizacion;
     try {
       const saved = localStorage.getItem(storageKey(pidPedido));
-      if (saved) Object.assign(autoSel, JSON.parse(saved));
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        Object.entries(parsed).forEach(([idProducto, sel]) => {
+          // Solo aceptar si la selección guardada pertenece a la cotización de este pedido
+          if (sel.id_cotizacion === idCotizacionActual) {
+            autoSel[idProducto] = sel;
+          }
+        });
+      }
     } catch {}
 
     setSeleccionPorProducto(autoSel);
 
-    // Check if this pedido already has an orden_compra in the DB
     fetchConToken(`${API_BASE}/compras/ordenes-compra/verificar/pedido/${pidPedido}`)
       .then((r) => r.json())
       .then((data) => { if (data?.tieneOrden) setYaGenerado(true); })
@@ -199,13 +216,13 @@ export default function DetallePedido({ usuario, onNavegar, onLogout }) {
   };
 
   const handleAbrirModalCambiar = (productoItem) => {
-    // One cotizacion per pedido — iterate its detalle rows filtered by product.
-    // Each matching row represents a different proveedor's quote for this product.
     const cot = pedido?.cotizaciones?.[0];
     if (!cot) { setModalCambiar({ open: true, producto: productoItem, opciones: [] }); return; }
 
+    // ── FIX: filtrar detalles por id_producto Y por id_cotizacion de este pedido ──
+    // Así jamás aparecen cotizaciones de otros pedidos que tengan el mismo producto.
     const opciones = (cot.detalle ?? [])
-      .filter((d) => d.id_producto === productoItem.id_producto)
+      .filter((d) => d.id_producto === productoItem.id_producto && d.id_cotizacion === cot.id_cotizacion)
       .map((d) => ({
         id_cotizacion: cot.id_cotizacion,
         id_cotizacion_detalle: d.id_cotizacion_detalle,
@@ -215,8 +232,10 @@ export default function DetallePedido({ usuario, onNavegar, onLogout }) {
         precio_unitario: d.precio_unitario,
         subtotal: d.subtotal,
         cantidad: d.cantidad,
+        // La cantidad del pedido para este producto (para mostrar "X / Y" en el modal)
         cantidadPedido: productoItem.cantidad,
       }));
+
     setModalCambiar({ open: true, producto: productoItem, opciones });
   };
 
@@ -413,8 +432,28 @@ export default function DetallePedido({ usuario, onNavegar, onLogout }) {
 
       </main>
 
-      <CargarCotizacionModal open={modalCargar} onClose={() => setModalCargar(false)} onGuardado={() => { setModalCargar(false); fetchPedido(); }} idCotizacion={pedido?.cotizaciones?.[0]?.id_cotizacion} idPedido={pedido?.id_pedido ?? Number(id)} productos={pedido?.detalle ?? []} proveedores={proveedores} detallesExistentes={pedido?.cotizaciones?.[0]?.detalle ?? []} />
-      <ModalCambiarCotizacion open={modalCambiar.open} onClose={() => setModalCambiar({ open: false, producto: null, opciones: [] })} onGuardar={handleGuardarCambio} productoNombre={modalCambiar.producto?.producto ?? ""} opciones={modalCambiar.opciones} seleccionActual={seleccionPorProducto[modalCambiar.producto?.id_producto] ?? null} />
+      <CargarCotizacionModal
+        open={modalCargar}
+        onClose={() => setModalCargar(false)}
+        onGuardado={() => { setModalCargar(false); fetchPedido(); }}
+        idCotizacion={pedido?.cotizaciones?.[0]?.id_cotizacion}
+        idPedido={pedido?.id_pedido ?? Number(id)}
+        productos={pedido?.detalle ?? []}
+        proveedores={proveedores}
+        // ── FIX: solo pasar detalles de la cotización de ESTE pedido ──────────
+        // pedido.cotizaciones[0].detalle viene del endpoint /pedidos/:id/completo
+        // que ya está filtrado por pedido; esto garantiza que CargarCotizacionModal
+        // no detecte como "ya cotizado" a un proveedor que cotizó otro pedido.
+        detallesExistentes={pedido?.cotizaciones?.[0]?.detalle ?? []}
+      />
+      <ModalCambiarCotizacion
+        open={modalCambiar.open}
+        onClose={() => setModalCambiar({ open: false, producto: null, opciones: [] })}
+        onGuardar={handleGuardarCambio}
+        productoNombre={modalCambiar.producto?.producto ?? ""}
+        opciones={modalCambiar.opciones}
+        seleccionActual={seleccionPorProducto[modalCambiar.producto?.id_producto] ?? null}
+      />
     </div>
   );
 }
