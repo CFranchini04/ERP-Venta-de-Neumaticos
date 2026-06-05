@@ -84,4 +84,15 @@ const deleteProveedor = async (req, res) => {
   }
 }
 
-export default { getAllProveedores, getProveedores, searchProveedores, getProveedorByNombre, getProveedorByRuc, postProveedor, updateProveedor, deleteProveedor }
+const getOrdCompraByProveedor = async (req, res) => {
+    try {
+        const { id } = req.params
+        const ordenes = await proveedoresService.getOrdCompraByProveedor(id)
+        res.status(200).json(ordenes)
+    } catch (error) {
+        res.status(400).json({ message: error.message })
+    }
+}
+
+
+export default { getAllProveedores, getProveedores, searchProveedores, getProveedorByNombre, getProveedorByRuc, postProveedor, updateProveedor, deleteProveedor, getOrdCompraByProveedor }

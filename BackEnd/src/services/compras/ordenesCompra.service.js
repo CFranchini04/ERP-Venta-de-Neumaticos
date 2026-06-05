@@ -372,12 +372,13 @@ const createOrdenCompra = async (grupos, id_estado_inicial = 1) => {
   return ordenesCreadas
 }
 
+
 export default {
-  getAllOrdCompra,
-  getOrdCompra,
-  getDetalleOrdCompra,
-  getFacturasOrdCompra,
-  tieneOrdenCompraPorPedido,
-  tieneOrdenCompraPorCotizacion,
-  createOrdenCompra,
+    getAllOrdCompra,
+    getOrdCompra,
+    getDetalleOrdCompra,
+    getFacturasOrdCompra,
+    tieneOrdenCompraPorPedido,
+    tieneOrdenCompraPorCotizacion,
+    createOrdenCompra, 
 }

@@ -104,6 +104,7 @@ console.log('id_cotizacion recibido:', id_cotizacion)
   }
 }
 
+
 export default {
   listarOrdenesCompra,
   obtenerOrdenCompra,

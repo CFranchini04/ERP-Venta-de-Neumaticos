@@ -128,4 +128,31 @@ const deleteProveedor = async (id) => {
     return { message: 'Proveedor eliminado correctamente' }
 }
 
-export default { getAllProveedores, getProveedores, searchProveedores, getProveedorByNombre, getProveedorByRuc, postProveedor, updateProveedor, deleteProveedor }
+const getOrdCompraByProveedor = async (id_proveedor) => {
+    const { data: ordenes, error } = await supabase
+        .from('ordenes_compras')
+        .select('id_orden, codigo_orden, fecha, nro_orden, id_estado')
+        .eq('id_proveedor', id_proveedor)
+        .order('id_orden', { ascending: false })
+
+    if (error) throw new Error(error.message)
+
+    return Promise.all((ordenes || []).map(async (orden) => {
+        const { data: estado } = await supabase
+            .from('estados')
+            .select('nombre')
+            .eq('id_estado', orden.id_estado)
+            .maybeSingle()
+
+        return {
+            id_orden:     orden.id_orden,
+            codigo_orden: orden.codigo_orden ?? '—',
+            fecha:        orden.fecha ?? '—',
+            nro_orden:    orden.nro_orden ?? '—',
+            estado:       estado?.nombre ?? '—',
+        }
+    }))
+}
+
+
+export default { getAllProveedores, getProveedores, searchProveedores, getProveedorByNombre, getProveedorByRuc, postProveedor, updateProveedor, deleteProveedor, getOrdCompraByProveedor }
