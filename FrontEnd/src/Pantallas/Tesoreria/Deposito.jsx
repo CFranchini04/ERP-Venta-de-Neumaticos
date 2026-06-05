@@ -105,41 +105,36 @@ export default function Deposito({ usuario = 'Empleado', onLogout, onNavegar }) 
     setError('');
   }
 
-  const generarAsientoDeposito = async (cuentaDestId, montoNum, tipo, cuentaOrigenId = null) => {
+  const generarAsientoDeposito = async (montoNum, tipo) => {
     try {
       const todasCuentas = await fetchCuentas()
-      const buscarPorId = (id) => todasCuentas.find(c => c.id_cuentas == id || c.id == id)
       const buscarPorCodigo = (codigo) => todasCuentas.find(c => c.codigo == codigo)
 
-      const cuentaDest = buscarPorId(cuentaDestId)
-      if (!cuentaDest) throw new Error('No se encontró la cuenta bancaria destino')
+      const cuentaDest = buscarPorCodigo('1.1.1.2.01')
+      if (!cuentaDest) throw new Error('No se encontró cuenta bancaria destino (1.1.1.2.01)')
 
       let cuentaContra = null
-
       if (tipo === 'Efectivo') {
         cuentaContra = buscarPorCodigo('1.1.1.1.01')
         if (!cuentaContra) throw new Error('No se encontró la cuenta Caja (1.1.1.1.01)')
       } else if (tipo === 'Cheque Propio') {
-        if (!cuentaOrigenId) throw new Error('Debe seleccionar la cuenta bancaria de origen del cheque')
-        cuentaContra = buscarPorId(cuentaOrigenId)
-        if (!cuentaContra) throw new Error('No se encontró la cuenta bancaria de origen')
+        cuentaContra = buscarPorCodigo('1.1.1.2.02')
+        if (!cuentaContra) throw new Error('No se encontró cuenta bancaria origen (1.1.1.2.02)')
       } else if (tipo === 'Cheque Terceros') {
         cuentaContra = buscarPorCodigo('1.1.3.1.05')
-        if (!cuentaContra) throw new Error('No se encontró la cuenta Documentos a cobrar (1.1.3.1.05)')
+        if (!cuentaContra) throw new Error('No se encontró cuenta Documentos a cobrar (1.1.3.1.05)')
       }
 
-      const asiento = await crearAsientoAPI({
+      return await crearAsientoAPI({
         fecha: new Date().toISOString().split('T')[0],
-        concepto: `Depósito ${tipo} - ${cuentaDest.nombre ?? cuentaDest.cuenta}`,
+        concepto: `Depósito ${tipo}`,
         lineas: [
-          { id_cuenta: cuentaDest.id_cuentas, debe: montoNum, haber: 0 },
-          { id_cuenta: cuentaContra.id_cuentas, debe: 0, haber: montoNum },
+          { codigo: cuentaDest.codigo, cuenta: cuentaDest.cuenta, debe: montoNum, haber: 0 },
+          { codigo: cuentaContra.codigo, cuenta: cuentaContra.cuenta, debe: 0, haber: montoNum },
         ],
         id_periodo_fiscal: null,
         id_estado: 1,
       })
-
-      return asiento
     } catch (err) {
       throw new Error(`Error generando asiento: ${err.message}`)
     }
@@ -188,12 +183,7 @@ export default function Deposito({ usuario = 'Empleado', onLogout, onNavegar }) 
 
       const nuevo = await res.json();
 
-      await generarAsientoDeposito(
-        Number(cuentaId),
-        Number(monto),
-        tipoDeposito,
-        tipoDeposito === 'Cheque Propio' ? Number(cuentaOrigenId) : null
-      );
+      await generarAsientoDeposito(Number(monto), tipoDeposito)
 
       const cuenta = cuentas.find(c => c.id === Number(cuentaId));
       setHistorial(prev => [{

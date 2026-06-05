@@ -224,7 +224,7 @@ export default function Movimiento({ usuario = 'Empleado', onLogout, onNavegar }
         setCuentasDestino(
           dataCuentas.map(c => ({
             id: c.id_cuenta_bancaria,
-            nombre: `${c.bancos?.nombre ?? '—'} - ${c.tipo_cuenta ?? '—'}`,
+            nombre: `${c.titular ?? '—'} - ${c.bancos?.nombre ?? '—'} - ${c.tipo_cuenta ?? '—'}`,
           }))
         );
 
@@ -277,25 +277,43 @@ export default function Movimiento({ usuario = 'Empleado', onLogout, onNavegar }
     setError('');
   }
 
-  const generarAsientoMovimiento = async (cuentaOrigenId, cuentaDestinoId, montoNum, fechaMov, conceptoMov) => {
+  const generarAsientoMovimiento = async (montoNum, fechaMov, conceptoMov, tipoOrigen, tipoDestino) => {
     try {
       const todasCuentas = await fetchCuentas()
       const buscarPorCodigo = (codigo) => todasCuentas.find(c => c.codigo == codigo)
 
-      // Cuenta contable origen — banco que sale el dinero
-      const cuentaOrig = buscarPorCodigo('1.1.1.2.01')
-      // Cuenta contable destino — banco que recibe el dinero  
-      const cuentaDest = buscarPorCodigo('1.1.1.2.02')
+      const COD_BANCO_PROPIO = '1.1.1.2.01'
+      const COD_BANCO_PROPIO2 = '1.1.1.2.02'
+      const COD_RECIBIR_AJENA = '1.1.4.1.01' // recibir de cuenta ajena
+      const COD_ENVIAR_AJENA = '2.1.1.1.01' // enviar a cuenta ajena
+      const esAjena = (nombre) => nombre?.toLowerCase()?.includes('ajena')
 
-      if (!cuentaOrig) throw new Error('No se encontró cuenta contable origen (1.1.1.2.01)')
-      if (!cuentaDest) throw new Error('No se encontró cuenta contable destino (1.1.1.2.02)')
+      let cuentaOrig = null
+      let cuentaDest = null
+
+      if (esAjena(tipoOrigen) && !esAjena(tipoDestino)) {
+        // Recibir de cuenta ajena
+        cuentaOrig = buscarPorCodigo(COD_RECIBIR_AJENA)
+        cuentaDest = buscarPorCodigo(COD_BANCO_PROPIO)
+      } else if (!esAjena(tipoOrigen) && esAjena(tipoDestino)) {
+        // Enviar a cuenta ajena
+        cuentaOrig = buscarPorCodigo(COD_BANCO_PROPIO)
+        cuentaDest = buscarPorCodigo(COD_ENVIAR_AJENA)
+      } else {
+        // Entre cuentas propias
+        cuentaOrig = buscarPorCodigo(COD_BANCO_PROPIO)
+        cuentaDest = buscarPorCodigo(COD_BANCO_PROPIO2)
+      }
+
+      if (!cuentaOrig) throw new Error('No se encontró cuenta contable origen')
+      if (!cuentaDest) throw new Error('No se encontró cuenta contable destino')
 
       await crearAsientoAPI({
         fecha: fechaMov,
         concepto: conceptoMov || 'Transferencia entre cuentas',
         lineas: [
-          { id_cuenta: cuentaDest.id_cuentas, debe: montoNum, haber: 0 },
-          { id_cuenta: cuentaOrig.id_cuentas, debe: 0, haber: montoNum },
+          { codigo: cuentaDest.codigo, cuenta: cuentaDest.cuenta, debe: montoNum, haber: 0 },
+          { codigo: cuentaOrig.codigo, cuenta: cuentaOrig.cuenta, debe: 0, haber: montoNum },
         ],
         id_periodo_fiscal: null,
         id_estado: 1,
@@ -342,15 +360,6 @@ export default function Movimiento({ usuario = 'Empleado', onLogout, onNavegar }
 
       const nuevo = await res.json();
 
-      // Generás el asiento contable
-      await generarAsientoMovimiento(
-        Number(cuentaOrigenId),
-        cuentaDestino.id,
-        Number(monto),
-        fecha,
-        observacionFinal
-      );
-
       const cuentaOrigen = cuentas.find(c => c.id === Number(cuentaOrigenId));
       setHistorial(prev => [{
         id: nuevo.id_movimiento,
@@ -361,6 +370,18 @@ export default function Movimiento({ usuario = 'Empleado', onLogout, onNavegar }
         tipo: tipoMovimiento,
         monto: Number(monto),
       }, ...prev]);
+
+      const cuentaOrigenData = cuentas.find(c => c.id === Number(cuentaOrigenId))
+      const nombreOrigen = cuentaOrigenData?.nombre ?? ''
+      const nombreDestino = cuentaDestino?.nombre ?? ''
+
+      await generarAsientoMovimiento(
+        Number(monto),
+        fecha,
+        observacionFinal,
+        nombreOrigen,
+        nombreDestino
+      )
 
       cerrarModal();
     } catch (err) {

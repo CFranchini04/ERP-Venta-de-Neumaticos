@@ -85,24 +85,33 @@ export default function NuevaVentaDirecta({ usuario, onNavegar, onLogout }) {
       const todasCuentas = await fetchCuentas()
       const buscarPorCodigo = (codigo) => todasCuentas.find(c => c.codigo == codigo)
 
-      const cuentaDeudores  = buscarPorCodigo('1.1.3.1.01') // Deudores por ventas
-      const cuentaVentas    = buscarPorCodigo('4.1.1.1.01') // Ventas
-      const cuentaIVA       = buscarPorCodigo('2.1.1.4.01') // IVA Débito Fiscal
+      const cuentaDeudores = buscarPorCodigo('1.1.3.1.01') // Deudores por ventas
+      const cuentaVentas = buscarPorCodigo('4.1.1.1.01') // Ventas
+      const cuentaIVA = buscarPorCodigo('2.1.1.4.01') // IVA Débito Fiscal
 
       if (!cuentaDeudores) throw new Error('No se encontró cuenta Deudores por ventas (1.1.3.1.01)')
-      if (!cuentaVentas)   throw new Error('No se encontró cuenta Ventas (4.1.1.1.01)')
-      if (!cuentaIVA)      throw new Error('No se encontró cuenta IVA Débito Fiscal (2.1.1.4.01)')
+      if (!cuentaVentas) throw new Error('No se encontró cuenta Ventas (4.1.1.1.01)')
+      if (!cuentaIVA) throw new Error('No se encontró cuenta IVA Débito Fiscal (2.1.1.4.01)')
 
       await crearAsientoAPI({
         fecha: fechaEmision,
         concepto: `Venta directa - Factura ${nroFactura}`,
         lineas: [
           // DEBE — deudores por el total
-          { id_cuenta: cuentaDeudores.id_cuentas, debe: totalVenta, haber: 0 },
+          {
+            codigo: "1.1.1.1.01",
+            cuenta: "CAJA EN MONEDA NACIONAL", debe: totalVenta, haber: 0
+          },
           // HABER — ventas por el subtotal sin IVA
-          { id_cuenta: cuentaVentas.id_cuentas, debe: 0, haber: subtotalVenta },
+          {
+            codigo: "1.1.4.1.01",
+            cuenta: "MERCADERIAS DE REVENTA", debe: 0, haber: subtotalVenta
+          },
           // HABER — IVA débito fiscal
-          { id_cuenta: cuentaIVA.id_cuentas, debe: 0, haber: ivaVenta },
+          {
+            codigo: "2.1.1.4.01",
+            cuenta: "I.V.A. DEBITO FISCAL", debe: 0, haber: ivaVenta
+          },
         ],
         id_periodo_fiscal: null,
         id_estado: 1,
