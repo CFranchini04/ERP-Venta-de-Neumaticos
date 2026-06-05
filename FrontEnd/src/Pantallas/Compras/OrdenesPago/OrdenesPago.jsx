@@ -50,6 +50,7 @@ export default function OrdenesPago({ usuario, onNavegar, onLogout }) {
 
 
   const ordenesFiltradas = ordenes
+    .filter((o) => (o.estado || "").toLowerCase() !== "anulado")
     .filter((o) => {
       const texto = busqueda.toLowerCase();
       return (

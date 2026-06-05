@@ -113,12 +113,100 @@ const postFactura = async (id_proveedor, id_orden_compra, timbrado, nro_factura,
         id_factura_compra: factura.id_factura_compra
     }))
 
-    const { data: detallesCreados, error: errorDetalles } = await supabase
-        .from('detalles_facturas_compras')
-        .insert(detallesConId)
-        .select()
-    if (errorDetalles) throw new Error(errorDetalles.message)
+// ── Orden de pago: reusar la existente o crear una nueva ──────────────────
+const { data: estadoEspera } = await supabase
+  .from('estados')
+  .select('id_estado')
+  .ilike('nombre', 'pendiente')
+  .maybeSingle()
 
+// ✅ Buscar si ya existe una orden de pago pendiente para esta orden de compra
+const { data: detallesExistentesOP } = await supabase
+  .from('detalles_orden_pago')
+  .select('id_orden_pago')
+  .in(
+    'id_factura_compra',
+    // todas las facturas reales confirmadas de esta orden
+    (todosDetalles || []).map((d) => d.id_orden_compra_detalle).filter(Boolean)
+  )
+
+// Buscar por facturas de la misma orden de compra
+const { data: facturasDeOrden } = await supabase
+  .from('facturas_compras')
+  .select('id_factura_compra')
+  .eq('id_orden_compra', id_orden_compra)
+  .not('nro_factura', 'is', null)
+  .neq('nro_factura', '')
+
+const idsFacturasOrden = (facturasDeOrden || []).map((f) => f.id_factura_compra)
+
+let idOrdenPagoExistente = null
+
+if (idsFacturasOrden.length > 0) {
+  const { data: detOP } = await supabase
+    .from('detalles_orden_pago')
+    .select('id_orden_pago, ordenes_pago(id_estado)')
+    .in('id_factura_compra', idsFacturasOrden)
+    .maybeSingle()
+
+  // Reusar solo si está pendiente (no pagada, no anulada)
+  if (detOP?.id_orden_pago && detOP?.ordenes_pago?.id_estado === estadoEspera?.id_estado) {
+    idOrdenPagoExistente = detOP.id_orden_pago
+  }
+}
+
+let ordenPago
+if (idOrdenPagoExistente) {
+  // ✅ Ya existe una orden de pago para esta orden de compra — agregar el detalle
+  const { data: opActualizada, error: errorActualizacion } = await supabase
+    .from('ordenes_pago')
+    .update({ monto_total: supabase.rpc ? undefined : importe_total }) // no pisamos el total acumulado aquí
+    .eq('id_orden_pago', idOrdenPagoExistente)
+    .select()
+    .single()
+
+  if (errorActualizacion) throw new Error(`Error actualizando orden de pago: ${errorActualizacion.message}`)
+  ordenPago = opActualizada
+
+  const { error: errorDetallePago } = await supabase
+    .from('detalles_orden_pago')
+    .insert({
+      id_factura_compra: id,
+      id_metodo_pago:    null,
+      monto:             importe_total,
+      id_orden_pago:     idOrdenPagoExistente,
+    })
+  if (errorDetallePago) throw new Error(`Error creando detalle de orden de pago: ${errorDetallePago.message}`)
+
+} else {
+  // ✅ No existe orden de pago — crear una nueva
+  const codigoOrdenPago = `OP-${new Date().getFullYear()}-${Date.now().toString().slice(-6)}`
+
+  const { data: nuevaOrdenPago, error: errorOrdenPago } = await supabase
+    .from('ordenes_pago')
+    .insert({
+      fecha_creacion:    new Date().toISOString().split('T')[0],
+      monto_total:       importe_total,
+      id_proveedor:      id_proveedor,
+      codigo_orden_pago: codigoOrdenPago,
+      id_estado:         estadoEspera?.id_estado ?? null,
+    })
+    .select()
+    .single()
+
+  if (errorOrdenPago) throw new Error(`Error creando orden de pago: ${errorOrdenPago.message}`)
+  ordenPago = nuevaOrdenPago
+
+  const { error: errorDetallePago } = await supabase
+    .from('detalles_orden_pago')
+    .insert({
+      id_factura_compra: id,
+      id_metodo_pago:    null,
+      monto:             importe_total,
+      id_orden_pago:     nuevaOrdenPago.id_orden_pago,
+    })
+  if (errorDetallePago) throw new Error(`Error creando detalle de orden de pago: ${errorDetallePago.message}`)
+}
     return { factura, detalles: detallesCreados }
 }
 

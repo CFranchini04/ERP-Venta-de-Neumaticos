@@ -7,33 +7,6 @@ const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:9128/api";
 
 const Req = () => <span style={{ color: "red", marginLeft: 2 }}>*</span>;
 
-// Badge de estado de entrega
-const BadgeEntrega = ({ totalDevuelto, cantidad }) => {
-  if (totalDevuelto >= cantidad)
-    return <span style={bs.anulado}>Devuelto</span>;
-  if (totalDevuelto > 0)
-    return <span style={bs.parcial}>Parcial</span>;
-  return <span style={bs.entregado}>Entregado</span>;
-};
-
-const bs = {
-  entregado: {
-    display: "inline-block", fontSize: 10, borderRadius: 4,
-    padding: "2px 7px", fontWeight: "bold",
-    background: "#E8F5E9", color: "#388e3c",
-  },
-  parcial: {
-    display: "inline-block", fontSize: 10, borderRadius: 4,
-    padding: "2px 7px", fontWeight: "bold",
-    background: "#FFF8E1", color: "#c8890a",
-  },
-  anulado: {
-    display: "inline-block", fontSize: 10, borderRadius: 4,
-    padding: "2px 7px", fontWeight: "bold",
-    background: "#FFEBEE", color: "#c0392b",
-  },
-};
-
 export default function ModalNotaCredito({ factura, idOrden, onClose, onGuardado }) {
   const [form, setForm] = useState({
     nro_nota_credito: "",
@@ -90,8 +63,9 @@ export default function ModalNotaCredito({ factura, idOrden, onClose, onGuardado
             }
           }
 
-          setLineas(
-            detallesFiltrados.map((det) => {
+          // ── Solo incluir productos con cantidad disponible para devolver ──
+          const lineasDisponibles = detallesFiltrados
+            .map((det) => {
               const yaDevuelto = devueltoPorProducto[det.id_producto] ?? 0;
               const disponibleDevolver = Math.max(0, Number(det.cantidad) - yaDevuelto);
               return {
@@ -99,10 +73,13 @@ export default function ModalNotaCredito({ factura, idOrden, onClose, onGuardado
                 nombre: det.productos?.nombre ?? `Producto ${det.id_producto}`,
                 yaDevuelto,
                 disponibleDevolver,
-                cantidadDevolver: 0,
+                // Se auto-rellena con todo lo disponible
+                cantidadDevolver: disponibleDevolver,
               };
             })
-          );
+            .filter((l) => l.disponibleDevolver > 0);
+
+          setLineas(lineasDisponibles);
         }
       } catch (err) {
         setError("Error al cargar datos: " + err.message);
@@ -116,21 +93,6 @@ export default function ModalNotaCredito({ factura, idOrden, onClose, onGuardado
     setForm((p) => ({ ...p, [name]: value }));
   };
 
-  const handleCantidad = (idx, valor) => {
-    setLineas((prev) =>
-      prev.map((l, i) => {
-        if (i !== idx) return l;
-        const cant = Math.min(Math.max(0, Number(valor)), l.disponibleDevolver);
-        return { ...l, cantidadDevolver: cant };
-      })
-    );
-  };
-
-  // Determinar si la devolución que se está armando es total
-  const esDevolucionTotal = lineas.length > 0 && lineas.every(
-    (l) => l.cantidadDevolver + l.yaDevuelto >= Number(l.cantidad)
-  );
-
   const montoTotal = lineas.reduce((acc, l) => {
     const sub = l.cantidadDevolver * Number(l.precio_unitario);
     return acc + sub + sub * 0.1;
@@ -138,19 +100,19 @@ export default function ModalNotaCredito({ factura, idOrden, onClose, onGuardado
 
   const generarAsientoNotaCreditoCompra = async (fechaNota, montoTotal, nroNota) => {
     try {
-      const todasCuentas = await fetchCuentas()
-      const buscarPorCodigo = (codigo) => todasCuentas.find(c => c.codigo == codigo)
+      const todasCuentas = await fetchCuentas();
+      const buscarPorCodigo = (codigo) => todasCuentas.find(c => c.codigo == codigo);
 
-      const subtotal = montoTotal / 1.1
-      const iva = montoTotal - subtotal
+      const subtotal = montoTotal / 1.1;
+      const iva = montoTotal - subtotal;
 
-      const cuentaProveedores = buscarPorCodigo('2.1.1.1.01')
-      const cuentaMercaderias = buscarPorCodigo('1.1.4.1.01')
-      const cuentaIVA = buscarPorCodigo('1.1.3.2.07')
+      const cuentaProveedores = buscarPorCodigo('2.1.1.1.01');
+      const cuentaMercaderias = buscarPorCodigo('1.1.4.1.01');
+      const cuentaIVA = buscarPorCodigo('1.1.3.2.07');
 
-      if (!cuentaProveedores) throw new Error('No se encontró cuenta Proveedores (2.1.1.1.01)')
-      if (!cuentaMercaderias) throw new Error('No se encontró cuenta Mercaderías (1.1.4.1.01)')
-      if (!cuentaIVA) throw new Error('No se encontró cuenta IVA Crédito Fiscal (1.1.3.2.07)')
+      if (!cuentaProveedores) throw new Error('No se encontró cuenta Proveedores (2.1.1.1.01)');
+      if (!cuentaMercaderias) throw new Error('No se encontró cuenta Mercaderías (1.1.4.1.01)');
+      if (!cuentaIVA) throw new Error('No se encontró cuenta IVA Crédito Fiscal (1.1.3.2.07)');
 
       await crearAsientoAPI({
         fecha: fechaNota,
@@ -162,11 +124,11 @@ export default function ModalNotaCredito({ factura, idOrden, onClose, onGuardado
         ],
         id_periodo_fiscal: null,
         id_estado: 1,
-      })
+      });
     } catch (err) {
-      throw new Error(`Error generando asiento: ${err.message}`)
+      throw new Error(`Error generando asiento: ${err.message}`);
     }
-  }
+  };
 
   const handleGuardar = async () => {
     setError("");
@@ -187,7 +149,7 @@ export default function ModalNotaCredito({ factura, idOrden, onClose, onGuardado
       }));
 
     if (detallesAEnviar.length === 0)
-      return setError("Debés incluir al menos un producto con cantidad mayor a 0.");
+      return setError("No hay productos disponibles para devolver.");
 
     try {
       setGuardando(true);
@@ -209,7 +171,7 @@ export default function ModalNotaCredito({ factura, idOrden, onClose, onGuardado
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || "Error al guardar");
 
-      await generarAsientoNotaCreditoCompra(form.fecha, montoTotal, form.nro_nota_credito)
+      await generarAsientoNotaCreditoCompra(form.fecha, montoTotal, form.nro_nota_credito);
 
       onGuardado?.();
       onClose();
@@ -237,18 +199,14 @@ export default function ModalNotaCredito({ factura, idOrden, onClose, onGuardado
         </div>
 
         <div style={ms.cuerpo}>
-          {/* ── Advertencia dinámica ── */}
+          {/* ── Advertencia ── */}
           <div style={{
-            background: esDevolucionTotal ? "#FFEBEE" : "#FFF8E1",
-            border: `2px solid ${esDevolucionTotal ? "#EF9A9A" : "#FFD54F"}`,
+            background: "#FFEBEE",
+            border: "2px solid #EF9A9A",
             borderRadius: 8, padding: "12px 16px", fontSize: 13,
-            color: esDevolucionTotal ? "#c0392b" : "#c8890a",
+            color: "#c0392b",
           }}>
-            {esDevolucionTotal ? (
-              <>⚠️ Estás devolviendo <strong>todos los productos</strong> — la factura quedará <strong>anulada</strong> y el stock será revertido.</>
-            ) : (
-              <>ℹ️ Devolución <strong>parcial</strong> — la factura <strong>mantendrá su estado</strong> — podés emitir notas adicionales por los productos restantes.</>
-            )}
+            Estás devolviendo <strong>todos los productos</strong> — la factura quedará <strong>anulada</strong> y el stock será revertido.
           </div>
 
           {/* ── Información Básica ── */}
@@ -289,9 +247,7 @@ export default function ModalNotaCredito({ factura, idOrden, onClose, onGuardado
           <div style={ms.seccion}>
             <p style={ms.seccionTitulo}>Productos a Devolver</p>
             <p style={ms.hint}>
-              Ingresá la cantidad a devolver por cada producto. Los productos
-              con estado <strong>Devuelto</strong> ya fueron completamente
-              revertidos en notas anteriores.
+              Se devolverán todas las unidades disponibles de cada producto.
             </p>
 
             {lineas.length === 0 ? (
@@ -301,7 +257,7 @@ export default function ModalNotaCredito({ factura, idOrden, onClose, onGuardado
                 <table style={ms.tabla}>
                   <thead>
                     <tr>
-                      {["Producto", "Estado", "Facturado", "Ya devuelto", "A devolver", "Precio Unit.", "Subtotal"].map(
+                      {["Producto", "Facturado", "Ya devuelto", "A devolver", "Precio Unit.", "Subtotal"].map(
                         (h) => <th key={h} style={ms.th}>{h}</th>
                       )}
                     </tr>
@@ -309,17 +265,10 @@ export default function ModalNotaCredito({ factura, idOrden, onClose, onGuardado
                   <tbody>
                     {lineas.map((l, idx) => {
                       const subtotal = l.cantidadDevolver * Number(l.precio_unitario);
-                      const agotado = l.disponibleDevolver === 0;
                       return (
-                        <tr key={idx} style={agotado ? ms.trAgotado : ms.tr}>
+                        <tr key={idx} style={ms.tr}>
                           <td style={ms.td}>
                             <span style={ms.nombreProd}>{l.nombre}</span>
-                          </td>
-                          <td style={ms.td}>
-                            <BadgeEntrega
-                              totalDevuelto={l.yaDevuelto}
-                              cantidad={Number(l.cantidad)}
-                            />
                           </td>
                           <td style={{ ...ms.td, textAlign: "center" }}>
                             {l.cantidad}
@@ -331,20 +280,8 @@ export default function ModalNotaCredito({ factura, idOrden, onClose, onGuardado
                           }}>
                             {l.yaDevuelto > 0 ? l.yaDevuelto : "—"}
                           </td>
-                          <td style={{ ...ms.td, textAlign: "center" }}>
-                            <input
-                              type="number"
-                              min={0}
-                              max={l.disponibleDevolver}
-                              value={l.cantidadDevolver}
-                              disabled={agotado}
-                              onChange={(e) => handleCantidad(idx, e.target.value)}
-                              style={{
-                                ...ms.inputNum,
-                                background: agotado ? "#f0f0f0" : "#fff",
-                                color: agotado ? "#aaa" : "#222",
-                              }}
-                            />
+                          <td style={{ ...ms.td, textAlign: "center", fontWeight: "bold", color: "#c0392b" }}>
+                            {l.cantidadDevolver}
                           </td>
                           <td style={{ ...ms.td, textAlign: "right" }}>
                             Gs. {Number(l.precio_unitario).toLocaleString("es-PY")}
@@ -376,15 +313,11 @@ export default function ModalNotaCredito({ factura, idOrden, onClose, onGuardado
             Cancelar
           </button>
           <button
-            style={{ ...ms.btnGuardar, background: esDevolucionTotal ? "#c0392b" : "#e67e22" }}
+            style={ms.btnGuardar}
             onClick={handleGuardar}
             disabled={guardando}
           >
-            {guardando
-              ? "Guardando..."
-              : esDevolucionTotal
-                ? "Anular Factura"
-                : "Emitir Nota de Crédito Parcial"}
+            {guardando ? "Guardando..." : "Anular Factura"}
           </button>
         </div>
       </div>
@@ -441,13 +374,8 @@ const ms = {
     fontWeight: "bold", borderBottom: "2px solid #E0E0E0", whiteSpace: "nowrap",
   },
   tr: { borderBottom: "1px solid #F0F0F0" },
-  trAgotado: { borderBottom: "1px solid #F0F0F0", opacity: 0.5 },
   td: { padding: "8px 10px", verticalAlign: "middle" },
   nombreProd: { fontWeight: "600", display: "block" },
-  inputNum: {
-    width: 70, padding: "5px 6px", border: "1px solid #CCC",
-    borderRadius: 5, textAlign: "center", fontSize: 13, fontFamily: "Lato",
-  },
   totalRow: {
     display: "flex", justifyContent: "flex-end", alignItems: "center",
     gap: 16, marginTop: 10, paddingTop: 10,
@@ -467,6 +395,6 @@ const ms = {
   btnGuardar: {
     padding: "9px 20px", borderRadius: 6, border: "none",
     cursor: "pointer", fontSize: 14, fontFamily: "Lato",
-    fontWeight: "bold", color: "#fff",
+    fontWeight: "bold", color: "#fff", background: "#c0392b",
   },
 };

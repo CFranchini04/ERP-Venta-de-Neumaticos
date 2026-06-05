@@ -1,11 +1,23 @@
 import supabase from '../../config/supabase.js'
 
 const getAllOrdPago = async () => {
-    const { data, error } = await supabase
-        .from('ordenes_pago')
-        .select('*, proveedores(*, personas(nombre)), estados(nombre), detalles_orden_pago(*, facturas_compras(*), metodos_de_pago(*))')
-    if (error) throw new Error(error.message)
-    return data
+  const { data: estadoAnulado } = await supabase
+    .from('estados')
+    .select('id_estado')
+    .ilike('nombre', 'anulado')
+    .maybeSingle()
+
+  let query = supabase
+    .from('ordenes_pago')
+    .select('*, proveedores(*, personas(nombre)), estados(nombre), detalles_orden_pago(*, facturas_compras(*), metodos_de_pago(*))')
+
+  if (estadoAnulado?.id_estado) {
+    query = query.neq('id_estado', estadoAnulado.id_estado)
+  }
+
+  const { data, error } = await query
+  if (error) throw new Error(error.message)
+  return data
 }
 
 const getOrdPago = async (id) => {
