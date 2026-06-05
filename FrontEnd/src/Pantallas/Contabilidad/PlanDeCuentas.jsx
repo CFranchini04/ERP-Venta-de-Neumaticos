@@ -85,7 +85,7 @@ export default function PlanDeCuentas({ usuario = "Empleado", onNavegar, onLogou
       render: (item) => <span style={{ fontWeight: item.imputable ? 400 : 700 }}>{item.codigo}</span> },
     { key: "cuenta", label: "Cuenta",
       render: (item) => {
-        const indent = (nivelDe(item.codigo) - 1) * 16;
+        const indent = (nivelDe(item.codigo) - 1) * 20;
         return (
           <span style={{ display: "block", textAlign: "left", paddingLeft: indent, fontWeight: item.imputable ? 400 : 700, textDecoration: nivelDe(item.codigo) <= 2 ? "underline" : "none" }}>
             {item.cuenta}
@@ -93,7 +93,7 @@ export default function PlanDeCuentas({ usuario = "Empleado", onNavegar, onLogou
         );
       } },
     { key: "imputable", label: "Imputable", width: "120px", render: (i) => (i.imputable ? "SI" : "NO") },
-    { key: "saldo", label: "Saldo", width: "160px", render: (i) => (i.imputable ? formatoMoneda(i.saldo) : "—") },
+    { key: "  ", width: "160px", },
     { key: "acciones", label: "Acciones", width: "120px",
       render: (item) => (
         <div style={{ display: "flex", gap: 6, justifyContent: "center" }}>
