@@ -495,7 +495,7 @@ export default function DetallePresupuesto({ usuario, onNavegar, onLogout }) {
                 {presupuesto.estado === "Pendiente" && (
                   <button
                     onClick={() =>
-                      navigate(`/ventas/facturas/nueva?presupuesto=${id}`)
+                      navigate(`/ventas/presupuestos/${id}/nueva-factura`)
                     }
                     style={styles.botonCrearFactura}
                   >
